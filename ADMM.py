@@ -371,23 +371,24 @@ class QCQP_ADMM:
             # print("Time elapsed: ", end_time - start_time)
             # breakpoint()
 
-    def update_vars(self, presi_threshold=1e-6, dresi_threshold=1e-6):
+    def update_vars(self, presi_threshold=1e-4, dresi_threshold=1e-4, max_iter = 300):
         k = 0
-        while self.presi > presi_threshold or np.max(self.dresi) > dresi_threshold:
+        while (self.presi > presi_threshold or np.max(self.dresi) > dresi_threshold) and k < max_iter:
         # for k in range(self.max_iter):
             print("############### Round {} started ############### ".format(k))
             start_time = time.time()
+            
+            self.edge_update()
+            print("Edge update finished")
             self.node_update()
             print("Node update finished")
             # breakpoint()
-            self.edge_update()
-            print("Edge update finished")
             self.dual_update()
             print("Dual update finished")
             # breakpoint()
-            print("Objective value at iteration {}: {}".format(k, self.objective()))
-            print("Primal residual at iteration {}: {}".format(k, self.presi))
-            print("Dual residual at iteration {}: {}".format(k, self.dresi))
+            # print("Objective value at iteration {}: {}".format(k, self.objective()))
+            # print("Primal residual at iteration {}: {}".format(k, self.presi))
+            # print("Dual residual at iteration {}: {}".format(k, self.dresi))
             end_time = time.time()
             print("Time elapsed: ", end_time - start_time)
             # breakpoint()
@@ -401,6 +402,7 @@ class QCQP_ADMM:
             k += 1
 
         obj = self.objective()
+        # breakpoint()
 
         return obj, self.varphi, self.g
     
@@ -487,9 +489,9 @@ def solve_QCQP_OptTuple(BX, BY, lambda_lower, lambda_upper, radi):
 
     return obj, optimal_tilde_BIg, optimal_tilde_varphi
         
-## f(x) = x^t x + 2 x
-# mean = [0, 0, 0]  # mean of the bivariate Gaussian distribution
-# covariance = [[1, 0.5, 0.2], [0.5, 1, 0.4], [0.2, 0.4, 1]]  # covariance matrix of the bivariate Gaussian distribution
+# f(x) = x^t x + 2 x
+# mean = [-1, 0, 2]  # mean of the bivariate Gaussian distribution
+# covariance = [[1, 0.6, 0.2], [0.6, 1, 0.1], [0.2, 0.1, 1]]  # covariance matrix of the bivariate Gaussian distribution
 
 # np.random.seed(42)
 
@@ -504,17 +506,17 @@ def solve_QCQP_OptTuple(BX, BY, lambda_lower, lambda_upper, radi):
 # # covariance = [[1, 0.5], [0.5, 1]]
 
 # np.random.seed(0)
-# X_sample = 10 * np.random.multivariate_normal(mean, covariance, 100)
+# X_sample = 10 * np.random.multivariate_normal(mean, covariance, 10)
 # X_radi = 2 * math.ceil(np.max(np.linalg.norm(X_sample, axis=1)))
-# Y_sample = 3 * 10 * np.random.multivariate_normal(mean, covariance, 100) + 5
+# Y_sample = 3 * 10 * np.random.multivariate_normal(mean, covariance, 10) + 5
 # Y_radi = 3 * X_radi
 # # breakpoint()
 # pi_star, _ = solve_OptCoupling_matrix(X_sample, Y_sample)
-# # obj, tilde_BIg_star, tilde_varphi_star = solve_QCQP_OptTuple(X_sample, Y_sample, 0.1, 10, Y_radi)
-# # print("Optimal objective value: ", obj)
-# # print("Optimal tilde_BIg_star: ", tilde_BIg_star)
-# # print("Optimal tilde_varphi_star: ", tilde_varphi_star)
-# # breakpoint()
+# obj, tilde_BIg_star, tilde_varphi_star = solve_QCQP_OptTuple(X_sample, Y_sample, 0.1, 10, Y_radi)
+# print("Optimal objective value: ", obj)
+# print("Optimal tilde_BIg_star: ", tilde_BIg_star)
+# print("Optimal tilde_varphi_star: ", tilde_varphi_star)
+# breakpoint()
 # ADMM_solver = QCQP_ADMM(X_sample, Y_sample, 0.1, 0.1, 10, pi_star, Y_radi)
 # obj_ADMM, varphi_ADMM, g_ADMM = ADMM_solver.update_vars()
 # print("Optimal objective value: ", obj_ADMM)

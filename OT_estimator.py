@@ -58,10 +58,10 @@ class OT_Map_Estimator:
         pi_star, _ = self.solve_OptCoupling_matrix(BX, BY)
         m, n = len(BX), len(BY)
         dim = self.dim
-
+        
         if not ADMM: # Solve the optimization problem using Gurobi QCQP solver
             model = gp.Model("OptTuple_qcqp")
-            model.setParam('NumericFocus', 1)
+            model.setParam('NumericFocus', 3)
             tilde_g = {}
             tilde_varphi = {}
             for i in range(m):
@@ -103,13 +103,16 @@ class OT_Map_Estimator:
         else: # Solve the optimization problem using ADMM
             rho = 0.1 # penalty parameter
             ADMM_solver = QCQP_ADMM(BX, BY, rho, lambda_lower, lambda_upper, pi_star, radi)
-            _, tilde_varphi_star, tilde_g_star = ADMM_solver.update_vars(presi_threshold=1e-4, dresi_threshold=1e-6)
+            _, tilde_varphi_star, tilde_g_star = ADMM_solver.update_vars(presi_threshold=1e-4, dresi_threshold=1e-4)
 
-        tilde_G = (tilde_g_star - self.lambda_lower * self.BX).T
-        Bv = tilde_varphi_star
+        tilde_G = tilde_g_star.T
+        g_star = tilde_g_star + lambda_lower * BX
+        varphi_star = tilde_varphi_star + np.diag(self.BX @ self.BX.T) * self.lambda_lower / 2
+
+        Bv = varphi_star
         + np.diag(self.BX @ self.BX.T) * self.lambda_lower * self.lambda_upper / (2 * (self.lambda_upper - self.lambda_lower))
-        + np.diag(tilde_g_star @ tilde_g_star.T) / (2 * (self.lambda_upper - self.lambda_lower))
-        - np.diag(tilde_g_star @ self.BX.T) * self.lambda_lower / (self.lambda_upper - self.lambda_lower)
+        + np.diag(g_star @ g_star.T) / (2 * (self.lambda_upper - self.lambda_lower))
+        - np.diag(g_star @ self.BX.T) * self.lambda_lower / (self.lambda_upper - self.lambda_lower)
 
         self.estimator_info[f'Iteration_{self.iter}_Measure_{self.measure_index}'] = {
             'BX': BX, 
@@ -120,6 +123,10 @@ class OT_Map_Estimator:
             'lambda_lower': lambda_lower,
             'lambda_upper': lambda_upper
         }
+
+        # store the estimator_info as json file in folder "records"
+        with open(f"records/estimator_info/estimator_info_{self.iter}_{self.measure_index}.json", "w") as f:
+            json.dump(self.estimator_info[f'Iteration_{self.iter}_Measure_{self.measure_index}'], f)
 
     def interp_QP(self, iter, measure_index, input_vector):
         local_esimator_info = self.estimator_info[f'Iteration_{iter}_Measure_{measure_index}']
@@ -155,7 +162,7 @@ class OT_Map_Estimator:
 
         return eval_value, eval_gradient
     
-    def KS_estimate(self, iter, measure_index, eval_sample, theta = 100, Tau = 10): 
+    def KS_estimate(self, iter, measure_index, eval_sample, theta = 100, Tau = 100): 
         ### KS-smoothing based on Theorem~4.8
         # - Inputs:
         # function_index - index of the convex function to interpolate
@@ -201,7 +208,7 @@ class OT_Map_Estimator:
             _, idx = self.kd_tree.query(point)
             return self.points_with_info[idx][0], self.points_with_info[idx][1]  # Return coordinates and associated info
     
-    def SM_estimate(self, iter, measure_index, eval_sample, theta = 10):
+    def SM_estimate(self, iter, measure_index, eval_sample, theta = 1000):
         ### SM-smoothing based on Theorem~4.10
         # - Inputs:
         # function_index - index of the convex function to interpolate
@@ -210,21 +217,25 @@ class OT_Map_Estimator:
         # - Outputs:
         # SM_eval_value - the value of the SM-smoothed function at eval_sample
         # SM_eval_gradient - the gradient of the SM-smoothed function at eval_sample
-
+        
         local_esimator_info = self.estimator_info[f'Iteration_{iter}_Measure_{measure_index}']
         # print("local_esimator_info = ", local_esimator_info)
         # breakpoint()
         tilde_G, Bv, lambda_lower, lambda_upper = local_esimator_info['tilde_G'], local_esimator_info['Bv'], local_esimator_info['lambda_lower'], local_esimator_info['lambda_upper']
-        x = eval_sample.ravel()
+        x = eval_sample
+        # x = eval_sample.ravel()
         m = len(Bv)
         # breakpoint()
         ######## Solve the embedded maximization problem ########
-        if (f'Iteration_{iter}_Measure_{measure_index}' in self.SM_warmstart) == False:
-            self.SM_warmstart[f'Iteration_{iter}_Measure_{measure_index}'] = self.KDTreeWithInfo()
-            w = np.ones(m) / m # concatenated vector of w and xi (initialization)
-        else:
-            # breakpoint()
-            w = self.SM_warmstart[f'Iteration_{iter}_Measure_{measure_index}'].query(x)[1]
+        # if (f'Iteration_{iter}_Measure_{measure_index}' in self.SM_warmstart) == False:
+        #     self.SM_warmstart[f'Iteration_{iter}_Measure_{measure_index}'] = self.KDTreeWithInfo()
+        #     w = np.ones(m) / m # concatenated vector of w and xi (initialization)
+        # else:
+        #     # breakpoint()
+        #     w = self.SM_warmstart[f'Iteration_{iter}_Measure_{measure_index}'].query(x)[1]
+        #     print("w = ", w)
+        self.SM_warmstart[f'Iteration_{iter}_Measure_{measure_index}'] = self.KDTreeWithInfo()
+        w = np.ones(m) / m
 
         class embedded_minimization:
             def __init__(self, x, tilde_G, Bv, lambda_lower, lambda_upper, theta):
@@ -243,6 +254,11 @@ class OT_Map_Estimator:
                     + np.linalg.norm(tilde_G @ w) ** 2 / (2 * (lambda_upper - lambda_lower))
                     + (np.log(m) + np.dot(w, np.log(w))) / theta
                 )
+                # value = (
+                #     -np.dot((tilde_G.T @ x + Bv), w)
+                #     + np.linalg.norm(tilde_G @ w) ** 2 / (2 * (lambda_upper - lambda_lower))
+                #     + (np.log(m) - np.dot(np.ones(m), np.log(w))) / theta
+                # )
                 return value
             
             def objective_gradient(self, w):
@@ -252,6 +268,10 @@ class OT_Map_Estimator:
                             + tilde_G.T @ tilde_G @ w / (lambda_upper - lambda_lower) 
                             - tilde_G.T @ x - Bv
                 )
+                # gradient = (- 1 / theta * w  
+                #             + tilde_G.T @ tilde_G @ w / (lambda_upper - lambda_lower) 
+                #             - tilde_G.T @ x - Bv
+                # )
                 return gradient
             
             def objective_hessian(self, w):
@@ -259,7 +279,33 @@ class OT_Map_Estimator:
                 hessian = (np.diag(1 / w) / theta 
                            + tilde_G.T @ tilde_G / (lambda_upper - lambda_lower)
                 )
+                # hessian = (np.diag(1 / w ** 2) / theta 
+                #            + tilde_G.T @ tilde_G / (lambda_upper - lambda_lower)
+                # )
                 return hessian
+            
+            def solve_KKT_system_woodbury(self, w):
+                m = self.m
+                tilde_G = self.tilde_G
+                lambda_lower, lambda_upper = self.lambda_lower, self.lambda_upper
+                theta = self.theta
+                d = tilde_G.shape[0]
+                gradient = self.objective_gradient(w)
+                # hessian = self.objective_hessian(w)
+
+                A_inv = theta * np.diag(w)
+                mid_inverse = solve(np.eye(d) + tilde_G @ A_inv @ tilde_G.T / (lambda_upper - lambda_lower), np.eye(d))
+                hessian_inv = A_inv - A_inv @ tilde_G.T @ mid_inverse @ tilde_G @ A_inv / (lambda_upper - lambda_lower)
+                # print("hessian_inv_check = ", inv(hessian))
+                # breakpoint()
+                z1 = - hessian_inv @ gradient
+                s = - np.ones(m) @ hessian_inv @ np.ones(m)
+                z2 = - np.sum(z1) / s
+                newton_step = z1 - hessian_inv @ np.ones(m) * z2
+                newton_decrement_sq = - gradient @ newton_step
+                ## checked
+
+                return newton_step, newton_decrement_sq, gradient
             
             def solve_KKT_system(self, w):
                 m = self.m
@@ -288,43 +334,64 @@ class OT_Map_Estimator:
                 # breakpoint()
 
                 KKT_vector[:-1] = - gradient
-                print("w = ", w)
-                print("KKT_matrix = ", KKT_matrix)
-                print("KKT_vector = ", KKT_vector)
+                
+                # print("KKT_matrix = ", KKT_matrix)
+                # print("KKT_vector = ", KKT_vector)
+                # print("w = ", w)
                 # breakpoint()
+
                 newton_step = solve(KKT_matrix, KKT_vector)[:-1]
-                newton_decrement = np.sqrt(newton_step.T @ hessian @ newton_step)
+                newton_decrement_sq = newton_step.T @ hessian @ newton_step
                 # directional_derivative = (self.objective_value(w + 1e-5 * newton_step) - self.objective_value(w)) / 1e-5
                 # breakpoint()
-                return newton_step, newton_decrement, gradient, hessian
+                # breakpoint()
+                return newton_step, newton_decrement_sq, gradient
             
             def backtracking_line_search(self, w, newton_step, gradient, alpha = 0.2, beta = 0.5):
                 t = 1
                 # breakpoint()
-                while np.any(w + t * newton_step <= 0) or self.objective_value(w + t * newton_step) > self.objective_value(w) + alpha * t * gradient.T @ newton_step:
+                # while np.any(w + t * newton_step <= 1e-8) or self.objective_value(w + t * newton_step) > self.objective_value(w) + alpha * t * gradient.T @ newton_step:
+                # print("w = ", w)
+                # print("newton_step: ", newton_step)
+                while np.any(w + t * newton_step <= 1e-20) or self.objective_value(w + t * newton_step) > self.objective_value(w) + alpha * t * gradient @ newton_step:
+                    # print(np.any(w + t * newton_step <= 0), self.objective_value(w + t * newton_step) > self.objective_value(w) + alpha * t * gradient @ newton_step)
                     t = beta * t
+                    # print("t = ", t)
                     # breakpoint()
                 return t, self.objective_value(w + t * newton_step)
         
         def newton_method(w, x, tilde_G, Bv, lambda_lower, lambda_upper, theta):
             embedded_min = embedded_minimization(x, tilde_G, Bv, lambda_lower, lambda_upper, theta)
             value_list = []
+            step_count = 0
+           
             while True:
-                newton_step, newton_decrement, gradient, _ = embedded_min.solve_KKT_system(w)
-                print(newton_decrement)
-                # breakpoint()
+                # newton_step, newton_decrement, gradient = embedded_min.solve_KKT_system(w)
+                newton_step, newton_decrement, gradient = embedded_min.solve_KKT_system_woodbury(w)
+                # if count % 100 == 0:
+                #     print("w = ", w)
+                #     print("newton_step = ", newton_step)
+                #     print("gradient = ", gradient)
+                #     print("newton_decrement = ", newton_decrement)
+                    # breakpoint()
                 if newton_decrement < 0.1:
+                    print("w = ", w)   
+                    print("newton_decrement = ", newton_decrement)
+                    print(step_count)
+                    # breakpoint()
                     break
+                # if newton_decrement < 0.5 or np.any(w <= 5e-8):
+                #     break
                 else:
+                    newton_step[np.abs(newton_step) < 1e-10] = 0
                     t, objective_value = embedded_min.backtracking_line_search(w, newton_step, gradient)
                     w = w + t * newton_step
                     value_list.append(objective_value)
-                    # breakpoint()
+                    step_count += 1
             # breakpoint()
             return w, value_list
         
-        
-        w_star, value_list = newton_method(w, x, tilde_G, Bv, lambda_lower, lambda_upper, theta)
+        w_star, _ = newton_method(w, x, tilde_G, Bv, lambda_lower, lambda_upper, theta)
         # print("w = ", w)
         # print("w_star = ", w_star)
         # print("value_list = ", value_list)

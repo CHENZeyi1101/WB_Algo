@@ -13,6 +13,7 @@ import scipy as sp
 from scipy.linalg import sqrtm, pinv, norm, inv, solve
 import pdb
 from scipy.interpolate import griddata
+import pickle
 
 class MixtureOfGaussians:
 ### For generating samples from a mixture of Gaussian distributions (underlying barycenter measure) ###
@@ -45,9 +46,9 @@ class MixtureOfGaussians:
         dim = self.dim
         np.random.seed(seed)
         for _ in range(num_components):
-            mean = np.random.rand(dim) - 0.5
+            mean = (np.random.rand(dim) - 0.5) * 10
             A = np.random.rand(dim, dim) - 0.5
-            cov = np.dot(A, A.T) + np.eye(dim)
+            cov = np.dot(A, A.T) + np.eye(dim) * 10
             self.add_gaussian(mean, cov)
         weights = np.random.rand(num_components)
         self.set_weights(weights)
@@ -83,7 +84,7 @@ class convex_function:
         coeff_list = []
         intercept_list = []
         for _ in range(num_functions):
-            coeff = np.random.rand(dim) - 0.5
+            coeff = (np.random.rand(dim) - 0.5) * 10
             intercept = (np.random.rand() - 0.5) * 10
             coeff_list.append(coeff)
             intercept_list.append(intercept)
@@ -209,10 +210,16 @@ class Input_Measure_Sampling:
             np.random.seed(seed + k)
             l_para = np.random.rand(2) * 2 # 0 < l_down < l_up < 2 to ensure strong convexity and smoothness, since \|x\|^2 is C_{2, 2}
             l_down, l_up = min(l_para), max(l_para)
-            U = np.random.randint(0, 1)
+            U = np.random.randint(0, 1) # all CPWA functions
             Convex = convex_function(U, x_samples, num_functions=5)
             x_values, x_gradients= Convex.generate_function(index = k + 1, seed = seed + k)
+            # breakpoint()
             # reparametrize
+            # add a linear term
+            w = (np.random.rand(dim) - 0.5) * 10
+            x_values = x_values + np.dot(x_samples, w)
+            x_gradients = x_gradients + np.repeat(w[np.newaxis, :], x_samples.shape[0], axis=0)
+
             X_interp = x_samples + x_gradients / (l_up - l_down)
             G_interp = x_gradients + l_down * X_interp
             V_interp = x_values
@@ -235,14 +242,22 @@ class Input_Measure_Sampling:
 
             self.function_info.append(function_profile)
 
+        with open('function_info.pkl', 'wb') as file:
+            pickle.dump(self.function_info, file)
+        
+        breakpoint()
+
     def index_permutation(self, seed = 42):
         ### Generate a random permutation of the indices of the convex functions
         ### The functions would be randomly combined based on the premutation
 
         num_measures = self.num_measures
-        np.random.seed(seed)
-        premutation = np.random.permutation(2 * num_measures)
-        self.permutation = premutation
+        origin = np.arange(2 * num_measures)
+        permutation = np.zeros(2 * num_measures)
+        for i in range(num_measures):
+            permutation[2 * i] = origin[i]
+            permutation[2 * i + 1] = origin[i + num_measures]
+        self.permutation = permutation
 
     def interp_QP(self, function_index, x): 
         ### Solve the QP for shape-constrained iinterpolation based on Theorem~4.7
@@ -285,7 +300,7 @@ class Input_Measure_Sampling:
 
         return eval_value, eval_gradient
     
-    def KS_estimate(self, function_index, eval_sample, theta = 10, Tau = 10): 
+    def KS_estimate(self, function_index, eval_sample, theta = 100, Tau = 10): 
         ### KS-smoothing based on Theorem~4.8
         # - Inputs:
         # function_index - index of the convex function to interpolate
@@ -313,12 +328,107 @@ class Input_Measure_Sampling:
         KS_eval_value = MC_value_sum / Tau
         KS_eval_gradient = MC_grad_list / Tau
 
-        return KS_eval_value, KS_eval_gradient
+        return KS_eval_value, KS_eval_gradient/ Tau
     
-    def SM_estimate(self):
-        pass
+    def SM_estimate(self, function_index, eval_sample, theta = 1000):
+        function_profile = self.function_info[function_index]
+        l_down, l_up, tilde_BG, Bv = function_profile['l_down'], function_profile['l_up'], function_profile['tilde_BG'], function_profile['Bv']
+        num_x = self.num_x
+        w = np.ones(num_x) / num_x
 
-    def compute_mapping(self, base_samples):
+        class embedded_minimization:
+            def __init__(self, x, tilde_G, Bv, lambda_lower, lambda_upper, theta):
+                self.x = x
+                self.tilde_G = tilde_G
+                self.Bv = Bv
+                self.lambda_lower = lambda_lower
+                self.lambda_upper = lambda_upper
+                self.theta = theta
+                self.m = len(Bv)
+
+            def objective_value(self, w):
+                x, tilde_G, Bv, lambda_lower, lambda_upper, theta, m = self.x, self.tilde_G, self.Bv, self.lambda_lower, self.lambda_upper, self.theta, self.m
+                value = (
+                    -np.dot((tilde_G.T @ x + Bv), w)
+                    + np.linalg.norm(tilde_G @ w) ** 2 / (2 * (lambda_upper - lambda_lower))
+                    + (np.log(m) + np.dot(w, np.log(w))) / theta
+                )
+                return value
+            
+            def objective_gradient(self, w):
+                x, tilde_G, Bv, lambda_lower, lambda_upper, theta, m = self.x, self.tilde_G, self.Bv, self.lambda_lower, self.lambda_upper, self.theta, self.m
+                gradient = (np.log(w) / theta 
+                            + np.ones(m) / theta 
+                            + tilde_G.T @ tilde_G @ w / (lambda_upper - lambda_lower) 
+                            - tilde_G.T @ x - Bv
+                )
+                return gradient
+            
+            def solve_KKT_system_woodbury(self, w):
+                m = self.m
+                tilde_G = self.tilde_G
+                lambda_lower, lambda_upper = self.lambda_lower, self.lambda_upper
+                theta = self.theta
+                d = tilde_G.shape[0]
+                gradient = self.objective_gradient(w)
+                # hessian = self.objective_hessian(w)
+
+                A_inv = theta * np.diag(w)
+                mid_inverse = solve(np.eye(d) + tilde_G @ A_inv @ tilde_G.T / (lambda_upper - lambda_lower), np.eye(d))
+                hessian_inv = A_inv - A_inv @ tilde_G.T @ mid_inverse @ tilde_G @ A_inv / (lambda_upper - lambda_lower)
+                # print("hessian_inv_check = ", inv(hessian))
+                # breakpoint()
+                z1 = - hessian_inv @ gradient
+                s = - np.ones(m) @ hessian_inv @ np.ones(m)
+                z2 = - np.sum(z1) / s
+                newton_step = z1 - hessian_inv @ np.ones(m) * z2
+                newton_decrement_sq = - gradient @ newton_step
+                ## checked
+                return newton_step, newton_decrement_sq, gradient
+            
+            def backtracking_line_search(self, w, newton_step, gradient, alpha = 0.2, beta = 0.5):
+                t = 1
+                while np.any(w + t * newton_step <= 0) or self.objective_value(w + t * newton_step) > self.objective_value(w) + alpha * t * gradient @ newton_step:
+                    t = beta * t
+                return t, self.objective_value(w + t * newton_step)
+        
+        def newton_method(w, x, tilde_G, Bv, lambda_lower, lambda_upper, theta):
+            embedded_min = embedded_minimization(x, tilde_G, Bv, lambda_lower, lambda_upper, theta)
+            value_list = []
+            step_count = 0
+            while True:
+                
+                newton_step, newton_decrement, gradient = embedded_min.solve_KKT_system_woodbury(w)
+
+                # if count % 100 == 0:
+                #     print("w = ", w)
+                #     print("newton_step = ", newton_step)
+                #     print("gradient = ", gradient)
+                #     print("newton_decrement = ", newton_decrement)
+                #     breakpoint()
+                
+                if newton_decrement < 0.1:
+                    print(f"step_count = {step_count}")
+                    break
+                else:
+                    newton_step[np.abs(newton_step) < 1e-10] = 0
+                    t, objective_value = embedded_min.backtracking_line_search(w, newton_step, gradient)
+                    w = w + t * newton_step
+                    value_list.append(objective_value)
+                    step_count += 1
+            # breakpoint()
+            return w, value_list
+        
+        w_star, _ = newton_method(w, eval_sample, tilde_BG, Bv, l_down, l_up, theta)
+        SM_eval_value = (l_down * norm(eval_sample) ** 2 / 2 
+                         + np.dot((tilde_BG.T @ eval_sample + Bv), w_star) - norm(tilde_BG @ w_star) ** 2 / (2 * (l_up - l_down))
+                         - (np.log(num_x) + np.dot(w_star, np.log(w_star))) / theta
+        )
+        SM_eval_gradient = tilde_BG @ w_star + l_down * eval_sample
+
+        return SM_eval_value, SM_eval_gradient
+    
+    def compute_mapping(self, base_samples, smoothing = 'KS'):
         ### Compute the mapping of the base samples under the convex functions
         # - Inputs:
         # base_samples - the samples to be mapped
@@ -333,24 +443,30 @@ class Input_Measure_Sampling:
             eval_values = np.zeros(len(base_samples))
             eval_gradients = np.zeros((len(base_samples), dim))
             for i in range(len(base_samples)):
-                eval_value, eval_gradient = self.KS_estimate(function_index, base_samples[i])
+                if smoothing == 'KS':
+                    eval_value, eval_gradient = self.KS_estimate(function_index, base_samples[i])
+                if smoothing == 'SM':
+                    eval_value, eval_gradient = self.SM_estimate(function_index, base_samples[i])
+                # breakpoint()
                 print(f"Function {function_index}, Sample {i}: Value = {eval_value}, Gradient = {eval_gradient}")
+                # breakpoint()
                 eval_values[i] = eval_value
                 eval_gradients[i] = eval_gradient
             dict_base_samples[f"function_{function_index}"]['eval_values'] = eval_values
             dict_base_samples[f"function_{function_index}"]['eval_gradients'] = eval_gradients
+            print(f"Function {function_index} finished")
             # breakpoint()
 
         return dict_base_samples
     
-    def measure_sampling(self, base_samples):
+    def measure_sampling(self, base_samples, smoothing = 'KS'):
         ### Generate samples from the input measures (based on the permutation of the convex functions)
         # - Inputs:
         # base_samples - the samples to be mapped
         # - Outputs:
         # dict_measure_samples - a dictionary containing the generated samples from the input measures
         permutation = self.permutation
-        dict_base_samples = self.compute_mapping(base_samples)
+        dict_base_samples = self.compute_mapping(base_samples, smoothing)
         num_measures = self.num_measures
         dict_measure_samples = {}
         for measure_index in range(num_measures):
@@ -369,6 +485,87 @@ class Input_Measure_Sampling:
             measure_samples = (part1 + part2) / 2
             dict_measure_samples[f"measure_{measure_index}"] = measure_samples
 
+        return dict_measure_samples
+    
+class Gaussian_Measure:
+    def __init__(self, dim, num_measures, distribution_type = None, parameters = None):
+        self.dim = dim
+        self.type = distribution_type
+        self.parameters = parameters
+        self.num_measures = num_measures
+
+    def generate_random_parameters(self, num_measures, seed = 41):
+        dim = self.dim
+        np.random.seed(seed)
+        parameters = []
+        for _ in range(num_measures):
+            mean = np.random.rand(dim) * 10
+            A = np.random.rand(dim, dim)
+            A = np.dot(A, A.T) * 10 + np.eye(dim) # Ensure covariance matrix is positive definite
+            parameters.append((mean, A))
+        return parameters
+
+    def generate_gaussian_sample(self, size, k, seed = None):
+        np.random.seed(seed)
+        if self.type == "gaussian":
+            mean, covariance_matrix = self.parameters[k]
+            return np.random.multivariate_normal(mean, covariance_matrix, size)
+        else:
+            raise ValueError("Unsupported distribution type")
+        
+    def generate_mixture_gaussian_sample(self, size, seed = None):
+        np.random.seed(seed)
+        if self.type == "mixture_gaussian":
+            gaussians = self.parameters
+            n_mix = len(gaussians)
+            U = np.random.rand(size)
+            samples = []
+            for u in U:
+                group = math.floor(u * n_mix)
+                mean, covariance_matrix = gaussians[group]
+                sample = np.random.multivariate_normal(mean, covariance_matrix)
+                samples.append(sample)
+            return np.array(samples)
+        else:
+            raise ValueError("Unsupported distribution type")
+        
+    def generate_truncated_sample(self, size, R = 1, A = None, b = None, seed = None):
+        dim = self.dim
+        if self.type == "gaussian":
+            accepted = []
+            sample = np.random.multivariate_normal(np.zeros(dim), np.eye(dim), 10 * size)
+            # breakpoint()
+            index = 0
+            while len(accepted) < size:
+                if norm(sample[index]) < R:
+                    accepted.append(A @ sample[index] + b)
+                index += 1
+            return np.squeeze(np.array(accepted))
+
+        elif self.type == "mixture_gaussian": # not location scatter
+            accepted = []
+            
+            while len(accepted) < size:
+                sample = self.generate_mixture_gaussian_sample(10 * size, seed)
+                index = 0
+                while len(accepted) < size and index < 10 * size:
+                    if norm(sample[index]) < R:
+                        accepted.append(sample[index])
+                    index += 1
+            return np.squeeze(np.array(accepted))
+        
+        else:
+            raise ValueError("Unsupported distribution type")
+
+    def measure_sampling(self, num_samples):
+        num_measures = self.num_measures
+        nu_para = self.generate_random_parameters(num_measures, seed = 41)
+        print(nu_para)
+        # breakpoint()
+        dict_measure_samples = {}
+        for i in range(num_measures):
+            b, A = nu_para[i][0], nu_para[i][1]
+            dict_measure_samples[f"measure_{i}"] = self.generate_truncated_sample(size = num_samples, R = 1, A = A, b = b) 
         return dict_measure_samples
     
 # mixture = MixtureOfGaussians()
