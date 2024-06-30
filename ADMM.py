@@ -46,7 +46,7 @@ def projected_newton_method(q0, q1, P0, P1, v0, max_iter=100):
 
         # breakpoint()
         
-        print(f'Iteration {count}: v = {v}, phi(v) = {phi(v, q0, q1, P0, P1)}, grad = {grad}')
+        # print(f'Iteration {count}: v = {v}, phi(v) = {phi(v, q0, q1, P0, P1)}, grad = {grad}')
         # if np.linalg.norm(grad) < 1e-6:
         #     break
         
@@ -166,16 +166,18 @@ class QCQP_ADMM:
             delta_u_target[i, i] = 0
             delta_v_source[i, i, :] = np.zeros(self.d)
             delta_v_target[i, i, :] = np.zeros(self.d) #################### !!!! replace for loop with assiging indices ####################
-
-        self.presi = np.sum(delta_u_source**2)
-        + np.sum(delta_u_target**2) 
-        + np.sum(delta_v_source**2)
-        + np.sum(delta_v_target**2)
         
         self.u_source = self.u_source + delta_u_source
         self.u_target = self.u_target + delta_u_target
         self.v_source = self.v_source + delta_v_source
         self.v_target = self.v_target + delta_v_target
+
+        # self.presi = delta_u_source + delta_u_target + delta_v_source + delta_v_target
+
+        self.presi = np.sum(delta_u_source**2)
+        + np.sum(delta_u_target**2) 
+        + np.sum(delta_v_source**2)
+        + np.sum(delta_v_target**2)
         
         # for i in range(self.m):
         #     self.u_source[i, i] = 0
@@ -274,7 +276,7 @@ class QCQP_ADMM:
             phi = -0.25 * q0.T @ q0
             phi_grad = -0.5 * q1.T @ q0 + 0.25 * q0.T @ Q @ q0
             phi_hess = -0.5 * q1.T @ q1 + q1.T @ Q @ q0 - 0.5 * q0.T @ Q @ Q @ q0
-            print(gradient_phi(v, q0, q1, np.eye(2 * d + 2), Q))
+            # print(gradient_phi(v, q0, q1, np.eye(2 * d + 2), Q))
 
         return phi, phi_grad, phi_hess
     
@@ -290,7 +292,7 @@ class QCQP_ADMM:
             phi_values.append(phi_value)
             # breakpoint()
             
-            print(f'Iteration {count}: v = {v}, phi(v) = {phi_value}, grad = {phi_grad}, hess = {phi_hess}')
+            # print(f'Iteration {count}: v = {v}, phi(v) = {phi_value}, grad = {phi_grad}, hess = {phi_hess}')
             
             delta_v = - phi_grad / phi_hess
 
@@ -357,11 +359,11 @@ class QCQP_ADMM:
                 if i == j:
                     continue
                 else:
-                    print("edge update: i = {}, j = {}".format(i, j))
-                    start_time = time.time()
+                    # print("edge update: i = {}, j = {}".format(i, j))
+                    # start_time = time.time()
                     xi_ij_star = self.local_QCQP_newton(i, j)
-                    end_time = time.time()
-                    print("Time elapsed: ", end_time - start_time)
+                    # end_time = time.time()
+                    # print("Time elapsed: ", end_time - start_time)
                     # breakpoint()
                     self.varphi_e_source[i, j] = xi_ij_star[0]
                     self.g_e_source[i, j] = xi_ij_star[1: self.d + 1]
@@ -373,7 +375,7 @@ class QCQP_ADMM:
 
     def update_vars(self, presi_threshold=1e-4, dresi_threshold=1e-4, max_iter = 300):
         k = 0
-        while (self.presi > presi_threshold or np.max(self.dresi) > dresi_threshold) and k < max_iter:
+        while (self.presi > presi_threshold or np.max(self.dresi) > dresi_threshold) and k <= max_iter:
         # for k in range(self.max_iter):
             print("############### Round {} started ############### ".format(k))
             start_time = time.time()

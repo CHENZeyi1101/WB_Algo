@@ -45,7 +45,7 @@ class Iterative_Scheme:
                 for measure_index in range(num_measures):
                     print(f"iter: {iter}")
                     print(f"Measure index: {measure_index}")
-                    breakpoint()
+                    # breakpoint()
                     if smoothing == 'KS':
                         _, sub_sample = self.OT_Map_Estimator.KS_estimate(t, measure_index, sample)
                     if smoothing == 'SM':
@@ -56,30 +56,32 @@ class Iterative_Scheme:
                 accepted[count] = sample
                 count += 1
                 print(f"count: {count}")
-                breakpoint()
+                # breakpoint()
         print("time: ", time.time() - start_time)
-        breakpoint()
+        # breakpoint()
         return accepted
     
     def W2_square(self, BX, BY):
         W2_square = self.OT_Map_Estimator.solve_OptCoupling_matrix(BX, BY)[1]
         return W2_square
     
-    def construct_mapping(self, iter, BX, lambda_lower = 0.1, lambda_upper = 10, radi = 100, ADMM = False):
+    def construct_mapping(self, iter, BX, lambda_lower = 0.01, lambda_upper = 1000, radi = 1000, ADMM = False):
         num_measures = self.Input_Measure_Sampler.num_measures
         num_samples = self.num_samples
+
         base_samples = self.barycenter.sample(num_samples, seed = 100 + iter)
-        print(base_samples)
-        # breakpoint()
+       
         # input_measure_samples = self.Input_Measure_Sampler.measure_sampling(num_samples)
-        input_measure_samples = self.Input_Measure_Sampler.measure_sampling(base_samples, smoothing = 'SM') # return a dictionary
+        input_measure_samples = self.Input_Measure_Sampler.measure_sampling(base_samples, smoothing = 'KS')
+         # return a dictionary
+
         V_value = 0
         for measure_index in range(num_measures):
             self.OT_Map_Estimator.label(iter, measure_index)
             BY = input_measure_samples[f"measure_{measure_index}"]
             print("BY:, ", BY)
             # breakpoint()
-            radi = np.max(norm(BY, axis = 1)) * 10
+            # radi = np.max(norm(BY, axis = 1)) * 10
             self.OT_Map_Estimator.solve_opt_tuples(BX, BY, lambda_lower, lambda_upper, radi, ADMM)
             print(self.OT_Map_Estimator.estimator_info[f'Iteration_{iter}_Measure_{measure_index}']['tilde_g_star'])
             # breakpoint()
@@ -87,7 +89,7 @@ class Iterative_Scheme:
 
         return V_value
 
-    def convergence(self, max_diff = 1e-3, max_iter = 10, smoothing = 'KS', ADMM = False):
+    def convergence(self, max_diff = 1e-3, max_iter = 20, smoothing = 'KS', ADMM = False):
         iter = 0
         V_list = [math.inf]
         difference = math.inf
@@ -101,66 +103,84 @@ class Iterative_Scheme:
             print(f"V_value: {V_value}")
             print(f"BX: {BX}")
             # store V_list as json file in folder "records"
-            with open(f"records/V_list_{smoothing}_{iter}.json", "w") as f:
+            with open(f"test_records_KS_ADMM/V_list_{smoothing}_{iter}.json", "w") as f:
                 json.dump(V_list, f)
+            # with open(f"test_records_KS_solver/V_list_{smoothing}_{iter}.json", "w") as f:
+            #     json.dump(V_list, f)
             # store BX as json file in folder "records"
-            with open(f"records/BX_{smoothing}_{iter}.json", "w") as f:
+            with open(f"test_records_KS_ADMM/BX_{smoothing}_{iter}.json", "w") as f:
                 json.dump(BX.tolist(), f)
-            breakpoint()
+            # with open(f"test_records_KS_solver/BX_{smoothing}_{iter}.json", "w") as f:
+            #     json.dump(BX.tolist(), f)
+            # breakpoint()
         print(V_list)
         # breakpoint()
         return BX
     
-dim = 5
-num_measures = 5
+dim = 2
+num_measures = 3
 barycenter = MixtureOfGaussians(dim)
-barycenter.random_components(4, seed = 42)
+barycenter.random_components(1, seed = 42)
 barycenter.set_truncation(radius = 100)
 print(barycenter.gaussians)
 # print(barycenter.sample(10))
-# breakpoint()
+breakpoint()
 
 OT_estimator = OT_Map_Estimator(dim)
-## Gaussian
-# input_measure_sampler = Measure(dim, num_measures, 'gaussian')
+# Gaussian
+# input_measure_sampler = Gaussian_Measure(dim, num_measures, 'gaussian')
 
-## Barycenter Generate
+# Barycenter Generate
 input_measure_sampler = Input_Measure_Sampling()
 input_measure_sampler.generate_cvx_functions(dim, num_x=100, num_measures=num_measures)
 input_measure_sampler.index_permutation()
 
 # print(input_measure_sampler.permutation)
 # breakpoint()
-num_samples = 500
+num_samples = 70
 # breakpoint()
 iter_scheme = Iterative_Scheme(barycenter, OT_estimator, input_measure_sampler, num_samples)
 
 start_time = time.time()
-bary_samples = barycenter.sample(num_samples, seed = 142)
-base_samples = barycenter.sample(num_samples, seed = 42 + 142)
+base_samples = barycenter.sample(num_samples, seed = 10)
+input_measure_samples = input_measure_sampler.measure_sampling(base_samples, smoothing = 'KS')
+# input_measure_samples = input_measure_sampler.measure_sampling(num_samples)
+
+V_bary_list = []
+bary_sample_list = []
+for t in range(20):
+    V_bary = 0
+    bary_samples = barycenter.sample(num_samples, seed = 20 + t)
+    for measure_index in range(num_measures):
+        BY = input_measure_samples[f"measure_{measure_index}"]
+        print("BY:, ", BY)
+        print("bary_samples: ", bary_samples)
+        # breakpoint()
+        V_bary += iter_scheme.W2_square(bary_samples, BY) / num_measures
+    V_bary_list.append(V_bary)
+    bary_sample_list.append(bary_samples.tolist())
+
 # breakpoint()
-input_measure_samples = input_measure_sampler.measure_sampling(base_samples, smoothing = 'SM')
-V_bary = 0
-for measure_index in range(num_measures):
-    BY = input_measure_samples[f"measure_{measure_index}"]
-    print("BY:, ", BY)
-    print("bary_samples: ", bary_samples)
-    # breakpoint()
-    V_bary += iter_scheme.W2_square(bary_samples, BY) / num_measures
 
 # store V_bary as json file
-with open("records/V_bary.json", "w") as f:
-    json.dump(V_bary, f)
+with open("test_records_KS_ADMM/V_bary.json", "w") as f:
+    json.dump(V_bary_list, f)
+# with open("test_records_KS_solver/V_bary.json", "w") as f:
+#     json.dump(V_bary_list, f)
 # store bary_samples as json file  
-with open("records/bary_samples.json", "w") as f:
+with open("test_records_KS_ADMM/bary_samples.json", "w") as f:
     json.dump(bary_samples.tolist(), f)
+# with open("test_records_KS_solver/bary_samples.json", "w") as f:
+#     json.dump(bary_samples.tolist(), f)
 print("saved")
-# breakpoint()
+breakpoint()
 
-approx_barycenter1 = iter_scheme.convergence(smoothing = 'SM', ADMM = True)
+approx_barycenter1 = iter_scheme.convergence(smoothing = 'SM', ADMM = False)
 
 # store both approx_barycenter as json file
-with open("approx_barycenter1.json", "w") as f:
+with open("test_records_KS_ADMM/approx_barycenter1.json", "w") as f:
+    json.dump(approx_barycenter1.tolist(), f)
+with open("test_records_KS_solver/approx_barycenter1.json", "w") as f:
     json.dump(approx_barycenter1.tolist(), f)
 # with open("approx_barycenter2.json", "w") as f:
 #     json.dump(approx_barycenter2.tolist(), f)

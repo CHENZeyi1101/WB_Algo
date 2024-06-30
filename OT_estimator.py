@@ -86,8 +86,8 @@ class OT_Map_Estimator:
                     if i != j:
                         constraint_expr = gp.QuadExpr()
                         inner_product = tilde_g[i]@(BX[j] - BX[i])
-                        norm_squared_tilde_BIg = (tilde_g[i] - tilde_g[j])@(tilde_g[i] - tilde_g[j])
-                        constraint_expr += tilde_varphi[i] - tilde_varphi[j] + inner_product + norm_squared_tilde_BIg / (2*(lambda_upper - lambda_lower))
+                        norm_squared_tilde_g = (tilde_g[i] - tilde_g[j])@(tilde_g[i] - tilde_g[j])
+                        constraint_expr += tilde_varphi[i] - tilde_varphi[j] + inner_product + norm_squared_tilde_g / (2*(lambda_upper - lambda_lower))
                         model.addConstr(constraint_expr <= 0, "constraint_{}_{}".format(i, j))
                     else:
                         pass
@@ -99,9 +99,12 @@ class OT_Map_Estimator:
                 tilde_varphi_star = np.array([tilde_varphi[i].x for i in range(m)])
             else:
                 print("No optimal solution found")
+                rho = 10 # penalty parameter
+                ADMM_solver = QCQP_ADMM(BX, BY, rho, lambda_lower, lambda_upper, pi_star, radi)
+                _, tilde_varphi_star, tilde_g_star = ADMM_solver.update_vars(presi_threshold=1e-4, dresi_threshold=1e-4)
 
         else: # Solve the optimization problem using ADMM
-            rho = 0.1 # penalty parameter
+            rho = 0.5 # penalty parameter
             ADMM_solver = QCQP_ADMM(BX, BY, rho, lambda_lower, lambda_upper, pi_star, radi)
             _, tilde_varphi_star, tilde_g_star = ADMM_solver.update_vars(presi_threshold=1e-4, dresi_threshold=1e-4)
 
@@ -124,9 +127,21 @@ class OT_Map_Estimator:
             'lambda_upper': lambda_upper
         }
 
+        store_estimator_info = {
+            'BX': BX.tolist(), 
+            'tilde_g_star': tilde_g_star.tolist(),
+            'tilde_varphi_star': tilde_varphi_star.tolist(),
+            'tilde_G': tilde_G.tolist(),
+            'Bv': Bv.tolist(),
+            'lambda_lower': lambda_lower,
+            'lambda_upper': lambda_upper
+        }
+
         # store the estimator_info as json file in folder "records"
-        with open(f"records/estimator_info/estimator_info_{self.iter}_{self.measure_index}.json", "w") as f:
-            json.dump(self.estimator_info[f'Iteration_{self.iter}_Measure_{self.measure_index}'], f)
+        with open(f"test_records_KS_ADMM/estimator_info/estimator_info_{self.iter}_{self.measure_index}.json", "w") as f:
+            json.dump(store_estimator_info, f)
+        # with open(f"test_records_KS_solver/estimator_info/estimator_info_{self.iter}_{self.measure_index}.json", "w") as f:
+        #     json.dump(store_estimator_info, f)
 
     def interp_QP(self, iter, measure_index, input_vector):
         local_esimator_info = self.estimator_info[f'Iteration_{iter}_Measure_{measure_index}']

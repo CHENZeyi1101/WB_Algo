@@ -242,10 +242,21 @@ class Input_Measure_Sampling:
 
             self.function_info.append(function_profile)
 
-        with open('function_info.pkl', 'wb') as file:
-            pickle.dump(self.function_info, file)
+            function_profile_store = function_profile.copy()
+            function_profile_store['X_interp'] = X_interp.tolist()
+            function_profile_store['G_interp'] = G_interp.tolist()
+            function_profile_store['V_interp'] = V_interp.tolist()
+            function_profile_store['tilde_BG'] = tilde_BG.tolist()
+            function_profile_store['Bv'] = Bv.tolist()
+            with open(f'test_records_KS_ADMM/function_info/function_info_{k}.json', 'w') as file:
+                json.dump(function_profile_store, file)
+            # with open(f'test_records_KS_solver/function_info/function_info_{k}.json', 'w') as file:
+            #     json.dump(function_profile_store, file)
+
+        # with open('function_info.pkl', 'wb') as file:
+        #     pickle.dump(self.function_info, file)
         
-        breakpoint()
+        # breakpoint()
 
     def index_permutation(self, seed = 42):
         ### Generate a random permutation of the indices of the convex functions
