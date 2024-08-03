@@ -32,7 +32,7 @@ class MixtureOfGaussians:
         dim = self.dim
         np.random.seed(seed)
         for _ in range(num_components):
-            mean = (np.random.rand(dim) - 0.5) * 10
+            mean = (np.random.rand(dim) - 0.5) * 100
             A = np.random.rand(dim, dim) - 0.5
             cov = (np.dot(A, A.T) + np.eye(dim)) * 100
             self.add_gaussian(mean, cov)
@@ -53,12 +53,16 @@ class MixtureOfGaussians:
                 count += 1
         return samples
     
-    def visualize(self, samples):
+    def visualize(self, samples, name = None):
         if self.dim != 2:
             print("Visualization only supported for 2D distributions")
         else:
+            plt.figure()
             plt.scatter(samples[:, 0], samples[:, 1], alpha=0.5)
-            plt.show()
+            if name:
+                plt.savefig(name)
+            else:
+                plt.show()
 
 
 # Example usage: 

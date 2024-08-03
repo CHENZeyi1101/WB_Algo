@@ -50,8 +50,11 @@ class QCQP_ADMM:
         np.fill_diagonal(block2[1:, 1:], -1)
         self.Q = 1/(2 * (self.lambda_upper - self.lambda_lower)) * np.block([[block1, block2], [block2, block1]])
 
+
         self.logger = logger
         self.log_file_path = log_file_path
+        self.eig_value, self.U = np.linalg.eig(self.Q)
+        # self.D = np.diag(self.eig_value)
 
     def objective(self):
         # define the objective function of the shape-constrained QCQP
@@ -109,7 +112,7 @@ class QCQP_ADMM:
                                 f"Optimal solution found for the local QCQP\n"
                                 f"Source index: {i}, Target index: {j}\n"
                                 f"Objective value: {model.objVal}\n"
-                                f"Optimal solution: {xi.x}\n"
+                                # f"Optimal solution: {xi.x}\n"
                                 )
             else: 
                 print("No optimal solution found")
@@ -124,24 +127,40 @@ class QCQP_ADMM:
     def phi_info(self, v, q0, q1):
         d = self.d
         Q = self.Q
-        eig_value, U = np.linalg.eig(Q)
-        D = np.diag(eig_value)
+        eig_value, U = self.eig_value, self.U
+        # D = np.diag(eig_value)
+        U_tsp_q0 = U.T @ q0
+        U_tsp_q1 = U.T @ q1
 
         if v != 0:
-            K = np.diag(1 / (np.ones(2 * d + 2) / v + eig_value))
-            K2 = np.diag(1 / (np.ones(2 * d + 2) / v + eig_value)**2)
-            K3 = np.diag(1 / (np.ones(2 * d + 2) / v + eig_value)**3)
-            D2 = np.diag(eig_value**2)
+            # K = np.diag(1 / (np.ones(2 * d + 2) / v + eig_value))
+            # K2 = np.diag(1 / (np.ones(2 * d + 2) / v + eig_value)**2)
+            # K3 = np.diag(1 / (np.ones(2 * d + 2) / v + eig_value)**3)
+            # D2 = np.diag(eig_value**2)
+            K_vec = 1 / (np.ones(2 * d + 2) / v + eig_value)
+            K2_vec = 1 / (np.ones(2 * d + 2) / v + eig_value)**2
+            K3_vec = 1 / (np.ones(2 * d + 2) / v + eig_value)**3
+            D2_vec = eig_value**2
+
+            q0_inv_q0 = (1/v) * np.dot(K_vec, U_tsp_q0 ** 2)
+            q0_inv_q1 = (1/v) * np.dot(K_vec, U_tsp_q0 * U_tsp_q1)
+            q1_inv_q1 = (1/v) * np.dot(K_vec, U_tsp_q1 ** 2)
+            q0_inv_Q_inv_q0 = (1/v**2) * np.dot(K2_vec * eig_value, U_tsp_q0 ** 2)
+            q0_inv_Q_inv_q1 = (1/v**2) * np.dot(K2_vec * eig_value, U_tsp_q0 * U_tsp_q1)
+            q1_inv_Q_inv_q1 = (1/v**2) * np.dot(K2_vec * eig_value, U_tsp_q1 ** 2)
+            q0_inv_Q_inv_Q_inv_q0 = (1/v**3) * np.dot(K3_vec * D2_vec, U_tsp_q0 ** 2)
+            q0_inv_Q_inv_Q_inv_q1 = (1/v**3) * np.dot(K3_vec * D2_vec, U_tsp_q0 * U_tsp_q1)
+            q1_inv_Q_inv_Q_inv_q1 = (1/v**3) * np.dot(K3_vec * D2_vec, U_tsp_q1 ** 2)
         
-            q0_inv_q0 = (1/v) * q0.T @ U @ K @ U.T @ q0
-            q0_inv_q1 = (1/v) * q0.T @ U @ K @ U.T @ q1
-            q1_inv_q1 = (1/v) * q1.T @ U @ K @ U.T @ q1
-            q0_inv_Q_inv_q0 = (1 / v**2) * q0.T @ U @ K2 @ D @ U.T @ q0
-            q0_inv_Q_inv_q1 = (1 / v**2) * q0.T @ U @ K2 @ D @ U.T @ q1
-            q1_inv_Q_inv_q1 = (1 / v**2) * q1.T @ U @ K2 @ D @ U.T @ q1
-            q0_inv_Q_inv_Q_inv_q0 = (1 / v**3) * q0.T @ U @ K3 @ D2 @ U.T @ q0
-            q0_inv_Q_inv_Q_inv_q1 = (1 / v**3) * q0.T @ U @ K3 @ D2 @ U.T @ q1
-            q1_inv_Q_inv_Q_inv_q1 = (1 / v**3) * q1.T @ U @ K3 @ D2 @ U.T @ q1
+            # q0_inv_q0 = (1/v) * q0.T @ U @ K @ U.T @ q0
+            # q0_inv_q1 = (1/v) * q0.T @ U @ K @ U.T @ q1
+            # q1_inv_q1 = (1/v) * q1.T @ U @ K @ U.T @ q1
+            # q0_inv_Q_inv_q0 = (1 / v**2) * q0.T @ U @ K2 @ D @ U.T @ q0
+            # q0_inv_Q_inv_q1 = (1 / v**2) * q0.T @ U @ K2 @ D @ U.T @ q1
+            # q1_inv_Q_inv_q1 = (1 / v**2) * q1.T @ U @ K2 @ D @ U.T @ q1
+            # q0_inv_Q_inv_Q_inv_q0 = (1 / v**3) * q0.T @ U @ K3 @ D2 @ U.T @ q0
+            # q0_inv_Q_inv_Q_inv_q1 = (1 / v**3) * q0.T @ U @ K3 @ D2 @ U.T @ q1
+            # q1_inv_Q_inv_Q_inv_q1 = (1 / v**3) * q1.T @ U @ K3 @ D2 @ U.T @ q1
 
             # phi = -0.25 * (q0_inv_q0 + 2 * v * q0_inv_q1 + v**2 * q1_inv_q1)
             # phi_grad = -0.5 * (q0_inv_q1 + v * q1_inv_q1) + 0.25 * (q0_inv_Q_inv_q0 + 2 * v * q0_inv_Q_inv_q1 + v**2 * q1_inv_Q_inv_q1)
@@ -171,19 +190,19 @@ class QCQP_ADMM:
                         f"Projected Newton started\n"
                         )
 
-        while newton_decrement_sq > 1e-6:
+        while newton_decrement_sq > 1e-10:
             phi_value, phi_grad, phi_hess = self.phi_info(v, q0, q1)
             newton_step = - phi_grad / phi_hess
             newton_decrement_sq = - phi_grad * newton_step
             # print(f"Newton decrement squared ins step_{count}: ", newton_decrement_sq)
 
-            if logger:
-                logger.info(f"\n"
-                            f"Step {count} started\n"
-                            f"Current value: {v}\n"
-                            f"Newton decrement squared: {newton_decrement_sq}\n"
-                            f"Newton step: {newton_step}\n"
-                            )
+            # if logger:
+            #     logger.info(f"\n"
+            #                 f"Step {count} started\n"
+            #                 f"Current value: {v}\n"
+            #                 f"Newton decrement squared: {newton_decrement_sq}\n"
+            #                 f"Newton step: {newton_step}\n"
+            #                 )
 
             # backtracking line search
             t = 1
@@ -201,17 +220,25 @@ class QCQP_ADMM:
                 else:
                     t *= beta
 
-            if logger:
-                logger.info(f"\n"
-                            f"Step {count} finished\n"
-                            f"Updated value: {v}\n"
-                            f"Objective value: {phi}\n"
-                            f"Step size: {t}\n"
-                            )
+            # if logger:
+            #     logger.info(f"\n"
+            #                 f"Step {count} finished\n"
+            #                 f"Updated value: {v}\n"
+            #                 f"Objective value: {phi}\n"
+            #                 f"Step size: {t}\n"
+            #                 )
             count += 1
 
-        v = max(v, 0)
-        phi, _, _ = self.phi_info(v, q0, q1)
+        if logger:
+            logger.info(f"\n"
+                        f"Projected Newton finished\n"
+                        # f"Optimal value: {v}\n"
+                        # f"Objective value: {phi}\n"
+                        f"Number of iterations: {count}\n"
+                        )
+        # print("Newton Count = ", count)
+        # v = max(v, 0)
+        # phi, _, _ = self.phi_info(v, q0, q1)
             
         return v, phi
 
@@ -246,24 +273,33 @@ class QCQP_ADMM:
                         f"Source index: {i}, Target index: {j}\n"
                         f"@@@@@@@@@@@@@@@@@@@@@@@@\n"
                         )
-        v0 = 10
-        v_star, _ = self.projected_newton(v0, q0, q1)
         
-        # retrieve optimal xi_star from v_star
-        if v_star != 0: 
-            xi_ij_star = - 0.5 * (1/v_star) * U @ np.diag(1 / (1/v_star + eig_value)) @ U.T @ (q0 + v_star * q1)
-        else:
-            xi_ij_star = - 0.5 * q0
+        # gradient of phi at v = 0
+        phi_grad_0 = 0.5 * q1.T @ q0 - 0.25 * q0.T @ Q @ q0
 
-        if logger:
-            logger.info(f"\n"
-                        f"@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                        f"Local QCQP Newton finished\n"
-                        f"Source index: {i}, Target index: {j}\n"
-                        f"Optimal v_value: {v_star}\n"
-                        f"Optimal xi_star: {xi_ij_star}\n"
-                        f"@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                        )
+        if phi_grad_0 > 0:
+            v_star = 0
+            xi_ij_star = - 0.5 * q0
+        else:
+            v0 = 10
+            v_star, _ = self.projected_newton(v0, q0, q1)
+            xi_ij_star = - 0.5 * (1/v_star) * U @ np.diag(1 / (1/v_star + eig_value)) @ U.T @ (q0 + v_star * q1)
+            
+        # retrieve optimal xi_star from v_star
+        # if v_star != 0: 
+        #     xi_ij_star = - 0.5 * (1/v_star) * U @ np.diag(1 / (1/v_star + eig_value)) @ U.T @ (q0 + v_star * q1)
+        # else:
+        #     xi_ij_star = - 0.5 * q0
+
+        # if logger:
+        #     logger.info(f"\n"
+        #                 f"@@@@@@@@@@@@@@@@@@@@@@@@\n"
+        #                 f"Local QCQP Newton finished\n"
+        #                 f"Source index: {i}, Target index: {j}\n"
+        #                 f"Optimal v_value: {v_star}\n"
+        #                 f"Optimal xi_star: {xi_ij_star}\n"
+        #                 f"@@@@@@@@@@@@@@@@@@@@@@@@\n"
+        #                 )
 
         return xi_ij_star
     
@@ -288,14 +324,14 @@ class QCQP_ADMM:
             else:
                 self.g[i] = self.radi * diff / np.linalg.norm(diff) - self.lambda_lower * self.X[i]
 
-        if logger:
-            logger.info(f"\n"
-                        f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-                        f"Node update finished\n"
-                        f"Updated varphi: {self.varphi}\n"
-                        f"Updated g: {self.g}\n"
-                        f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-                        )
+        # if logger:
+        #     logger.info(f"\n"
+        #                 f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        #                 f"Node update finished\n"
+        #                 f"Updated varphi: {self.varphi}\n"
+        #                 f"Updated g: {self.g}\n"
+        #                 f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        #                 )
         
         self.dresi = self.rho ** 2 * (np.sum((self.g - g_old) ** 2) + norm(self.varphi - varphi_old) ** 2)
             
@@ -323,16 +359,16 @@ class QCQP_ADMM:
         + np.sum(delta_v_source**2)
         + np.sum(delta_v_target**2)
 
-        if logger:
-            logger.info(f"\n"
-                        f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-                        f"Dual update finished\n"
-                        f"Updated u_source: {self.u_source}\n"
-                        f"Updated u_target: {self.u_target}\n"
-                        f"Updated v_source: {self.v_source}\n"
-                        f"Updated v_target: {self.v_target}\n"
-                        f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-                        )
+        # if logger:
+        #     logger.info(f"\n"
+        #                 f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        #                 f"Dual update finished\n"
+        #                 f"Updated u_source: {self.u_source}\n"
+        #                 f"Updated u_target: {self.u_target}\n"
+        #                 f"Updated v_source: {self.v_source}\n"
+        #                 f"Updated v_target: {self.v_target}\n"
+        #                 f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        #                 )
     
     def edge_update(self, newton = False, check = False):
         logger = self.logger
@@ -368,16 +404,16 @@ class QCQP_ADMM:
                     self.g_e_source[i, j] = xi_ij_star[1: self.d + 1]  
                     self.g_e_target[j, i] = xi_ij_star[self.d + 2:]
 
-        if logger:
-            logger.info(f"\n"
-                        f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-                        f"Edge update finished\n"
-                        f"Updated varphi_e_source: {self.varphi_e_source}\n"
-                        f"Updated varphi_e_target: {self.varphi_e_target}\n"
-                        f"Updated g_e_source: {self.g_e_source}\n"
-                        f"Updated g_e_target: {self.g_e_target}\n"
-                        f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-                        )
+        # if logger:
+        #     logger.info(f"\n"
+        #                 f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        #                 f"Edge update finished\n"
+        #                 f"Updated varphi_e_source: {self.varphi_e_source}\n"
+        #                 f"Updated varphi_e_target: {self.varphi_e_target}\n"
+        #                 f"Updated g_e_source: {self.g_e_source}\n"
+        #                 f"Updated g_e_target: {self.g_e_target}\n"
+        #                 f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        #                 )
 
     def update_vars(self, presi_threshold=1e-6, dresi_threshold=1e-6, newton = False):
         logger = self.logger
@@ -511,36 +547,38 @@ def solve_QCQP_OptTuple(BX, BY, lambda_lower, lambda_upper, radi, logger = None,
 
     return obj, optimal_tilde_BIg, optimal_tilde_varphi
         
-np.random.seed(42)
+# np.random.seed(42)
 
-# Generate random data with 100 samples and 100 features
-data = np.random.randn(2, 2)
+# # Generate random data with 100 samples and 100 features
+# data = np.random.randn(2, 2)
 
-mean = np.zeros(2)
-# Compute the covariance matrix
-covariance = np.cov(data, rowvar=False) + np.eye(2)
+# mean = np.zeros(2)
+# # Compute the covariance matrix
+# covariance = np.cov(data, rowvar=False) + np.eye(2)
 
-ADMM_dir = "ADMM_test_smalldim"
-os.makedirs(ADMM_dir, exist_ok=True)
-solver_logger, solver_log_file_path = configure_logging('solver', ADMM_dir, 'solver_test.log')
-ADMM_logger, ADMM_log_file_path = configure_logging('ADMM', ADMM_dir, 'ADMM_test_notnewton.log')
+# ADMM_dir = "ADMM_test_smalldim2"
+# os.makedirs(ADMM_dir, exist_ok=True)
+# solver_logger, solver_log_file_path = configure_logging('solver', ADMM_dir, 'solver_test.log')
+# ADMM_logger, ADMM_log_file_path = configure_logging('ADMM', ADMM_dir, 'ADMM_test_notnewton.log')
 
-X_sample = 10 * np.random.multivariate_normal(mean, covariance, 10)
-X_radi = 2 * math.ceil(np.max(np.linalg.norm(X_sample, axis=1)))
-Y_sample = 3 * 10 * np.random.multivariate_normal(mean, covariance, 10) + 5
-Y_radi = 3 * X_radi
-# breakpoint()
-pi_star, _ = solve_OptCoupling_matrix(X_sample, Y_sample)
-obj, tilde_BIg_star, tilde_varphi_star = solve_QCQP_OptTuple(X_sample, Y_sample, 0.1, 10, Y_radi, solver_logger, solver_log_file_path)
-print("Optimal tilde_BIg_star: ", tilde_BIg_star)
-print("Optimal tilde_varphi_star: ", tilde_varphi_star)
-print("Optimal objective value: ", obj)
-breakpoint()
-ADMM_solver = QCQP_ADMM(X_sample, Y_sample, 0.1, 0.1, 10, pi_star, Y_radi, ADMM_logger, ADMM_log_file_path)
-obj_ADMM, varphi_ADMM, g_ADMM = ADMM_solver.update_vars(newton = False)
-print("Optimal objective value: ", obj_ADMM)
-print("Optimal varphi_ADMM: ", varphi_ADMM)
-print("Optimal g_ADMM: ", g_ADMM)
+# X_sample = 10 * np.random.multivariate_normal(mean, covariance, 200)
+# X_radi = 2 * math.ceil(np.max(np.linalg.norm(X_sample, axis=1)))
+# Y_sample = 3 * 10 * np.random.multivariate_normal(mean, covariance, 200) + 5
+# Y_radi = 3 * X_radi
+# # breakpoint()
+# pi_star, _ = solve_OptCoupling_matrix(X_sample, Y_sample)
+# # obj, tilde_BIg_star, tilde_varphi_star = solve_QCQP_OptTuple(X_sample, Y_sample, 0.1, 10, Y_radi, solver_logger, solver_log_file_path)
+# # print("Optimal tilde_BIg_star: ", tilde_BIg_star)
+# # print("Optimal tilde_varphi_star: ", tilde_varphi_star)
+# # print("Optimal objective value: ", obj)
+# # breakpoint()
+# ADMM_solver = QCQP_ADMM(X_sample, Y_sample, 0.1, 0.1, 10, pi_star, Y_radi, logger = ADMM_logger, log_file_path = ADMM_log_file_path)
+# obj_ADMM, varphi_ADMM, g_ADMM = ADMM_solver.update_vars(newton = False, presi_threshold=0, dresi_threshold=0)
+# print("Optimal objective value: ", obj_ADMM)
+# print("Optimal varphi_ADMM: ", varphi_ADMM)
+# print("Optimal g_ADMM: ", g_ADMM)
+
+
 
 
 

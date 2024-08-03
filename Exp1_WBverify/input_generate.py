@@ -11,6 +11,28 @@ from scipy.spatial import KDTree
 from true_WB import *
 
 class convex_function:
+
+    # FUNCTIONALITY:
+    # 1. Generate convex functions and produce convex-interpolable tuples.
+    # 2. The potential functions associated with the OT map between the input measures and the barycenter 
+    # would be combinations of these functions after shape-constraint transformation.
+
+    # DESCRIPTION:
+    # All convex functions are defined as the supremum of a set of convex functions within a certain type   .
+    # Function types:
+    #       CPWA: Convex Piecewise Affine Function
+    #       quadratic_sq: Quadratic Function with the quadratic term further squared
+    #       quadratic_sqrt: Quadratic Function with the quadratic term square-rooted
+    # Inputs:
+    #       x_samples: the sample points for generating the convex function
+    #       num_functions: the number of convex functions to be generated within each function type
+    #       log: whether to log the information
+    #       logger: the logger object for logging the information
+    # Outputs:
+    #       sample_value: the function values of the sample points
+    #       sample_gradient: the function gradients of the sample points (i.e., the image of the mapping)
+    #       max_indices: the indices of the convex functions that achieve the maximum values at the sample points
+
     def __init__(self, x_samples, num_functions = 8, log = False, logger = None):
         self.x_samples = x_samples
         self.dim = x_samples.shape[1]
@@ -18,7 +40,9 @@ class convex_function:
         self.log = log
         self.logger = logger
 
-    def generate_CPWA(self, seed = 1000): # Affine CPW
+    def generate_CPWA(self): 
+        # f(x) = max_i {x^T coeff_i + intercept_i}
+        # For each function element, generate random coefficients and intercepts.
         num_functions = self.num_functions
         x_samples = self.x_samples
         dim = self.dim
@@ -27,7 +51,7 @@ class convex_function:
         if self.log:
             logger.info(f" ####### Function type: CPWA #######")
 
-        np.random.seed(seed)  # For reproducibility
+        # np.random.seed(seed)  # For reproducibility
         coeff_list = []
         intercept_list = []
         for _ in range(num_functions):
@@ -59,7 +83,9 @@ class convex_function:
         
         return sample_value, sample_gradient, max_indices
     
-    def generate_quadratic_sq(self, seed = 1000): 
+    def generate_quadratic_sq(self): 
+        # f(x) = max_i {x^T Q_i x + b_i^T x + c_i}
+        # For each function element, generate random quadratic matrices and linear terms.
         num_functions = self.num_functions
         x_samples = self.x_samples
         dim = self.dim
@@ -70,7 +96,7 @@ class convex_function:
 
         values = np.zeros((num_functions, x_samples.shape[0]))
         gradient = np.zeros((num_functions, x_samples.shape[0], dim))
-        np.random.seed(seed)
+        # np.random.seed(seed)
         for f in range(num_functions):
             A = np.random.rand(dim, dim)
             Q = np.dot(A, A.T) * 0.01
@@ -94,7 +120,9 @@ class convex_function:
 
         return sample_value, sample_gradient, max_indices
     
-    def generate_quadratic_sqrt(self, seed = 1000): 
+    def generate_quadratic_sqrt(self): 
+        # f(x) = max_i {10 * (sqrt(x^T Q_i x + 10) + b_i^T x + c_i)}
+        # For each function element, generate random quadratic matrices and linear terms.
         num_functions = self.num_functions
         x_samples = self.x_samples
         dim = self.dim
@@ -104,7 +132,7 @@ class convex_function:
 
         values = np.zeros((num_functions, x_samples.shape[0]))
         gradient = np.zeros((num_functions, x_samples.shape[0], dim))
-        np.random.seed(seed)
+        # np.random.seed(seed)
         for f in range(num_functions):
             A = np.random.rand(dim, dim) + np.eye(dim)
             Q = (np.dot(A, A.T)) * 100
@@ -128,9 +156,9 @@ class convex_function:
 
         return sample_value, sample_gradient, max_indices
             
-    def generate(self, seed = 1000, index = 0):
+    def generate(self, index = 0):
         # randomly generate a convex function   
-        np.random.seed(seed)
+        # np.random.seed(seed)
         func_type = np.random.choice(['quadratic_sq', 'quadratic_sqrt'])
         if func_type == 'CPWA':
             print("CPWA")
@@ -163,11 +191,21 @@ class convex_function:
             ax.set_zlabel('Y')
             ax.set_title('CPW with Interpolated Surface')   
             ax.legend()
-            plt.show()
             if name:
                 plt.savefig(name)
+            else:
+                plt.show()
 
 class KDTreeWithInfo:
+
+    # FUNCTIONALITY:
+    # Build a KDTree with additional information for the nearest neighbor search.
+
+    # DESCRIPTION:
+    # rebuild_tree(): rebuild the KDTree with the updated points
+    # add_point(): add a point with additional information to the KDTree
+    # query(): query the nearest neighbor of a given point and return the point and the additional information
+
     def __init__(self):
         self.points_with_info = []
 
@@ -184,7 +222,33 @@ class KDTreeWithInfo:
         return self.points_with_info[idx][0], self.points_with_info[idx][1]
 
 class cvx_based_OTmap:
+
+    # FUNCTIONALITY:
+    # 1. Generate the convex functions as the ingredients of the potential functions associated with the OT maps 
+    # between the input measures and the barycenter.
+    # 2. The generated functions should be shape-constrained (smooth and strongly convex) and infinitely differentiable
+    # to make the input measures would be admissible.
+
+    # DESCRIPTION:
+    #       shape_paras(): 
+    #             generate the shape parameters for the interpolation; 
+    #             note that the strong convexity & smoothness parameters should be between 0 and 2.
+    #       interp_paras(): 
+    #             generate the parameters for shape-constrained interpolations;
+    #             specifically, tilde_BG and Bv are characterized via transformation from the convex-interpolable tuples.
+    #       KS_estimate():
+    #             estimate the value and gradient via the KS estimator at a given point.
+    #       BA_estimate():
+    #             estimate the value and gradient via the BA estimator at a given point.
+    #       generate_samples():
+    #             generate samples from the mapped points resulting from either the KS or BA estimator.
+
     def __init__(self, x_samples, x_values, x_gradients, log = True):
+        # Inputs:
+        #       x_samples: the sample points for generating the convex functions (without shape constraints)
+        #       x_values: the function values of the sample points
+        #       x_gradients: the function gradients of the sample points
+
         self.x_samples = x_samples
         self.x_values = x_values
         self.x_gradients = x_gradients
@@ -192,9 +256,9 @@ class cvx_based_OTmap:
         self.log = log
         self.kdtree = KDTreeWithInfo()
 
-    def shape_paras(self, seed = 42, logger = None):
-        # the strong convexity & smoothness parameters should be between 0 and 2
-        np.random.seed(seed)
+    def shape_paras(self, logger = None):
+        # the shape parameters for the interpolation are generated randomly.
+        # np.random.seed(seed)
         l_para = np.random.rand(2) * 2 
         self.l_lower, self.l_upper = min(l_para), max(l_para)
         if self.log:
@@ -204,6 +268,11 @@ class cvx_based_OTmap:
         x_samples, x_values, x_gradients = self.x_samples, self.x_values, self.x_gradients
         l_lower, l_upper = self.l_lower, self.l_upper
         
+        # DESCRIPTION:
+        #       X_interp: the \CC_{l_lower, l_upper} interpolable points transformed from x_samples
+        #       G_interp: the \CC_{l_lower, l_upper} interpolable gradients transformed from x_gradients
+        #       varphi_interp: the \CC_{l_lower, l_upper} interpolable function values transformed from x_values
+        
         X_interp = x_samples + x_gradients / (l_upper - l_lower)
         G_interp = x_gradients + l_lower * X_interp
         varphi_interp = x_values
@@ -211,6 +280,7 @@ class cvx_based_OTmap:
         + np.diag(G_interp @ G_interp.T) / (2 * (l_upper - l_lower))
         - np.diag(G_interp @ X_interp.T) * l_lower / (l_upper - l_lower)
 
+        # tilde_BG, Bv: cf. the definitions in the paper regarding shape-constrained interpolations.
         tilde_BG = (G_interp - l_lower * X_interp).T
         Bv = varphi_interp 
         + np.diag(X_interp @ X_interp.T) * l_lower * l_upper / (2 * (l_upper - l_lower))
@@ -231,12 +301,25 @@ class cvx_based_OTmap:
 
         tilde_BG, Bv = self.tilde_BG, self.Bv
         
+        # Generate the Monte Carlo samples for the KS estimator (the number is preset as Tau)
         eta = np.random.multivariate_normal(np.zeros(dim), (1 / theta) * np.eye(dim), Tau)
         MC_samples = np.tile(x, (Tau, 1)) - eta
         MC_value_sum = 0
         MC_grad_list = np.zeros(dim)
 
         def interp_QP(x):
+            # FUNCTIONALITY:
+            # 1. Solve the QP problem for the KS estimator at a given point.
+            # 2. Shall be repeatedly called for each Monte Carlo sample.
+
+            # DESCRIPTION:
+            # Inputs:
+            #       x: the Monte Carlo sample
+            # Outputs:
+            #       eval_value: the evaluation value of the KS estimator
+            #       eval_gradient: the evaluation gradient of the KS estimator
+            #       optimal_weight: the optimal weight of the QP problem
+
             model = gp.Model("QP")
             if self.log:
                 model.Params.LogFile = log_file_path
@@ -295,6 +378,10 @@ class cvx_based_OTmap:
         tilde_BG, Bv = self.tilde_BG, self.Bv
 
         class inner_optimization:
+            # FUNCTIONALITY:
+            # 1. Solve the inner optimization problem for the BA estimator at a given point (solve for optimal weight).
+            # 2. The inner optimization problem is solved via the Newton method (details cf. Boyd's "Convex Optimmization").
+
             def __init__(self, x, tilde_BG, Bv, l_lower, l_upper, log = self.log):
                 self.x = x
                 self.tilde_BG = tilde_BG
@@ -307,17 +394,23 @@ class cvx_based_OTmap:
 
             def obj_value(self, w):
                 x, tilde_BG, Bv, l_lower, l_upper = self.x, self.tilde_BG, self.Bv, self.l_lower, self.l_upper
-                # m = tilde_BG.shape[1]
+                
+                # REMARK: We write the inner optimization problem as a minimization problem.
+                # obj = - (tilde_BG.T @ x + Bv) @ w + (tilde_BG @ w) @ (tilde_BG @ w) / (2 * (l_upper - l_lower)) - sum(log(w)) / theta
                 obj_value = (
                     - np.dot((tilde_BG.T @ x + Bv), w)
                     + np.linalg.norm(tilde_BG @ w) ** 2 / (2 * (l_upper - l_lower))
                     - (np.sum(np.log(w))) / theta
                 )
+
+                #### for SM_estimator ####
+                # m = tilde_BG.shape[1]
                 # obj_value = (
                 #     - np.dot((tilde_BG.T @ x + Bv), w)
                 #     + np.linalg.norm(tilde_BG @ w) ** 2 / (2 * (l_upper - l_lower))
                 #     + (np.log(m) + np.dot(w, np.log(w))) / theta
                 # )
+
                 return obj_value
             
             def obj_gradient(self, w):
@@ -336,6 +429,8 @@ class cvx_based_OTmap:
                 # )
 
                 ####### check gradient #######
+                ## One can always check the gradient formula using finite difference; 
+                ## h should be set between 1e-6 and 1e-8 for numerical stability.
                 # gradient_check = np.zeros_like(w)
                 # h = 1e-8
                 # for i in range(len(w)):
@@ -405,6 +500,11 @@ class cvx_based_OTmap:
                 alpha = 0.4
                 beta = 0.5
                 t = 1
+
+                # REMARK: There are two conditions in the stopping criterion for the backtracking line search.
+                # 1. The weight should be non-negative. We set the threshold as 1e-20 for stability issues.
+                # 2. The Armijo condition should be satisfied.
+
                 while np.any(w + t * newton_step <= 1e-20) or self.obj_value(w + t * newton_step) > self.obj_value(w) + alpha * t * gradient @ newton_step:
                     t *= beta
                 return t, self.obj_value(w + t * newton_step)
@@ -454,7 +554,7 @@ class cvx_based_OTmap:
 
         # w0 = np.ones(num_samples) / num_samples
 
-        # check whether the KDTree is empty for warm start;
+        # REMARK: check whether the KDTree is empty for warm start;
         # if so, use the uniform distribution as the initial weight
         # otherwise, use the nearest neighbor as the initial weight
         if self.kdtree.points_with_info == []:
@@ -468,6 +568,8 @@ class cvx_based_OTmap:
         self.kdtree.add_point(x, w_star)
 
         inner_obj_value = inner_optimizer.obj_value(w_star)
+
+        # cf. the formulae in the paper for the evaluated value and gradient of the BA estimator
         BA_eval_value = - inner_obj_value + norm(x)**2 * l_lower / 2
         BA_eval_gradient = tilde_BG @ w_star + l_lower * x
 
@@ -498,6 +600,28 @@ class cvx_based_OTmap:
         return samples_generated
     
 class input_sampler:
+
+    # FUNCTIONALITY:
+    # 1. Arrange and combine raw shape-constrained smooth convex functions to characterize the potential functions
+    # 2. Generate samples from the input measures.
+
+    # DESCRIPTION:
+    #       base_function_sample():
+    #             generate the sample points for the convex functions, and store the samples in the function_sample_collection dictionary
+    #       measure_sample():
+    #             generate the sample points for the input measures, and store the samples in the sample_collection dictionary
+    #       generate_samples():
+    #             generate the samples from the input measures (from the sample_collection dictionary) when the measure index is specified
+    #             the indices for sample collection are also specified as inputs.
+    #       dist_visualize():
+    #             visualize the input measures.
+
+    # Inputs:
+    #       raw_func_list: the list of raw convex functions (which are shape-constrained and infinitely differentiable);
+    #                      each element is an object of the class cvx_based_OTmap corresponding to a convex function
+    #       source_samples: the sample points for generating the input measures (from the true barycenter)
+    #                      it is assumed that the size of source samples should be sufficiently large.
+
     def __init__(self, raw_func_list, source_samples, log = True, func_logger = None, measure_logger = None, func_log_file_path = None):
         self.raw_func_list = raw_func_list
         self.log = log
@@ -600,55 +724,116 @@ class input_sampler:
         samples = self.sample_collection[measure_index][idx_start: idx_end, :]
         return samples
     
-    def dist_visualize(self, oneplot = False, save = False, savefile = None):
+    # def dist_visualize(self, oneplot = False, save = False, savefile = None):
+    #     raw_func_list = self.raw_func_list
+    #     num_measures = len(raw_func_list)
+    #     smoothing = self.smoothing
+
+    #     if not oneplot:
+    #         fig, axes = plt.subplots(1, num_measures, figsize=(18, 6), sharey=True)
+            
+    #         colors = ['red', 'blue', 'green', 'orange', 'purple', 'pink', 'olive', 'cyan']
+    #         markers = ['s', '^', 'D', 'v', 'h', '*', 'p', 'P']
+            
+    #         for i in range(num_measures):
+    #             source = self.source_samples[0: 500, :]
+    #             image = self.sample_collection[f"measure_{i}"][0: 500, :]
+    #             axes[i].scatter(source[:, 0], source[:, 1], color='black', marker='x', s=10, label="Source")
+    #             axes[i].scatter(image[:, 0], image[:, 1], color=colors[i % len(colors)], marker=markers[i % len(markers)], s=15, label=f"Measure_{i}")
+    #             axes[i].set_title(f"Measure_{i}")
+    #             axes[i].set_xlabel('X1')
+    #             if i == 0:
+    #                 axes[i].set_ylabel('X2')
+    #             axes[i].legend()
+            
+    #         fig.suptitle("Scatter Plot of Different Functions")
+    #         if save:
+    #             plt.savefig(f"{smoothing}_" + savefile)
+    #         else:
+    #             plt.show()
+
+    #     else:
+    #         fig, ax = plt.subplots(figsize=(18, 6))
+        
+    #         colors = ['red', 'blue', 'green', 'orange', 'purple', 'pink', 'olive', 'cyan']
+    #         markers = ['s', '^', 'D', 'v', 'h', '*', 'p', 'P']
+            
+    #         for i in range(num_measures):
+    #             source = self.source_samples[0: 500, :]
+    #             image = self.sample_collection[f"measure_{i}"][0: 500, :]
+    #             ax.scatter(source[:, 0], source[:, 1], color='black', marker='x', s=10, label=f"Source_{i}" if i == 0 else "")
+    #             ax.scatter(image[:, 0], image[:, 1], color=colors[i % len(colors)], marker=markers[i % len(markers)], s=15, label=f"Measure_{i}")
+            
+    #         ax.set_title("Scatter Plot of Different Functions")
+    #         ax.set_xlabel('X1')
+    #         ax.set_ylabel('X2')
+    #         ax.legend()
+            
+    #         if save:
+    #             plt.savefig(f"{smoothing}_" + savefile)
+    #         else:
+    #             plt.show()
+
+    
+    def dist_visualize(self, oneplot=False, save=False, savefile=None, bins = 100):
         raw_func_list = self.raw_func_list
         num_measures = len(raw_func_list)
         smoothing = self.smoothing
 
         if not oneplot:
-            fig, axes = plt.subplots(1, num_measures, figsize=(18, 6), sharey=True)
-            
-            colors = ['red', 'blue', 'green', 'orange', 'purple', 'pink', 'olive', 'cyan']
-            markers = ['s', '^', 'D', 'v', 'h', '*', 'p', 'P']
+            fig, axes = plt.subplots(1, num_measures, figsize=(18, 6), sharey=True, facecolor='black')
             
             for i in range(num_measures):
-                source = self.source_samples[0: 500, :]
-                image = self.sample_collection[f"measure_{i}"][0: 500, :]
-                axes[i].scatter(source[:, 0], source[:, 1], color='black', marker='x', s=10, label="Source")
-                axes[i].scatter(image[:, 0], image[:, 1], color=colors[i % len(colors)], marker=markers[i % len(markers)], s=15, label=f"Measure_{i}")
-                axes[i].set_title(f"Measure_{i}")
-                axes[i].set_xlabel('X1')
+                source = self.source_samples[0:10000, :]
+                image = self.sample_collection[f"measure_{i}"][0:10000, :]
+
+                # Plot heatmap for image
+                h_image = axes[i].hist2d(image[:, 0], image[:, 1], bins=bins, cmap='hot')
+
+                # Set axis background to black
+                axes[i].set_facecolor('black')
+                axes[i].set_title(f"Measure_{i}", color='white')
+                axes[i].set_xlabel('X1', color='white')
                 if i == 0:
-                    axes[i].set_ylabel('X2')
-                axes[i].legend()
-            
-            fig.suptitle("Scatter Plot of Different Functions")
+                    axes[i].set_ylabel('X2', color='white')
+
+                # Change tick parameters for better visibility
+                axes[i].tick_params(axis='x', colors='white')
+                axes[i].tick_params(axis='y', colors='white')
+                
+            fig.suptitle("2D Histogram (Heatmap) of Different Functions", color='white')
+            fig.colorbar(h_image[3], ax=axes, orientation='horizontal', label='Density', pad=0.1)  # Color bar for the density
+
             if save:
-                plt.savefig(f"{smoothing}_" + savefile)
+                plt.savefig(f"{smoothing}_" + savefile, facecolor=fig.get_facecolor(), edgecolor='none')
             else:
                 plt.show()
 
         else:
-            fig, ax = plt.subplots(figsize=(18, 6))
-        
-            colors = ['red', 'blue', 'green', 'orange', 'purple', 'pink', 'olive', 'cyan']
-            markers = ['s', '^', 'D', 'v', 'h', '*', 'p', 'P']
-            
+            fig, ax = plt.subplots(figsize=(18, 6), facecolor='black')
+
             for i in range(num_measures):
-                source = self.source_samples[0: 500, :]
-                image = self.sample_collection[f"measure_{i}"][0: 500, :]
-                ax.scatter(source[:, 0], source[:, 1], color='black', marker='x', s=10, label=f"Source_{i}" if i == 0 else "")
-                ax.scatter(image[:, 0], image[:, 1], color=colors[i % len(colors)], marker=markers[i % len(markers)], s=15, label=f"Measure_{i}")
+                source = self.source_samples[0:10000, :]
+                image = self.sample_collection[f"measure_{i}"][0:10000, :]
+                
+                # Plot heatmap for image
+                h_image = ax.hist2d(image[:, 0], image[:, 1], bins=bins, cmap='hot')
+
+            ax.set_facecolor('black')
+            ax.set_title("2D Histogram (Heatmap) of Different Functions", color='white')
+            ax.set_xlabel('X1', color='white')
+            ax.set_ylabel('X2', color='white')
             
-            ax.set_title("Scatter Plot of Different Functions")
-            ax.set_xlabel('X1')
-            ax.set_ylabel('X2')
-            ax.legend()
+            fig.colorbar(h_image[3], ax=ax, orientation='horizontal', label='Density', pad=0.1)  # Color bar for the density
             
             if save:
-                plt.savefig(f"{smoothing}_" + savefile)
+                plt.savefig(f"{smoothing}_" + savefile, facecolor=fig.get_facecolor(), edgecolor='none')
             else:
                 plt.show()
+
+
+    
+    
                 
 
 
