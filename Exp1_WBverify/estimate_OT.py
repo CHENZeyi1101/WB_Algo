@@ -8,6 +8,21 @@ from ADMM import QCQP_ADMM
 from input_generate import KDTreeWithInfo
 
 class OT_map_estimate:
+    # FUNCTIONALITY:
+    # 1. Estimate the OT map by using shape constrained least square regression
+    # 2. Smooth the OT map by using the KS or BA estimator
+
+    # DESCRIPTION:
+    #           solve_optimal_coupling: solve the optimal coupling between X and Y by solving a LP problem
+    #           solve_opt_tuples: solve the QCQP in search of the optimal tuples (tilde_g_star, tilde_varphi_star) for interpolation
+    #           KS_estimate: estimate the KS evaluation value and gradient at x
+    #           BA_estimate: estimate the BA evaluation value and gradient at x
+    #           generate_samples: generate samples from the estimated measure
+
+    # INPUT:
+    #           X: the source samples
+    #           Y: the target samples
+    
     def __init__(self, X, Y, log = True):
         self.X = X
         self.Y = Y

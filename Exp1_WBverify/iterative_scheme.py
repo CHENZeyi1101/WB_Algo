@@ -20,6 +20,8 @@ def read_data(pathname = None, filename = None):
     return data
 
 def W2(X, Y):
+    # FUNCTIONALITY:
+    # Compute the 2-Wasserstein distance between two empirical measures X and Y
     m, n = X.shape[0], Y.shape[0]
     model = gp.Model("LP_OptCoupling")
     pi = {}
@@ -40,6 +42,27 @@ def W2(X, Y):
     return W2_sq
 
 class iterative_scheme:
+    # FUNCTIONALITY:
+    # Implement the fixed-point iterative scheme for approximately computing the W2-barycenter
+
+    # DESCRIPTION:
+    #       iterative_sampling: Generate samples (with truncation) from G(\mu) at each iteration
+    #       G_sample_save: Record the generated samples from G(\mu) at each iteration
+    #       V_value_save: Compute and record the (empirical) Wasserstein distance between the generated samples and the barycenter samples
+    #       map_construct: Construct the OT map estimators from the current measure to each of the input measures
+    #       converge: Execute the iterative scheme until convergence
+
+    # INPUTS:
+    #       dim: dimension of the samples
+    #       num_measures: number of input measures
+    #       source_sampler: the underlying sampler of the barycenter
+    #       input_sample_collection: a dictionary of input samples for each measure
+    #       lambda_lower: lower bound of the regularization parameter
+    #       lambda_upper: upper bound of the regularization parameter
+    #       ADMM: whether to use ADMM for solving the optimization problem (0/1)
+    #       smoothing: the smoothing method for the optimization problem ('KS'/'BA')
+
+
     def __init__(self, dim, num_measures, source_sampler, input_sample_collection, lambda_lower = 0.01, lambda_upper = 1000, ADMM = False, smoothing = 'BA', log = True):
         self.dim = dim
         self.num_measures = num_measures
@@ -55,21 +78,30 @@ class iterative_scheme:
         self.log = log   
 
     def iterative_sampling(self, iter, num_samples = 100, truncate_radius = 1000, sample_logger = None, sample_logger_path = None):
+        # Inputs:
+        #       iter: current iteration number (to sample from \mu_{iter})
+        #       num_samples: number of samples to generate at each iteration
+        #       truncate_radius: truncation radius for the generated samples
+        # Outputs:
+        #       accepted: accepted samples generated from \mu_{iter}
+
         dim, num_measures = self.dim, self.num_measures
         smoothing = self.smoothing
         count = 0
         accepted = np.zeros((num_samples, dim))
 
-        np.random.seed(100 + iter)
+        # np.random.seed(100 + iter)
         while count < num_samples:
             if self.log:
                 sample_logger.info(f"\n"
                                 f"########## Sampling started at Iteration_{iter} for sample_{count} ##########\n"
                                 )
                 
+            # the initial sample is generated from the standard normal distribution
             sample = np.random.multivariate_normal(np.zeros(dim), np.eye(dim))
 
             for t in range(iter):
+                # to be executed only when iter > 0
                 sum_sample = np.zeros(dim)
                 for measure_index in range(num_measures):
                     OT_map_estimator = self.OT_collections[(t, measure_index)]
@@ -145,9 +177,9 @@ class iterative_scheme:
     def map_construct(self, accepted_samples, iter, measure_index, map_logger = None, map_logger_path = None):
 
         # REMARK: 
-        # Construct OT map estimators from the current measure to each of the input measures
+        # 1. Construct OT map estimators from the current measure to each of the input measures
         # based on the generated samples after iterations;
-        # Will be envoked each time after iterative_sampling() is called
+        # 2. Will be envoked each time after iterative_sampling() is called
         # when a new (empirical) G(\mu) measure is obtained.
 
         input_sample_collection = self.input_sample_collection
