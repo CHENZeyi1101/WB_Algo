@@ -3,9 +3,9 @@ import gurobipy as gp
 from gurobipy import GRB
 from scipy.linalg import sqrtm, pinv, norm, inv, solve
 
-from config_log import *
-from ADMM import QCQP_ADMM
-from input_generate import KDTreeWithInfo
+from .config_log import *
+from .ADMM import QCQP_ADMM
+from .input_generate import KDTreeWithInfo
 
 class OT_map_estimate:
     # FUNCTIONALITY:
@@ -364,13 +364,20 @@ class OT_map_estimate:
                     # Compute hessian inverse
                     A_inv = theta * np.diag(w ** 2)
                     mid_inverse = solve(np.eye(d) + tilde_BG @ A_inv @ tilde_BG.T / (l_upper - l_lower), np.eye(d))
-                    hessian_inv = A_inv - A_inv @ tilde_BG.T @ mid_inverse @ tilde_BG @ A_inv / (l_upper - l_lower)
+                    # hessian_inv = A_inv - A_inv @ tilde_BG.T @ mid_inverse @ tilde_BG @ A_inv / (l_upper - l_lower)
                     
-                    # Block elimination
-                    z1 = hessian_inv @ (-gradient)
-                    s = - np.ones(m) @ hessian_inv @ np.ones(m)
+                    # # Block elimination
+                    # z1 = hessian_inv @ (-gradient)
+                    # s = - np.ones(m) @ hessian_inv @ np.ones(m)
+                    # z2 = - np.sum(z1) / s
+                    # newton_step = z1 - hessian_inv @ np.ones(m) * z2
+
+                    z1 = A_inv @ (-gradient) - A_inv @ (tilde_BG.T @ (mid_inverse @ (tilde_BG @ (A_inv @ (-gradient))))) / (l_upper - l_lower)
+                    s = - np.ones(m) @ (A_inv @ np.ones(m) 
+                                        - (A_inv @ (tilde_BG.T @ (mid_inverse @ (tilde_BG @ (A_inv @ np.ones(m)))))) / (l_upper - l_lower))
                     z2 = - np.sum(z1) / s
-                    newton_step = z1 - hessian_inv @ np.ones(m) * z2
+                    newton_step = z1 - (A_inv @ np.ones(m) 
+                                        - (A_inv @ (tilde_BG.T @ (mid_inverse @ (tilde_BG @ (A_inv @ np.ones(m)))))) / (l_upper - l_lower)) * z2
 
                     # Define the squared newton decrement (for the stopping criterion; see Boyd's book)
                     newton_decrement_sq = - gradient @ newton_step

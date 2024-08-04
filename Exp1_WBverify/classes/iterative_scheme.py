@@ -2,11 +2,11 @@ import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
 
-from true_WB import *
-from input_generate import *
-from estimate_OT import *
-from ADMM import *
-from config_log import *
+from .true_WB import *
+from .input_generate import *
+from .estimate_OT import *
+from .ADMM import *
+from .config_log import *
 
 def save_data(data, pathname = None, filename = None):
     output_file = os.path.join(pathname, filename)

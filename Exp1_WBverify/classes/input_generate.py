@@ -8,7 +8,7 @@ from gurobipy import GRB
 from scipy.linalg import sqrtm, pinv, norm, inv, solve
 from scipy.spatial import KDTree
 
-from true_WB import *
+from .true_WB import *
 
 class convex_function:
 
@@ -162,13 +162,13 @@ class convex_function:
         func_type = np.random.choice(['quadratic_sq', 'quadratic_sqrt'])
         if func_type == 'CPWA':
             print("CPWA")
-            sample_value, sample_gradient, _ = self.generate_CPWA(seed)
+            sample_value, sample_gradient, _ = self.generate_CPWA()
         elif func_type == 'quadratic_sq':
             print("quadratic_sq")
-            sample_value, sample_gradient, _ = self.generate_quadratic_sq(seed)
+            sample_value, sample_gradient, _ = self.generate_quadratic_sq()
         elif func_type == 'quadratic_sqrt':
             print("quadratic_sqrt")
-            sample_value, sample_gradient, _ = self.generate_quadratic_sqrt(seed)
+            sample_value, sample_gradient, _ = self.generate_quadratic_sqrt()
         return sample_value, sample_gradient
     
     def plot_func(self, sample_values, max_indices, name = None):
@@ -462,14 +462,21 @@ class cvx_based_OTmap:
                     # A_inv = theta * np.diag(w)
                     A_inv = theta * np.diag(w ** 2)
                     mid_inverse = solve(np.eye(d) + tilde_BG @ A_inv @ tilde_BG.T / (l_upper - l_lower), np.eye(d))
-                    hessian_inv = A_inv - A_inv @ tilde_BG.T @ mid_inverse @ tilde_BG @ A_inv / (l_upper - l_lower)
+                    # hessian_inv = A_inv - A_inv @ tilde_BG.T @ mid_inverse @ tilde_BG @ A_inv / (l_upper - l_lower)
                     
                     # cf. Boyd's book, p. 674
                     # Block elimination for the KKT system
-                    z1 = hessian_inv @ (-gradient)
-                    s = - np.ones(m) @ hessian_inv @ np.ones(m)
+                    # z1 = hessian_inv @ (-gradient)
+                    # s = - np.ones(m) @ hessian_inv @ np.ones(m)
+                    # z2 = - np.sum(z1) / s
+                    # newton_step = z1 - hessian_inv @ np.ones(m) * z2
+
+                    z1 = A_inv @ (-gradient) - A_inv @ (tilde_BG.T @ (mid_inverse @ (tilde_BG @ (A_inv @ (-gradient))))) / (l_upper - l_lower)
+                    s = - np.ones(m) @ (A_inv @ np.ones(m) 
+                                        - (A_inv @ (tilde_BG.T @ (mid_inverse @ (tilde_BG @ (A_inv @ np.ones(m)))))) / (l_upper - l_lower))
                     z2 = - np.sum(z1) / s
-                    newton_step = z1 - hessian_inv @ np.ones(m) * z2
+                    newton_step = z1 - (A_inv @ np.ones(m) 
+                                        - (A_inv @ (tilde_BG.T @ (mid_inverse @ (tilde_BG @ (A_inv @ np.ones(m)))))) / (l_upper - l_lower)) * z2
 
                     # cf. Boyd's book, p. 527 (10.14)
                     newton_decrement_sq = - gradient @ newton_step
@@ -775,62 +782,7 @@ class input_sampler:
     #             plt.show()
 
     
-    def dist_visualize(self, oneplot=False, save=False, savefile=None, bins = 100):
-        raw_func_list = self.raw_func_list
-        num_measures = len(raw_func_list)
-        smoothing = self.smoothing
-
-        if not oneplot:
-            fig, axes = plt.subplots(1, num_measures, figsize=(18, 6), sharey=True, facecolor='black')
-            
-            for i in range(num_measures):
-                source = self.source_samples[0:10000, :]
-                image = self.sample_collection[f"measure_{i}"][0:10000, :]
-
-                # Plot heatmap for image
-                h_image = axes[i].hist2d(image[:, 0], image[:, 1], bins=bins, cmap='hot')
-
-                # Set axis background to black
-                axes[i].set_facecolor('black')
-                axes[i].set_title(f"Measure_{i}", color='white')
-                axes[i].set_xlabel('X1', color='white')
-                if i == 0:
-                    axes[i].set_ylabel('X2', color='white')
-
-                # Change tick parameters for better visibility
-                axes[i].tick_params(axis='x', colors='white')
-                axes[i].tick_params(axis='y', colors='white')
-                
-            fig.suptitle("2D Histogram (Heatmap) of Different Functions", color='white')
-            fig.colorbar(h_image[3], ax=axes, orientation='horizontal', label='Density', pad=0.1)  # Color bar for the density
-
-            if save:
-                plt.savefig(f"{smoothing}_" + savefile, facecolor=fig.get_facecolor(), edgecolor='none')
-            else:
-                plt.show()
-
-        else:
-            fig, ax = plt.subplots(figsize=(18, 6), facecolor='black')
-
-            for i in range(num_measures):
-                source = self.source_samples[0:10000, :]
-                image = self.sample_collection[f"measure_{i}"][0:10000, :]
-                
-                # Plot heatmap for image
-                h_image = ax.hist2d(image[:, 0], image[:, 1], bins=bins, cmap='hot')
-
-            ax.set_facecolor('black')
-            ax.set_title("2D Histogram (Heatmap) of Different Functions", color='white')
-            ax.set_xlabel('X1', color='white')
-            ax.set_ylabel('X2', color='white')
-            
-            fig.colorbar(h_image[3], ax=ax, orientation='horizontal', label='Density', pad=0.1)  # Color bar for the density
-            
-            if save:
-                plt.savefig(f"{smoothing}_" + savefile, facecolor=fig.get_facecolor(), edgecolor='none')
-            else:
-                plt.show()
-
+    
 
     
     

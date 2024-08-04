@@ -3,18 +3,24 @@ import gurobipy as gp
 from gurobipy import GRB
 import logging
 
-from true_WB import *
-from input_generate import *
-from estimate_OT import *
-from ADMM import QCQP_ADMM
-from iterative_scheme import *
-from config_log import *
+from ..classes.true_WB import *
+from ..classes.input_generate import *
+from ..classes.estimate_OT import *
+from ..classes.ADMM import *
+from ..classes.iterative_scheme import *
+from ..classes.config_log import *
+from ..classes.measure_visualize import *
 
-data_path = "input_samples"
+seed = 1000
+np.random.seed(seed)
+data_path = "input_samples_1"
 input_samples_dict = {k: np.array(v) for k, v in read_data(data_path, "input_samples_dict_BA.json").items()}
-# print(input_samples_dict["measure_0"].shape)
+source_samples = np.array(read_data(data_path, "source_samples_BA.json"))
+print(len(input_samples_dict))
+print(source_samples.shape)
 
-lambda_lower, lambda_upper = 0.01, 1000
+# breakpoint()
+lambda_lower, lambda_upper = 0.001, 1000
 smoothing = 'BA'
 ADMM = False
 

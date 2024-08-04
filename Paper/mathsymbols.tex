@@ -1,0 +1,762 @@
+\usepackage{amsfonts,mathrsfs,bbm, dsfont}
+
+
+% Symbols
+
+% Non-italic Latin lower case
+\newcommand{\Ta}{\mathrm{a}}
+\newcommand{\Tb}{\mathrm{b}}
+\newcommand{\Tc}{\mathrm{c}}
+\newcommand{\Td}{\mathrm{d}}
+\newcommand{\Te}{\mathrm{e}}
+\newcommand{\Tf}{\mathrm{f}}
+\newcommand{\Tg}{\mathrm{g}}
+\newcommand{\Th}{\mathrm{h}}
+\newcommand{\Ti}{\mathrm{i}}
+\newcommand{\Tj}{\mathrm{j}}
+\newcommand{\Tk}{\mathrm{k}}
+\newcommand{\Tl}{\mathrm{l}}
+\newcommand{\Tm}{\mathrm{m}}
+\newcommand{\Tn}{\mathrm{n}}
+\newcommand{\To}{\mathrm{o}}
+\newcommand{\Tp}{\mathrm{p}}
+\newcommand{\Tq}{\mathrm{q}}
+\newcommand{\Tr}{\mathrm{r}}
+\newcommand{\Ts}{\mathrm{s}}
+\newcommand{\Tt}{\mathrm{t}}
+\newcommand{\Tu}{\mathrm{u}}
+\newcommand{\Tv}{\mathrm{v}}
+\newcommand{\Tw}{\mathrm{w}}
+\newcommand{\Tx}{\mathrm{x}}
+\newcommand{\Ty}{\mathrm{y}}
+\newcommand{\Tz}{\mathrm{z}}
+
+% Non-italic Latin upper case
+\newcommand{\TA}{\mathrm{A}}
+\newcommand{\TB}{\mathrm{B}}
+\newcommand{\TC}{\mathrm{C}}
+\newcommand{\TD}{\mathrm{D}}
+\newcommand{\TE}{\mathrm{E}}
+\newcommand{\TF}{\mathrm{F}}
+\newcommand{\TG}{\mathrm{G}}
+\renewcommand{\TH}{\mathrm{H}}
+\newcommand{\TI}{\mathrm{I}}
+\newcommand{\TJ}{\mathrm{J}}
+\newcommand{\TK}{\mathrm{K}}
+\newcommand{\TL}{\mathrm{L}}
+\newcommand{\TM}{\mathrm{M}}
+\newcommand{\TN}{\mathrm{N}}
+\newcommand{\TO}{\mathrm{O}}
+\newcommand{\TP}{\mathrm{P}}
+\newcommand{\TQ}{\mathrm{Q}}
+\newcommand{\TR}{\mathrm{R}}
+\newcommand{\TS}{\mathrm{S}}
+\newcommand{\TT}{\mathrm{T}}
+\newcommand{\TU}{\mathrm{U}}
+\newcommand{\TV}{\mathrm{V}}
+\newcommand{\TW}{\mathrm{W}}
+\newcommand{\TX}{\mathrm{X}}
+\newcommand{\TY}{\mathrm{Y}}
+\newcommand{\TZ}{\mathrm{Z}}
+
+% 	Bold, non-italic Latin lower case
+\newcommand{\Ba}{\mathbf{a}}
+\newcommand{\Bb}{\mathbf{b}}
+\newcommand{\Bc}{\mathbf{c}}
+\newcommand{\Bd}{\mathbf{d}}
+\newcommand{\Be}{\mathbf{e}}
+\newcommand{\Bf}{\mathbf{f}}
+\newcommand{\Bg}{\mathbf{g}}
+\newcommand{\Bh}{\mathbf{h}}
+\newcommand{\Bi}{\mathbf{i}}
+\newcommand{\Bj}{\mathbf{j}}
+\newcommand{\Bk}{\mathbf{k}}
+\newcommand{\Bl}{\mathbf{l}}
+\newcommand{\Bm}{\mathbf{m}}
+\newcommand{\Bn}{\mathbf{n}}
+\newcommand{\Bo}{\mathbf{o}}
+\newcommand{\Bp}{\mathbf{p}}
+\newcommand{\Bq}{\mathbf{q}}
+\newcommand{\Br}{\mathbf{r}}
+\newcommand{\Bs}{\mathbf{s}}
+\newcommand{\Bt}{\mathbf{t}}
+\newcommand{\Bu}{\mathbf{u}}
+\newcommand{\Bv}{\mathbf{v}}
+\newcommand{\Bw}{\mathbf{w}}
+\newcommand{\Bx}{\mathbf{x}}
+\newcommand{\By}{\mathbf{y}}
+\newcommand{\Bz}{\mathbf{z}}
+
+% 	Bold, non-italic Latin upper case
+\newcommand{\BA}{\mathbf{A}}
+\newcommand{\BB}{\mathbf{B}}
+\newcommand{\BC}{\mathbf{C}}
+\newcommand{\BD}{\mathbf{D}}
+\newcommand{\BE}{\mathbf{E}}
+\newcommand{\BF}{\mathbf{F}}
+\newcommand{\BG}{\mathbf{G}}
+\newcommand{\BH}{\mathbf{H}}
+\newcommand{\BI}{\mathbf{I}}
+\newcommand{\BJ}{\mathbf{J}}
+\newcommand{\BK}{\mathbf{K}}
+\newcommand{\BL}{\mathbf{L}}
+\newcommand{\BM}{\mathbf{M}}
+\newcommand{\BN}{\mathbf{N}}
+\newcommand{\BO}{\mathbf{O}}
+\newcommand{\BP}{\mathbf{P}}
+\newcommand{\BQ}{\mathbf{Q}}
+\newcommand{\BR}{\mathbf{R}}
+\newcommand{\BS}{\mathbf{S}}
+\newcommand{\BT}{\mathbf{T}}
+\newcommand{\BU}{\mathbf{U}}
+\newcommand{\BV}{\mathbf{V}}
+\newcommand{\BW}{\mathbf{W}}
+\newcommand{\BX}{\mathbf{X}}
+\newcommand{\BY}{\mathbf{Y}}
+\newcommand{\BZ}{\mathbf{Z}}
+
+%	Bold, italic Latin lower case
+\newcommand{\BIa}{{\boldsymbol{a}}}
+\newcommand{\BIb}{{\boldsymbol{b}}}
+\newcommand{\BIc}{{\boldsymbol{c}}}
+\newcommand{\BId}{{\boldsymbol{d}}}
+\newcommand{\BIe}{{\boldsymbol{e}}}
+\newcommand{\BIf}{{\boldsymbol{f}}}
+\newcommand{\BIg}{{\boldsymbol{g}}}
+\newcommand{\BIh}{{\boldsymbol{h}}}
+\newcommand{\BIi}{{\boldsymbol{i}}}
+\newcommand{\BIj}{{\boldsymbol{j}}}
+\newcommand{\BIk}{{\boldsymbol{k}}}
+\newcommand{\BIl}{{\boldsymbol{l}}}
+\newcommand{\BIm}{{\boldsymbol{m}}}
+\newcommand{\BIn}{{\boldsymbol{n}}}
+\newcommand{\BIo}{{\boldsymbol{o}}}
+\newcommand{\BIp}{{\boldsymbol{p}}}
+\newcommand{\BIq}{{\boldsymbol{q}}}
+\newcommand{\BIr}{{\boldsymbol{r}}}
+\newcommand{\BIs}{{\boldsymbol{s}}}
+\newcommand{\BIt}{{\boldsymbol{t}}}
+\newcommand{\BIu}{{\boldsymbol{u}}}
+\newcommand{\BIv}{{\boldsymbol{v}}}
+\newcommand{\BIw}{{\boldsymbol{w}}}
+\newcommand{\BIx}{{\boldsymbol{x}}}
+\newcommand{\BIy}{{\boldsymbol{y}}}
+\newcommand{\BIz}{{\boldsymbol{z}}}
+
+%	Bold, italic Latin upper case
+\newcommand{\BIA}{{\boldsymbol{A}}}
+\newcommand{\BIB}{{\boldsymbol{B}}}
+\newcommand{\BIC}{{\boldsymbol{C}}}
+\newcommand{\BID}{{\boldsymbol{D}}}
+\newcommand{\BIE}{{\boldsymbol{E}}}
+\newcommand{\BIF}{{\boldsymbol{F}}}
+\newcommand{\BIG}{{\boldsymbol{G}}}
+\newcommand{\BIH}{{\boldsymbol{H}}}
+\newcommand{\BII}{{\boldsymbol{I}}}
+\newcommand{\BIJ}{{\boldsymbol{J}}}
+\newcommand{\BIK}{{\boldsymbol{K}}}
+\newcommand{\BIL}{{\boldsymbol{L}}}
+\newcommand{\BIM}{{\boldsymbol{M}}}
+\newcommand{\BIN}{{\boldsymbol{N}}}
+\newcommand{\BIO}{{\boldsymbol{O}}}
+\newcommand{\BIP}{{\boldsymbol{P}}}
+\newcommand{\BIQ}{{\boldsymbol{Q}}}
+\newcommand{\BIR}{{\boldsymbol{R}}}
+\newcommand{\BIS}{{\boldsymbol{S}}}
+\newcommand{\BIT}{{\boldsymbol{T}}}
+\newcommand{\BIU}{{\boldsymbol{U}}}
+\newcommand{\BIV}{{\boldsymbol{V}}}
+\newcommand{\BIW}{{\boldsymbol{W}}}
+\newcommand{\BIX}{{\boldsymbol{X}}}
+\newcommand{\BIY}{{\boldsymbol{Y}}}
+\newcommand{\BIZ}{{\boldsymbol{Z}}}
+
+%	Caligraphic, italic Latin upper case
+\newcommand{\CA}{\mathcal{A}}
+\newcommand{\CB}{\mathcal{B}}
+\newcommand{\CC}{\mathcal{C}}
+\newcommand{\CD}{\mathcal{D}}
+\newcommand{\CE}{\mathcal{E}}
+\newcommand{\CF}{\mathcal{F}}
+\newcommand{\CG}{\mathcal{G}}
+\newcommand{\CH}{\mathcal{H}}
+\newcommand{\CI}{\mathcal{I}}
+\newcommand{\CJ}{\mathcal{J}}
+\newcommand{\CK}{\mathcal{K}}
+\newcommand{\CL}{\mathcal{L}}
+\newcommand{\CM}{\mathcal{M}}
+\newcommand{\CN}{\mathcal{N}}
+\newcommand{\CO}{\mathcal{O}}
+\newcommand{\CP}{\mathcal{P}}
+\newcommand{\CQ}{\mathcal{Q}}
+\newcommand{\CR}{\mathcal{R}}
+\newcommand{\CS}{\mathcal{S}}
+\newcommand{\CT}{\mathcal{T}}
+\newcommand{\CU}{\mathcal{U}}
+\newcommand{\CV}{\mathcal{V}}
+\newcommand{\CW}{\mathcal{W}}
+\newcommand{\CX}{\mathcal{X}}
+\newcommand{\CY}{\mathcal{Y}}
+\newcommand{\CZ}{\mathcal{Z}}
+
+%	Caligraphic, italic Latin lower case
+\newcommand{\Ca}{\mathscr{a}}
+\newcommand{\Cb}{\mathscr{b}}
+\newcommand{\Cc}{\mathscr{c}}
+\newcommand{\Cd}{\mathscr{d}}
+\newcommand{\Ce}{\mathscr{e}}
+\newcommand{\Cf}{\mathscr{f}}
+\newcommand{\Cg}{\mathscr{g}}
+\newcommand{\Ch}{\mathscr{h}}
+\newcommand{\Ci}{\mathscr{i}}
+\newcommand{\Cj}{\mathscr{j}}
+\newcommand{\Ck}{\mathscr{k}}
+\newcommand{\Cl}{\mathscr{l}}
+\newcommand{\Cm}{\mathscr{m}}
+\newcommand{\Cn}{\mathscr{n}}
+\newcommand{\Co}{\mathscr{o}}
+\newcommand{\Cp}{\mathscr{p}}
+\newcommand{\Cq}{\mathscr{q}}
+\newcommand{\Cr}{\mathscr{r}}
+\newcommand{\Cs}{\mathscr{s}}
+\newcommand{\Ct}{\mathscr{t}}
+\newcommand{\Cu}{\mathscr{u}}
+\newcommand{\Cv}{\mathscr{v}}
+\newcommand{\Cw}{\mathscr{w}}
+\newcommand{\Cx}{\mathscr{x}}
+\newcommand{\Cy}{\mathscr{y}}
+\newcommand{\Cz}{\mathscr{z}}
+
+%	Bold, caligraphic, italic Latin upper case
+\newcommand{\BCA}{{\boldsymbol{\mathcal{A}}}}
+\newcommand{\BCB}{{\boldsymbol{\mathcal{B}}}}
+\newcommand{\BCC}{{\boldsymbol{\mathcal{C}}}}
+\newcommand{\BCD}{{\boldsymbol{\mathcal{D}}}}
+\newcommand{\BCE}{{\boldsymbol{\mathcal{E}}}}
+\newcommand{\BCF}{{\boldsymbol{\mathcal{F}}}}
+\newcommand{\BCG}{{\boldsymbol{\mathcal{G}}}}
+\newcommand{\BCH}{{\boldsymbol{\mathcal{H}}}}
+\newcommand{\BCI}{{\boldsymbol{\mathcal{I}}}}
+\newcommand{\BCJ}{{\boldsymbol{\mathcal{J}}}}
+\newcommand{\BCK}{{\boldsymbol{\mathcal{K}}}}
+\newcommand{\BCL}{{\boldsymbol{\mathcal{L}}}}
+\newcommand{\BCM}{{\boldsymbol{\mathcal{M}}}}
+\newcommand{\BCN}{{\boldsymbol{\mathcal{N}}}}
+\newcommand{\BCO}{{\boldsymbol{\mathcal{O}}}}
+\newcommand{\BCP}{{\boldsymbol{\mathcal{P}}}}
+\newcommand{\BCQ}{{\boldsymbol{\mathcal{Q}}}}
+\newcommand{\BCR}{{\boldsymbol{\mathcal{R}}}}
+\newcommand{\BCS}{{\boldsymbol{\mathcal{S}}}}
+\newcommand{\BCT}{{\boldsymbol{\mathcal{T}}}}
+\newcommand{\BCU}{{\boldsymbol{\mathcal{U}}}}
+\newcommand{\BCV}{{\boldsymbol{\mathcal{V}}}}
+\newcommand{\BCW}{{\boldsymbol{\mathcal{W}}}}
+\newcommand{\BCX}{{\boldsymbol{\mathcal{X}}}}
+\newcommand{\BCY}{{\boldsymbol{\mathcal{Y}}}}
+\newcommand{\BCZ}{{\boldsymbol{\mathcal{Z}}}}
+
+%	Bold, caligraphic, italic Latin lower case
+\newcommand{\BCa}{{\boldsymbol{\mathscr{a}}}}
+\newcommand{\BCb}{{\boldsymbol{\mathscr{b}}}}
+\newcommand{\BCc}{{\boldsymbol{\mathscr{c}}}}
+\newcommand{\BCd}{{\boldsymbol{\mathscr{d}}}}
+\newcommand{\BCe}{{\boldsymbol{\mathscr{e}}}}
+\newcommand{\BCf}{{\boldsymbol{\mathscr{f}}}}
+\newcommand{\BCg}{{\boldsymbol{\mathscr{g}}}}
+\newcommand{\BCh}{{\boldsymbol{\mathscr{h}}}}
+\newcommand{\BCi}{{\boldsymbol{\mathscr{i}}}}
+\newcommand{\BCj}{{\boldsymbol{\mathscr{j}}}}
+\newcommand{\BCk}{{\boldsymbol{\mathscr{k}}}}
+\newcommand{\BCl}{{\boldsymbol{\mathscr{l}}}}
+\newcommand{\BCm}{{\boldsymbol{\mathscr{m}}}}
+\newcommand{\BCn}{{\boldsymbol{\mathscr{n}}}}
+\newcommand{\BCo}{{\boldsymbol{\mathscr{o}}}}
+\newcommand{\BCp}{{\boldsymbol{\mathscr{p}}}}
+\newcommand{\BCq}{{\boldsymbol{\mathscr{q}}}}
+\newcommand{\BCr}{{\boldsymbol{\mathscr{r}}}}
+\newcommand{\BCs}{{\boldsymbol{\mathscr{s}}}}
+\newcommand{\BCt}{{\boldsymbol{\mathscr{t}}}}
+\newcommand{\BCu}{{\boldsymbol{\mathscr{u}}}}
+\newcommand{\BCv}{{\boldsymbol{\mathscr{v}}}}
+\newcommand{\BCw}{{\boldsymbol{\mathscr{w}}}}
+\newcommand{\BCx}{{\boldsymbol{\mathscr{x}}}}
+\newcommand{\BCy}{{\boldsymbol{\mathscr{y}}}}
+\newcommand{\BCz}{{\boldsymbol{\mathscr{z}}}}
+
+%	Fractur, non-italic Latin upper case
+\newcommand{\FA}{\mathfrak{A}}
+\newcommand{\FB}{\mathfrak{B}}
+\newcommand{\FC}{\mathfrak{C}}
+\newcommand{\FD}{\mathfrak{D}}
+\newcommand{\FE}{\mathfrak{E}}
+\newcommand{\FF}{\mathfrak{F}}
+\newcommand{\FG}{\mathfrak{G}}
+\newcommand{\FH}{\mathfrak{H}}
+\newcommand{\FI}{\mathfrak{I}}
+\newcommand{\FJ}{\mathfrak{J}}
+\newcommand{\FK}{\mathfrak{K}}
+\newcommand{\FL}{\mathfrak{L}}
+\newcommand{\FM}{\mathfrak{M}}
+\newcommand{\FN}{\mathfrak{N}}
+\newcommand{\FO}{\mathfrak{O}}
+\newcommand{\FP}{\mathfrak{P}}
+\newcommand{\FQ}{\mathfrak{Q}}
+\newcommand{\FR}{\mathfrak{R}}
+\newcommand{\FS}{\mathfrak{S}}
+\newcommand{\FT}{\mathfrak{T}}
+\newcommand{\FU}{\mathfrak{U}}
+\newcommand{\FV}{\mathfrak{V}}
+\newcommand{\FW}{\mathfrak{W}}
+\newcommand{\FX}{\mathfrak{X}}
+\newcommand{\FY}{\mathfrak{Y}}
+\newcommand{\FZ}{\mathfrak{Z}}
+
+%	Fractur, non-italic Latin lower case
+\newcommand{\Fa}{\mathfrak{a}}
+\newcommand{\Fb}{\mathfrak{b}}
+\newcommand{\Fc}{\mathfrak{c}}
+\newcommand{\Fd}{\mathfrak{d}}
+\newcommand{\Fe}{\mathfrak{e}}
+\newcommand{\Ff}{\mathfrak{f}}
+\newcommand{\Fg}{\mathfrak{g}}
+\newcommand{\Fh}{\mathfrak{h}}
+\newcommand{\Fi}{\mathfrak{i}}
+\newcommand{\Fj}{\mathfrak{j}}
+\newcommand{\Fk}{\mathfrak{k}}
+\newcommand{\Fl}{\mathfrak{l}}
+\newcommand{\Fm}{\mathfrak{m}}
+\newcommand{\Fn}{\mathfrak{n}}
+\newcommand{\Fo}{\mathfrak{o}}
+\newcommand{\Fp}{\mathfrak{p}}
+\newcommand{\Fq}{\mathfrak{q}}
+\newcommand{\Fr}{\mathfrak{r}}
+\newcommand{\Fs}{\mathfrak{s}}
+\newcommand{\Ft}{\mathfrak{t}}
+\newcommand{\Fu}{\mathfrak{u}}
+\newcommand{\Fv}{\mathfrak{v}}
+\newcommand{\Fw}{\mathfrak{w}}
+\newcommand{\Fx}{\mathfrak{x}}
+\newcommand{\Fy}{\mathfrak{y}}
+\newcommand{\Fz}{\mathfrak{z}}
+
+%	Bold, Fractur, non-italic Latin upper case
+%\newcommand{\BFA}{\boldsymbol{\mathfrak{A}}}
+%\newcommand{\BFB}{\boldsymbol{\mathfrak{B}}}
+%\newcommand{\BFC}{\boldsymbol{\mathfrak{C}}}
+%\newcommand{\BFD}{\boldsymbol{\mathfrak{D}}}
+%\newcommand{\BFE}{\boldsymbol{\mathfrak{E}}}
+%\newcommand{\BFF}{\boldsymbol{\mathfrak{F}}}
+%\newcommand{\BFG}{\boldsymbol{\mathfrak{G}}}
+%\newcommand{\BFH}{\boldsymbol{\mathfrak{H}}}
+%\newcommand{\BFI}{\boldsymbol{\mathfrak{I}}}
+%\newcommand{\BFJ}{\boldsymbol{\mathfrak{J}}}
+%\newcommand{\BFK}{\boldsymbol{\mathfrak{K}}}
+%\newcommand{\BFL}{\boldsymbol{\mathfrak{L}}}
+%\newcommand{\BFM}{\boldsymbol{\mathfrak{M}}}
+%\newcommand{\BFN}{\boldsymbol{\mathfrak{N}}}
+%\newcommand{\BFO}{\boldsymbol{\mathfrak{O}}}
+%\newcommand{\BFP}{\boldsymbol{\mathfrak{P}}}
+%\newcommand{\BFQ}{\boldsymbol{\mathfrak{Q}}}
+%\newcommand{\BFR}{\boldsymbol{\mathfrak{R}}}
+%\newcommand{\BFS}{\boldsymbol{\mathfrak{S}}}
+%\newcommand{\BFT}{\boldsymbol{\mathfrak{T}}}
+%\newcommand{\BFU}{\boldsymbol{\mathfrak{U}}}
+%\newcommand{\BFV}{\boldsymbol{\mathfrak{V}}}
+%\newcommand{\BFW}{\boldsymbol{\mathfrak{W}}}
+%\newcommand{\BFX}{\boldsymbol{\mathfrak{X}}}
+%\newcommand{\BFY}{\boldsymbol{\mathfrak{Y}}}
+%\newcommand{\BFZ}{\boldsymbol{\mathfrak{Z}}}
+
+%	Bold, Fractur, non-italic Latin lower case
+%\newcommand{\BFa}{\boldsymbol{\mathfrak{a}}}
+%\newcommand{\BFb}{\boldsymbol{\mathfrak{b}}}
+%\newcommand{\BFc}{\boldsymbol{\mathfrak{c}}}
+%\newcommand{\BFd}{\boldsymbol{\mathfrak{d}}}
+%\newcommand{\BFe}{\boldsymbol{\mathfrak{e}}}
+%\newcommand{\BFf}{\boldsymbol{\mathfrak{f}}}
+%\newcommand{\BFg}{\boldsymbol{\mathfrak{g}}}
+%\newcommand{\BFh}{\boldsymbol{\mathfrak{h}}}
+%\newcommand{\BFi}{\boldsymbol{\mathfrak{i}}}
+%\newcommand{\BFj}{\boldsymbol{\mathfrak{j}}}
+%\newcommand{\BFk}{\boldsymbol{\mathfrak{k}}}
+%\newcommand{\BFl}{\boldsymbol{\mathfrak{l}}}
+%\newcommand{\BFm}{\boldsymbol{\mathfrak{m}}}
+%\newcommand{\BFn}{\boldsymbol{\mathfrak{n}}}
+%\newcommand{\BFo}{\boldsymbol{\mathfrak{o}}}
+%\newcommand{\BFp}{\boldsymbol{\mathfrak{p}}}
+%\newcommand{\BFq}{\boldsymbol{\mathfrak{q}}}
+%\newcommand{\BFr}{\boldsymbol{\mathfrak{r}}}
+%\newcommand{\BFs}{\boldsymbol{\mathfrak{s}}}
+%\newcommand{\BFt}{\boldsymbol{\mathfrak{t}}}
+%\newcommand{\BFu}{\boldsymbol{\mathfrak{u}}}
+%\newcommand{\BFv}{\boldsymbol{\mathfrak{v}}}
+%\newcommand{\BFw}{\boldsymbol{\mathfrak{w}}}
+%\newcommand{\BFx}{\boldsymbol{\mathfrak{x}}}
+%\newcommand{\BFy}{\boldsymbol{\mathfrak{y}}}
+%\newcommand{\BFz}{\boldsymbol{\mathfrak{z}}}
+
+%	Boondox caligraphic, italic Latin upper case
+\newcommand{\DCA}{\mathscr{A}}
+\newcommand{\DCB}{\mathscr{B}}
+\newcommand{\DCC}{\mathscr{C}}
+\newcommand{\DCD}{\mathscr{D}}
+\newcommand{\DCE}{\mathscr{E}}
+\newcommand{\DCF}{\mathscr{F}}
+\newcommand{\DCG}{\mathscr{G}}
+\newcommand{\DCH}{\mathscr{H}}
+\newcommand{\DCI}{\mathscr{I}}
+\newcommand{\DCJ}{\mathscr{J}}
+\newcommand{\DCK}{\mathscr{K}}
+\newcommand{\DCL}{\mathscr{L}}
+\newcommand{\DCM}{\mathscr{M}}
+\newcommand{\DCN}{\mathscr{N}}
+\newcommand{\DCO}{\mathscr{O}}
+\newcommand{\DCP}{\mathscr{P}}
+\newcommand{\DCQ}{\mathscr{Q}}
+\newcommand{\DCR}{\mathscr{R}}
+\newcommand{\DCS}{\mathscr{S}}
+\newcommand{\DCT}{\mathscr{T}}
+\newcommand{\DCU}{\mathscr{U}}
+\newcommand{\DCV}{\mathscr{V}}
+\newcommand{\DCW}{\mathscr{W}}
+\newcommand{\DCX}{\mathscr{X}}
+\newcommand{\DCY}{\mathscr{Y}}
+\newcommand{\DCZ}{\mathscr{Z}}
+
+%	Bold, Boondox caligraphic, italic Latin upper case
+\newcommand{\BDCA}{{\boldsymbol{\mathscr{A}}}}
+\newcommand{\BDCB}{{\boldsymbol{\mathscr{B}}}}
+\newcommand{\BDCC}{{\boldsymbol{\mathscr{C}}}}
+\newcommand{\BDCD}{{\boldsymbol{\mathscr{D}}}}
+\newcommand{\BDCE}{{\boldsymbol{\mathscr{E}}}}
+\newcommand{\BDCF}{{\boldsymbol{\mathscr{F}}}}
+\newcommand{\BDCG}{{\boldsymbol{\mathscr{G}}}}
+\newcommand{\BDCH}{{\boldsymbol{\mathscr{H}}}}
+\newcommand{\BDCI}{{\boldsymbol{\mathscr{I}}}}
+\newcommand{\BDCJ}{{\boldsymbol{\mathscr{J}}}}
+\newcommand{\BDCK}{{\boldsymbol{\mathscr{K}}}}
+\newcommand{\BDCL}{{\boldsymbol{\mathscr{L}}}}
+\newcommand{\BDCM}{{\boldsymbol{\mathscr{M}}}}
+\newcommand{\BDCN}{{\boldsymbol{\mathscr{N}}}}
+\newcommand{\BDCO}{{\boldsymbol{\mathscr{O}}}}
+\newcommand{\BDCP}{{\boldsymbol{\mathscr{P}}}}
+\newcommand{\BDCQ}{{\boldsymbol{\mathscr{Q}}}}
+\newcommand{\BDCR}{{\boldsymbol{\mathscr{R}}}}
+\newcommand{\BDCS}{{\boldsymbol{\mathscr{S}}}}
+\newcommand{\BDCT}{{\boldsymbol{\mathscr{T}}}}
+\newcommand{\BDCU}{{\boldsymbol{\mathscr{U}}}}
+\newcommand{\BDCV}{{\boldsymbol{\mathscr{V}}}}
+\newcommand{\BDCW}{{\boldsymbol{\mathscr{W}}}}
+\newcommand{\BDCX}{{\boldsymbol{\mathscr{X}}}}
+\newcommand{\BDCY}{{\boldsymbol{\mathscr{Y}}}}
+\newcommand{\BDCZ}{{\boldsymbol{\mathscr{Z}}}}
+
+%	San-serif upper base
+\newcommand{\SFA}{\mathsf{A}}
+\newcommand{\SFB}{\mathsf{B}}
+\newcommand{\SFC}{\mathsf{C}}
+\newcommand{\SFD}{\mathsf{D}}
+\newcommand{\SFE}{\mathsf{E}}
+\newcommand{\SFF}{\mathsf{F}}
+\newcommand{\SFG}{\mathsf{G}}
+\newcommand{\SFH}{\mathsf{H}}
+\newcommand{\SFI}{\mathsf{I}}
+\newcommand{\SFJ}{\mathsf{J}}
+\newcommand{\SFK}{\mathsf{K}}
+\newcommand{\SFL}{\mathsf{L}}
+\newcommand{\SFM}{\mathsf{M}}
+\newcommand{\SFN}{\mathsf{N}}
+\newcommand{\SFO}{\mathsf{O}}
+\newcommand{\SFP}{\mathsf{P}}
+\newcommand{\SFQ}{\mathsf{Q}}
+\newcommand{\SFR}{\mathsf{R}}
+\newcommand{\SFS}{\mathsf{S}}
+\newcommand{\SFT}{\mathsf{T}}
+\newcommand{\SFU}{\mathsf{U}}
+\newcommand{\SFV}{\mathsf{V}}
+\newcommand{\SFW}{\mathsf{W}}
+\newcommand{\SFX}{\mathsf{X}}
+\newcommand{\SFY}{\mathsf{Y}}
+\newcommand{\SFZ}{\mathsf{Z}}
+
+%	San-serif lower base
+\newcommand{\SFa}{\mathsf{a}}
+\newcommand{\SFb}{\mathsf{b}}
+\newcommand{\SFc}{\mathsf{c}}
+\newcommand{\SFd}{\mathsf{d}}
+\newcommand{\SFe}{\mathsf{e}}
+\newcommand{\SFf}{\mathsf{f}}
+\newcommand{\SFg}{\mathsf{g}}
+\newcommand{\SFh}{\mathsf{h}}
+\newcommand{\SFi}{\mathsf{i}}
+\newcommand{\SFj}{\mathsf{j}}
+\newcommand{\SFk}{\mathsf{k}}
+\newcommand{\SFl}{\mathsf{l}}
+\newcommand{\SFm}{\mathsf{m}}
+\newcommand{\SFn}{\mathsf{n}}
+\newcommand{\SFo}{\mathsf{o}}
+\newcommand{\SFp}{\mathsf{p}}
+\newcommand{\SFq}{\mathsf{q}}
+\newcommand{\SFr}{\mathsf{r}}
+\newcommand{\SFs}{\mathsf{s}}
+\newcommand{\SFt}{\mathsf{t}}
+\newcommand{\SFu}{\mathsf{u}}
+\newcommand{\SFv}{\mathsf{v}}
+\newcommand{\SFw}{\mathsf{w}}
+\newcommand{\SFx}{\mathsf{x}}
+\newcommand{\SFy}{\mathsf{y}}
+\newcommand{\SFz}{\mathsf{z}}
+
+%	Monospace upper base
+\newcommand{\TTA}{\mathtt{A}}
+\newcommand{\TTB}{\mathtt{B}}
+\newcommand{\TTC}{\mathtt{C}}
+\newcommand{\TTD}{\mathtt{D}}
+\newcommand{\TTE}{\mathtt{E}}
+\newcommand{\TTF}{\mathtt{F}}
+\newcommand{\TTG}{\mathtt{G}}
+\newcommand{\TTH}{\mathtt{H}}
+\newcommand{\TTI}{\mathtt{I}}
+\newcommand{\TTJ}{\mathtt{J}}
+\newcommand{\TTK}{\mathtt{K}}
+\newcommand{\TTL}{\mathtt{L}}
+\newcommand{\TTM}{\mathtt{M}}
+\newcommand{\TTN}{\mathtt{N}}
+\newcommand{\TTO}{\mathtt{O}}
+\newcommand{\TTP}{\mathtt{P}}
+\newcommand{\TTQ}{\mathtt{Q}}
+\newcommand{\TTR}{\mathtt{R}}
+\newcommand{\TTS}{\mathtt{S}}
+\newcommand{\TTT}{\mathtt{T}}
+\newcommand{\TTU}{\mathtt{U}}
+\newcommand{\TTV}{\mathtt{V}}
+\newcommand{\TTW}{\mathtt{W}}
+\newcommand{\TTX}{\mathtt{X}}
+\newcommand{\TTY}{\mathtt{Y}}
+\newcommand{\TTZ}{\mathtt{Z}}
+
+%	San-serif lower base
+\newcommand{\TTa}{\mathtt{a}}
+\newcommand{\TTb}{\mathtt{b}}
+\newcommand{\TTc}{\mathtt{c}}
+\newcommand{\TTd}{\mathtt{d}}
+\newcommand{\TTe}{\mathtt{e}}
+\newcommand{\TTf}{\mathtt{f}}
+\newcommand{\TTg}{\mathtt{g}}
+\newcommand{\TTh}{\mathtt{h}}
+\newcommand{\TTi}{\mathtt{i}}
+\newcommand{\TTj}{\mathtt{j}}
+\newcommand{\TTk}{\mathtt{k}}
+\newcommand{\TTl}{\mathtt{l}}
+\newcommand{\TTm}{\mathtt{m}}
+\newcommand{\TTn}{\mathtt{n}}
+\newcommand{\TTo}{\mathtt{o}}
+\newcommand{\TTp}{\mathtt{p}}
+\newcommand{\TTq}{\mathtt{q}}
+\newcommand{\TTr}{\mathtt{r}}
+\newcommand{\TTs}{\mathtt{s}}
+\newcommand{\TTt}{\mathtt{t}}
+\newcommand{\TTu}{\mathtt{u}}
+\newcommand{\TTv}{\mathtt{v}}
+\newcommand{\TTw}{\mathtt{w}}
+\newcommand{\TTx}{\mathtt{x}}
+\newcommand{\TTy}{\mathtt{y}}
+\newcommand{\TTz}{\mathtt{z}}
+
+% Non-italic Greek upper case
+\newcommand{\Alpha}{\mathrm{A}}
+\newcommand{\TBeta}{\mathrm{B}} % Conflict with \Beta
+\newcommand{\Epsilon}{\mathrm{E}}
+\newcommand{\Zeta}{\mathrm{Z}}
+\newcommand{\Eta}{\mathrm{H}}
+\newcommand{\Iota}{\mathrm{I}}
+\newcommand{\Kappa}{\mathrm{K}}
+\newcommand{\Mu}{\mathrm{M}}
+\newcommand{\Nu}{\mathrm{N}}
+\newcommand{\Omikron}{\mathrm{O}}
+\newcommand{\Rho}{\mathrm{P}}
+\newcommand{\Tau}{\mathrm{T}}
+\newcommand{\Chi}{\mathrm{X}}
+
+% Italic Greek upper case
+\newcommand{\IAlpha}{A}
+\newcommand{\IBeta}{B}
+\newcommand{\IGamma}{\mathit{\Gamma}}
+\newcommand{\IDelta}{\mathit{\Delta}}
+\newcommand{\IEpsilon}{E}
+\newcommand{\IZeta}{Z}
+\newcommand{\IEta}{H}
+\newcommand{\ITheta}{\mathit{\Theta}}
+\newcommand{\IIota}{I}
+\newcommand{\IKappa}{K}
+\newcommand{\ILambda}{\mathit{\Lambda}}
+\newcommand{\IMu}{M}
+\newcommand{\INu}{N}
+\newcommand{\IXi}{\mathit{\Xi}}
+\newcommand{\IOmikron}{O}
+\newcommand{\IPi}{\mathit{\Pi}}
+\newcommand{\IRho}{P}
+\newcommand{\ISigma}{\mathit{\Sigma}}
+\newcommand{\ITau}{T}
+\newcommand{\IUpsilon}{\mathit{\Upsilon}}
+\newcommand{\IPhi}{\mathit{\Phi}}
+\newcommand{\IChi}{X}
+\newcommand{\IPsi}{\mathit{\Psi}}
+\newcommand{\IOmega}{\mathit{\Omega}}
+
+% Italic Greek lower case
+\newcommand{\omikron}{o}
+
+% Bold, non-italic Greek upper case
+\newcommand{\BAlpha}{{\boldsymbol{\Alpha}}}
+\newcommand{\BBeta}{{\boldsymbol{\Beta}}}
+\newcommand{\BGamma}{{\boldsymbol{\Gamma}}}
+\newcommand{\BDelta}{{\boldsymbol{\Delta}}}
+\newcommand{\BEpsilon}{{\boldsymbol{\Epsilon}}}
+\newcommand{\BZeta}{{\boldsymbol{\Zeta}}}
+\newcommand{\BEta}{{\boldsymbol{\Eta}}}
+\newcommand{\BTheta}{{\boldsymbol{\Theta}}}
+\newcommand{\BIota}{{\boldsymbol{\Iota}}}
+\newcommand{\BKappa}{{\boldsymbol{\Kappa}}}
+\newcommand{\BLambda}{{\boldsymbol{\Lambda}}}
+\newcommand{\BMu}{{\boldsymbol{\Mu}}}
+\newcommand{\BNu}{{\boldsymbol{\Nu}}}
+\newcommand{\BXi}{{\boldsymbol{\Xi}}}
+\newcommand{\BOmikron}{{\boldsymbol{\Omikron}}}
+\newcommand{\BPi}{{\boldsymbol{\Pi}}}
+\newcommand{\BRho}{{\boldsymbol{\Rho}}}
+\newcommand{\BSigma}{{\boldsymbol{\Sigma}}}
+\newcommand{\BTau}{{\boldsymbol{\Tau}}}
+\newcommand{\BUpsilon}{{\boldsymbol{\Upsilon}}}
+\newcommand{\BPhi}{{\boldsymbol{\Phi}}}
+\newcommand{\BChi}{{\boldsymbol{\Chi}}}
+\newcommand{\BPsi}{{\boldsymbol{\Psi}}}
+\newcommand{\BOmega}{{\boldsymbol{\Omega}}}
+
+% Bold, italic Greek upper case
+\newcommand{\BIAlpha}{{\boldsymbol{\IAlpha}}}
+\newcommand{\BIBeta}{{\boldsymbol{\IBeta}}}
+\newcommand{\BIGamma}{{\boldsymbol{\IGamma}}}
+\newcommand{\BIDelta}{{\boldsymbol{\IDelta}}}
+\newcommand{\BIEpsilon}{{\boldsymbol{\IEpsilon}}}
+\newcommand{\BIZeta}{{\boldsymbol{\IZeta}}}
+\newcommand{\BIEta}{{\boldsymbol{\IEta}}}
+\newcommand{\BITheta}{{\boldsymbol{\ITheta}}}
+\newcommand{\BIIota}{{\boldsymbol{\IIota}}}
+\newcommand{\BIKappa}{{\boldsymbol{\IKappa}}}
+\newcommand{\BILambda}{{\boldsymbol{\ILambda}}}
+\newcommand{\BIMu}{{\boldsymbol{\IMu}}}
+\newcommand{\BINu}{{\boldsymbol{\INu}}}
+\newcommand{\BIXi}{{\boldsymbol{\IXi}}}
+\newcommand{\BIOmikron}{{\boldsymbol{\IOmikron}}}
+\newcommand{\BIPi}{{\boldsymbol{\IPi}}}
+\newcommand{\BIRho}{{\boldsymbol{\IRho}}}
+\newcommand{\BISigma}{{\boldsymbol{\ISigma}}}
+\newcommand{\BITau}{{\boldsymbol{\ITau}}}
+\newcommand{\BIUpsilon}{{\boldsymbol{\IUpsilon}}}
+\newcommand{\BIPhi}{{\boldsymbol{\IPhi}}}
+\newcommand{\BIChi}{{\boldsymbol{\IChi}}}
+\newcommand{\BIPsi}{{\boldsymbol{\IPsi}}}
+\newcommand{\BIOmega}{{\boldsymbol{\IOmega}}}
+
+% Bold, italic Greek lower case
+\newcommand{\Balpha}{{\boldsymbol{\alpha}}}
+\newcommand{\Bbeta}{{\boldsymbol{\beta}}}
+\newcommand{\Bgamma}{{\boldsymbol{\gamma}}}
+\newcommand{\Bdelta}{{\boldsymbol{\delta}}}
+\newcommand{\Bepsilon}{{\boldsymbol{\epsilon}}}
+\newcommand{\Bzeta}{{\boldsymbol{\zeta}}}
+\newcommand{\Beta}{{\boldsymbol{\eta}}}
+\newcommand{\Btheta}{{\boldsymbol{\theta}}}
+\newcommand{\Biota}{{\boldsymbol{\iota}}}
+\newcommand{\Bkappa}{{\boldsymbol{\kappa}}}
+\newcommand{\Blambda}{{\boldsymbol{\lambda}}}
+\newcommand{\Bmu}{{\boldsymbol{\mu}}}
+\newcommand{\Bnu}{{\boldsymbol{\nu}}}
+\newcommand{\Bxi}{{\boldsymbol{\xi}}}
+\newcommand{\Bomikron}{{\boldsymbol{\omikron}}}
+\newcommand{\Bpi}{{\boldsymbol{\pi}}}
+\newcommand{\Brho}{{\boldsymbol{\rho}}}
+\newcommand{\Bsigma}{{\boldsymbol{\sigma}}}
+\newcommand{\Btau}{{\boldsymbol{\tau}}}
+\newcommand{\Bupsilon}{{\boldsymbol{\upsilon}}}
+\newcommand{\Bphi}{{\boldsymbol{\phi}}}
+\newcommand{\Bchi}{{\boldsymbol{\chi}}}
+\newcommand{\Bpsi}{{\boldsymbol{\psi}}}
+\newcommand{\Bomega}{{\boldsymbol{\omega}}}
+\newcommand{\Bvarepsilon}{{\boldsymbol{\varepsilon}}}
+\newcommand{\Bvarphi}{{\boldsymbol{\varphi}}}
+\newcommand{\Bvarpi}{{\boldsymbol{\varpi}}}
+\newcommand{\Bvarrho}{{\boldsymbol{\varrho}}}
+\newcommand{\Bvarsigma}{{\boldsymbol{\varsigma}}}
+\newcommand{\Bvartheta}{{\boldsymbol{\vartheta}}}
+
+% Commonly used symbols
+\newcommand{\NORMAL}{\CN} % Normal distribution
+\newcommand{\GP}{\mathcal{GP}} % Gaussian process
+\newcommand{\R}{\mathbb{R}} % real number
+\newcommand{\Q}{\mathbb{Q}} % rational number
+\newcommand{\Z}{\mathbb{Z}} % integer
+\newcommand{\N}{\mathbb{N}} % natural number
+\newcommand{\prob}{\mathbb{P}} 
+\newcommand{\F}{\mathscr{F}} 
+%\newcommand{\C}{\mathbb{C}} % complex number
+\newcommand{\vecone}{\mathbf{1}} % vector of ones
+\newcommand{\veczero}{\mathbf{0}} % vector of zeros
+\newcommand{\vecinfty}{\boldsymbol{\infty}} % vector of infinities
+\newcommand{\INDI}{\mathbbm{1}} % indicator function
+\newcommand{\TRANSP}{\mathsf{T}} % transpose
+\newcommand{\DIFF}{\Td} % differentiation sign
+\newcommand{\DIFFX}[1]{\,\Td{#1}} % differentiation with a measure or a variable name
+\newcommand{\DIFFM}[2]{\,{#1}({#2})}% % differentiation with a measure and a variable
+\newcommand{\lspan}{\mathrm{span}} % span
+\newcommand{\diag}{\mathrm{diag}} % diagonal
+\newcommand{\logistic}{\mathrm{logistic}} % logistic transformation
+\newcommand{\logit}{\mathrm{logit}} % logit transformation
+\newcommand{\PROB}{\mathbb{P}} % probability measure
+\newcommand{\PR}{\mathrm{Pr}} % probability
+\newcommand{\EXP}{\mathbb{E}} % expectation
+\newcommand{\VAR}{\mathrm{Var}} % variance
+\newcommand{\COV}{\mathrm{Cov}} % covariance
+\newcommand{\CORR}{\mathrm{Corr}} % correlation
+\newcommand{\MOD}{\mathrm{mod}} % modulo
+\newcommand{\realpart}{\mathrm{Re}} % real part
+\newcommand{\imagpart}{\mathrm{Im}} % imaginary part
+\newcommand{\clos}{\mathrm{cl}} % closure
+\newcommand{\inter}{\mathrm{int}} % interior
+\newcommand{\relint}{\mathrm{relint}} % relative interior
+\newcommand{\relbd}{\mathrm{relbd}} % relative boundary
+\newcommand{\support}{\mathrm{supp}} % support (of measure)
+\newcommand{\conv}{\mathrm{conv}} % convex hull
+\newcommand{\aff}{\mathrm{aff}} % affine hull
+\newcommand{\cone}{\mathrm{cone}} % conic hull
+\newcommand{\dual}{\mathrm{dual}} % dual cone
+\newcommand{\dom}{\mathrm{dom}} % domain
+\newcommand{\epigraph}{\mathrm{epi}} % epigraph
+\newcommand{\tr}{\mathrm{tr}} % trace
+\newcommand{\indicator}{\mathds{1}}
+\newcommand{\expectation}{\mathds{E}}
+\newcommand{\variance}{\mathrm{Var}}
+\newcommand{\lebesgue}{\mathscr{L}}
+\newcommand{\diameter}{\mathrm{diam}}
+\newcommand{\radius}{\mathrm{radius}}
+\newcommand{\boundary}{\mathrm{bd}}
+
+
+% Math operators
+%\DeclareMathOperator*{\argmin}{arg\,min} % argument that minimizes
+%\DeclareMathOperator*{\argmax}{arg\,max} % argument that maximizes
+\DeclareMathOperator*{\minimize}{\mathrm{minimize}} % minimize, for optimization problems
+\DeclareMathOperator*{\maximize}{\mathrm{maximize}} % maximize, for optimization problems
+
+
+% Theorems
+%\newtheorem{theorem}{Theorem}[subsection]
+%\newtheorem{corollary}[theorem]{Corollary}
+%\newtheorem{lemma}[theorem]{Lemma}
+%\newtheorem{definition}[theorem]{Definition}
+%\newtheorem{remark}[theorem]{Remark}
+%\newtheorem{proposition}[theorem]{Proposition}
+%\newtheorem{example}[theorem]{Example}
+%\newtheorem{assumption}[theorem]{Assumption}
+%\newtheorem{standingassumption}[theorem]{Standing Assumption}
