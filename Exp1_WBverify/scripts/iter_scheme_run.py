@@ -8,8 +8,11 @@ import os
 
 # Add the parent directory (Exp1_WBverify) to sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
+print("current_dir: ", current_dir)
 parent_dir = os.path.abspath(os.path.join(current_dir, '..'))
+print("parent_dir: ", parent_dir)
 sys.path.append(parent_dir)
+print(sys.path)
 
 from classes.true_WB import *
 from classes.input_generate import *
@@ -22,8 +25,8 @@ from classes.measure_visualize import *
 seed = 1000
 np.random.seed(seed)
 data_path = "input_samples"
-input_samples_dict = {k: np.array(v) for k, v in read_data(data_path, "input_samples_dict_BA.json").items()}
-source_samples = np.array(read_data(data_path, "source_samples_BA.json"))
+input_samples_dict = {k: np.array(v) for k, v in read_data(data_path, "input_samples_dict.json").items()}
+source_samples = np.array(read_data(data_path, "source_samples.json"))
 print(len(input_samples_dict))
 print(source_samples.shape)
 
