@@ -1,7 +1,7 @@
 import os
 import json
 
-from .config_log import *
+from config_log import *
 
 # Read and save data as json files
 def save_data(data, pathname = None, filename = None):

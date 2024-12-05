@@ -3,9 +3,9 @@ import gurobipy as gp
 from gurobipy import GRB
 from scipy.linalg import sqrtm, pinv, norm, inv, solve
 
-from .config_log import *
-from .ADMM import QCQP_ADMM
-from .input_generate import KDTreeWithInfo
+from config_log import *
+from ADMM import QCQP_ADMM
+from input_generate_plugin import KDTreeWithInfo
 
 class plugin_OT_map_estimate:
     # FUNCTIONALITY:

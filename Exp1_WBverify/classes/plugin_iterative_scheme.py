@@ -2,11 +2,11 @@ import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
 
-from .true_WB import *
-from .input_generate import *
-from .plugin_estimate_OT import *
-from .ADMM import *
-from .config_log import *
+from true_WB import *
+from input_generate_plugin import *
+from plugin_estimate_OT import *
+from ADMM import *
+from config_log import *
 
 def save_data(data, pathname = None, filename = None):
     output_file = os.path.join(pathname, filename)
@@ -18,6 +18,8 @@ def read_data(pathname = None, filename = None):
     with open(file_path, 'r') as f:
         data = json.load(f)
     return data
+
+
 
 def W2(X, Y):
     # FUNCTIONALITY:

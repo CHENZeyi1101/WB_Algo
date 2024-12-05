@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+# from tqdm import tqdm, tqdm_notebook
 
 class MixtureOfGaussians:
 ### For generating samples from a mixture of Gaussian distributions (underlying barycenter measure) ###
@@ -29,28 +30,36 @@ class MixtureOfGaussians:
         self.radius = radius
 
     def random_components(self, num_components, seed = 42):
+        self.num_components = num_components
+        self.seed = seed
         dim = self.dim
-        np.random.seed(seed)
+        rng_comp = np.random.RandomState(seed)
         for _ in range(num_components):
-            mean = (np.random.rand(dim) - 0.5) * 100
-            A = np.random.rand(dim, dim) - 0.5
+            mean = (rng_comp.rand(dim) - 0.5) * 100
+            A = rng_comp.rand(dim, dim) - 0.5
             cov = (np.dot(A, A.T) + np.eye(dim)) * 100
             self.add_gaussian(mean, cov)
-        weights = np.random.rand(num_components)
+        weights = rng_comp.rand(num_components)
         self.set_weights(weights)
 
-    def sample(self, n, seed = None):
+    def sample(self, n, seed = None, multiplication_factor = 1):
         dim = self.dim
         count = 0
         samples = np.zeros((n, dim))
+        rng_sample = np.random.RandomState(seed)
         np.random.seed(seed)
+
+        # with tqdm(total=n, desc="source sampling") as pbar:
         while count < n:
-            choice = np.random.choice(len(self.gaussians), p=self.weights)
+            choice = rng_sample.choice(len(self.gaussians), p=self.weights)
             mean, cov = self.gaussians[choice]
-            sample = np.random.multivariate_normal(mean, cov)
+            sample = rng_sample.multivariate_normal(mean, cov)
             if not self.truncation or np.linalg.norm(sample) <= self.radius:
                 samples[count] = sample
                 count += 1
+                # if (count + 1) % 1024 == 0:
+                #     pbar.update(1024)
+        samples *= multiplication_factor
         return samples
     
     def visualize(self, samples, name = None):

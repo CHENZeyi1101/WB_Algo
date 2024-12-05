@@ -12,7 +12,7 @@ parent_dir = os.path.abspath(os.path.join(current_dir, '..'))
 sys.path.append(parent_dir)
 
 from classes.true_WB import *
-from classes.input_generate import *
+from Exp1_WBverify.classes.input_generate_plugin import *
 from classes.plugin_estimate_OT import *
 from classes.ADMM import *
 from classes.plugin_iterative_scheme import *

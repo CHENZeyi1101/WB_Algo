@@ -12,7 +12,7 @@ import scipy as sp
 from scipy.linalg import sqrtm, pinv, norm, inv, solve
 import pdb
 
-from .config_log import *
+from config_log import *
 
 class QCQP_ADMM:
     def __init__(self, X, Y, rho, lambda_lower, lambda_upper, pi, radi, logger = None, log_file_path = None):
