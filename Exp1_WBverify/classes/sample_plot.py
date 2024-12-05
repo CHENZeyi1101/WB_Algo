@@ -5,14 +5,14 @@ import os
 from sklearn.decomposition import PCA
 
 # Function to generate kernel density estimation (KDE) data for contour plotting
-def get_kde_data(samples, bins=100):
+def get_kde_data(samples, bins=1000):
     x = samples[:, 0]
     y = samples[:, 1]
     # Perform KDE
     kde = gaussian_kde([x, y])
     # Generate a grid
-    x_min, x_max = x.min(), x.max()
-    y_min, y_max = y.min(), y.max()
+    x_min, x_max = x.min() - 10, x.max() + 10
+    y_min, y_max = y.min() - 10, y.max() + 10
     x_grid = np.linspace(x_min, x_max, bins)
     y_grid = np.linspace(y_min, y_max, bins)
     x_mesh, y_mesh = np.meshgrid(x_grid, y_grid)
@@ -20,7 +20,7 @@ def get_kde_data(samples, bins=100):
     kde_values = kde(np.vstack([x_mesh.ravel(), y_mesh.ravel()])).reshape(x_mesh.shape)
     return x_mesh, y_mesh, kde_values
 
-def plot_2d_input_measures(samples, measure_index, scatter = False, plot_dirc = None):
+def plot_2d_input_measure_kde(samples, measure_index, scatter = False, plot_dirc = None):
     # dimension of the samples
     dim = samples.shape[1]
     if dim > 2:
@@ -65,7 +65,7 @@ def plot_2d_input_measures(samples, measure_index, scatter = False, plot_dirc = 
     else:
         plt.show()
 
-def plot_2d_source_measures(samples, scatter = False, plot_dirc = None):
+def plot_2d_source_measures_kde(samples, scatter = False, plot_dirc = None):
     # dimension of the samples
     dim = samples.shape[1]
     if dim > 2:
@@ -78,8 +78,11 @@ def plot_2d_source_measures(samples, scatter = False, plot_dirc = None):
     fig.patch.set_facecolor('black')
     ax.set_facecolor('black')
     # Set axis limits to include all samples and contours
-    ax.set_xlim(samples[:, 0].min() - 30, samples[:, 0].max() + 30)
-    ax.set_ylim(samples[:, 1].min() - 30, samples[:, 1].max() + 30)
+    print(samples[:, 0].min(), samples[:, 0].max())
+    print(samples[:, 1].min(), samples[:, 1].max())
+
+    ax.set_xlim(samples[:, 0].min() - 100, samples[:, 0].max() + 100)
+    ax.set_ylim(samples[:, 1].min() - 100, samples[:, 1].max() + 100)
     # Get KDE data
     x_mesh, y_mesh, kde_values = get_kde_data(samples)
     # Plot KDE as a contour plot
@@ -109,7 +112,7 @@ def plot_2d_source_measures(samples, scatter = False, plot_dirc = None):
     else:
         plt.show()
 
-def plot_2d_compare_with_source(source_samples, accepted, iter, scatter = False, plot_dirc = None):
+def plot_2d_compare_with_source_kde(source_samples, accepted, iter, scatter = False, plot_dirc = None):
     dim = source_samples.shape[1]
     if dim > 2:
         # Perform PCA to reduce dimensions to 2D
@@ -171,6 +174,53 @@ def plot_2d_compare_with_source(source_samples, accepted, iter, scatter = False,
         # Save the figure
         plt.savefig(f"{plot_dirc}/iteration_{iter}_samples.png", facecolor='black')
         # Close the plot to free memory
+        plt.close()
+    else:
+        plt.show()
+
+
+def plot_2d_gmm_pdf(gmm_sampler, truncated_radius, grid_size=1000, plot_contour=False, save_path=None):
+    """
+    Plots the PDF of a Gaussian Mixture Model (GMM) over a 2D grid.
+    
+    Args:
+        gmm: GaussianMixture object.
+        grid_size: Number of grid points along each axis.
+        xlim: Tuple (xmin, xmax) defining the x-axis range.
+        ylim: Tuple (ymin, ymax) defining the y-axis range.
+        plot_contour: If True, plot contour lines. Otherwise, plot a heatmap.
+    """
+    # Create a grid of points over the specified range
+    xlim=(-truncated_radius, truncated_radius)
+    ylim=(-truncated_radius, truncated_radius)
+    x = np.linspace(xlim[0], xlim[1], grid_size)
+    y = np.linspace(ylim[0], ylim[1], grid_size)
+    x_mesh, y_mesh = np.meshgrid(x, y)
+    
+    # Evaluate the GMM PDF at each point on the grid
+    points = np.vstack([x_mesh.ravel(), y_mesh.ravel()]).T
+    pdf_values = gmm_sampler.pdf(points).reshape(grid_size, grid_size)
+
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(8, 6))
+    if plot_contour:
+        # Plot contour lines
+        contour = ax.contourf(x_mesh, y_mesh, pdf_values, levels=50, cmap='hot')
+        fig.colorbar(contour, ax=ax, label="PDF Value")
+    else:
+        # Plot heatmap
+        heatmap = ax.imshow(pdf_values, extent=(xlim[0], xlim[1], ylim[0], ylim[1]), 
+                            origin='lower', cmap='hot', aspect='auto')
+        fig.colorbar(heatmap, ax=ax, label="PDF Value")
+
+    # Set axis labels and title
+    ax.set_xlabel('X1')
+    ax.set_ylabel('X2')
+    ax.set_title('GMM PDF')
+
+    if save_path:
+        plt.savefig(save_path)
+        # set the name to be "GMM_pdf.png"
         plt.close()
     else:
         plt.show()

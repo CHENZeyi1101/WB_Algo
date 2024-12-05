@@ -2,23 +2,48 @@ import numpy as np
 from scipy.linalg import sqrtm, norm
 from tqdm import tqdm, tqdm_notebook
 
+from entropic_estimate_OT import *
+
 class entropic_input_sampler:
     r'''
     Python class for generating samples from input measures using entropic transportation maps
     '''
-    def __init__(self, dim, num_measures, tilde_K, source_sampler, n_k = 10, seed = 100):
+    def __init__(self, dim, num_measures, auxiliary_measure_sampler_set, source_sampler, n_k = 500, seed = 100):
         self.dim = dim
         self.num_measures = num_measures
-        self.tilde_K = tilde_K
+        self.tilde_K = len(auxiliary_measure_sampler_set)
         self.source_sampler = source_sampler
         self.n_k = n_k # we assume that $n_k$ across 1, \dots, \tilde{K} are the same
         # num_measures < 2 * tilde_K
         self.seed = seed
         self.rng_entropy = np.random.RandomState(seed)
 
-    def construct_surjective_mapping(self, seed = 100):
+    def generate_Y_and_g(self, epsilon):
+        r'''
+        We manually choose "fancy" auxiliary measures to generate the Y matrices and g vectors
+        The auxiliary measure sampler set is a list.
+        '''
+        auxiliary_measure_sampler_set = self.auxiliary_measure_sampler_set
+        source_sampler = self.source_sampler
+        n_k = self.n_k
+        X = source_sampler.sample(n_k)
+        Y_matrix_dict = {}
+        g_vector_dict = {}
+        for auxiliary_measure_sampler in auxiliary_measure_sampler_set:
+            Y = auxiliary_measure_sampler.sample(n_k)
+            entropic_OT_map_generator = entropic_OT_map_estimate(X, Y, log = False)
+            entropic_OT_map_generator.get_dual_potential(epsilon = epsilon)
+            Y_matrix_dict[auxiliary_measure_sampler] = Y
+            g_vector_dict[auxiliary_measure_sampler] = entropic_OT_map_generator.g_potential
+        self.Y_matrix_dict = Y_matrix_dict
+        self.g_vector_dict = g_vector_dict
+
+    def construct_surjective_mapping(self):
         r'''
         Construct a surjective mapping from 2 * tilde_K to num_measures
+        To ensure no cancellation of mappings, we will use the following strategy:
+        1. We map the maps with odd indices to the first half of the measures
+        2. We map the maps with even indices to the second half of the measures
         '''
         tilde_K = self.tilde_K
         num_measures = self.num_measures
@@ -27,18 +52,55 @@ class entropic_input_sampler:
         A = list(range(2 * tilde_K))
         B = list(range(num_measures))
 
+        A_odd = [a for a in A if a % 2 == 1]
+        A_even = [a for a in A if a % 2 == 0]
+
+        B_1 = [b for b in B if b < num_measures // 2]
+        B_2 = [b for b in B if b >= num_measures // 2]
+
         mapping = {a: None for a in A}
-        chosen_A = rng_entropy.choice(A, size=len(B), replace=False)
-        for b, a in zip(B, chosen_A):
+
+        # map the odd indices to the first half of the measures
+        chosen_A_odd = rng_entropy.choice(A_odd, size=len(B_1), replace=False)
+        for b, a in zip(B_1, chosen_A_odd):
             mapping[a] = b
-        remaining_A = [a for a in A if mapping[a] is None]
-        weights = rng_entropy.random(len(B))
-        weights[:len(B) // 2] += rng_entropy.random(len(B) // 2) * 2 
-        weights = weights / np.sum(weights)
-        for a in remaining_A:
-            mapping[a] = rng_entropy.choice(B, p = weights)
+        remaining_A_odd = [a for a in A_odd if mapping[a] is None]
+        for a in remaining_A_odd:
+            mapping[a] = rng_entropy.choice(B_1)
+
+        # map the even indices to the second half of the measures
+        chosen_A_even = rng_entropy.choice(A_even, size=len(B_2), replace=False)
+        for b, a in zip(B_2, chosen_A_even):
+            mapping[a] = b
+        remaining_A_even = [a for a in A_even if mapping[a] is None]
+        for a in remaining_A_even:
+            mapping[a] = rng_entropy.choice(B_2)
 
         self.surjective_mapping = mapping
+
+    # def construct_surjective_mapping(self):
+    #     r'''
+    #     Construct a surjective mapping from 2 * tilde_K to num_measures
+    #     '''
+    #     tilde_K = self.tilde_K
+    #     num_measures = self.num_measures
+    #     rng_entropy = self.rng_entropy
+
+    #     A = list(range(2 * tilde_K))
+    #     B = list(range(num_measures))
+
+    #     mapping = {a: None for a in A}
+    #     chosen_A = rng_entropy.choice(A, size=len(B), replace=False)
+    #     for b, a in zip(B, chosen_A):
+    #         mapping[a] = b
+    #     remaining_A = [a for a in A if mapping[a] is None]
+    #     weights = rng_entropy.random(len(B))
+    #     weights[:len(B) // 2] += rng_entropy.random(len(B) // 2) * 2 
+    #     weights = weights / np.sum(weights)
+    #     for a in remaining_A:
+    #         mapping[a] = rng_entropy.choice(B, p = weights)
+
+    #     self.surjective_mapping = mapping
 
     def generate_strong_convexity_param(self):
         r'''
@@ -51,46 +113,41 @@ class entropic_input_sampler:
         # make it a dictionary
         self.strong_convexity_param_dict = {i: strong_convexity_param[i] for i in range(tilde_K)}
 
-    def generate_g_vectors(self):
-        r'''
-        Generate the g vector for the entropic OT map estimator (for interpolation purpose)
-        '''
-        rng_entropy = self.rng_entropy
-        tilde_K = self.tilde_K
-        n_k = self.n_k
-        g_vector_dict = {}
-        for i in range(tilde_K):
-            g_vector = rng_entropy.uniform(low = -1, high = 1, size = n_k)
-            g_vector_dict[i] = g_vector
-        self.g_vector_dict = g_vector_dict
+    # def generate_g_vectors(self):
+    #     r'''
+    #     Generate the g vector for the entropic OT map estimator (for interpolation purpose)
+    #     '''
+    #     rng_entropy = self.rng_entropy
+    #     tilde_K = self.tilde_K
+    #     n_k = self.n_k
+    #     g_vector_dict = {}
+    #     for i in range(tilde_K):
+    #         g_vector = rng_entropy.uniform(low = -1, high = 1, size = n_k)
+    #         g_vector_dict[i] = g_vector
+    #     self.g_vector_dict = g_vector_dict
 
 
-    def generate_Y_matrices(self):
-        r'''
-        Generate the Y matrices for the entropic OT map estimator (for interpolation purpose)
-        '''
-        rng_entropy = self.rng_entropy
-        dim = self.dim
-        tilde_K = self.tilde_K
-        source_sampler = self.source_sampler
-        n_k = self.n_k
-        Y_matrix_dict = {}
-        for k in range(tilde_K):
-        # Initialize an empty matrix
-            matrix = np.zeros((n_k, dim))
-            for i in range(dim):
-                # Calculate the interval for the i-th column
-                lower_bound = -100 + 2 * 100 * i / dim
-                upper_bound = -100 + 2 * 100 * (i + 1) / dim
-                matrix[:, i] = rng_entropy.uniform(lower_bound, upper_bound, size=n_k)
-            Y_matrix_dict[k] = matrix
-        self.Y_matrix_dict = Y_matrix_dict
-        # for i in range(tilde_K):
-        #     # Generate random points on a unit sphere in d dimensions
-        #     Y_matrix = rng_entropy.uniform(low = -10, high = 10, size = (n_k, dim))
-        #     Y_matrix_dict[i] = Y_matrix
-        # self.Y_matrix_dict = Y_matrix_dict
-
+    # def generate_Y_matrices(self):
+    #     r'''
+    #     Generate the Y matrices for the entropic OT map estimator (for interpolation purpose)
+    #     '''
+    #     rng_entropy = self.rng_entropy
+    #     dim = self.dim
+    #     tilde_K = self.tilde_K
+    #     source_sampler = self.source_sampler
+    #     n_k = self.n_k
+    #     Y_matrix_dict = {}
+    #     for k in range(tilde_K):
+    #     # Initialize an empty matrix
+    #         matrix = np.zeros((n_k, dim))
+    #         for i in range(dim):
+    #             # Calculate the interval for the i-th column
+    #             lower_bound = -100 + 2 * 100 * i / dim
+    #             upper_bound = -100 + 2 * 100 * (i + 1) / dim
+    #             matrix[:, i] = rng_entropy.uniform(lower_bound, upper_bound, size=n_k)
+    #         Y_matrix_dict[k] = matrix
+    #     self.Y_matrix_dict = Y_matrix_dict
+        
     def compute_theta(self):
         r'''
         Compute the theta entropic parameter theta that satisfies 

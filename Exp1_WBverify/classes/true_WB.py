@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import multivariate_normal, invgamma
+
 # from tqdm import tqdm, tqdm_notebook
 
 class MixtureOfGaussians:
@@ -29,18 +31,92 @@ class MixtureOfGaussians:
         self.truncation = True
         self.radius = radius
 
-    def random_components(self, num_components, seed = 42):
+    def random_components(self, num_components, uniform_weights = True, seed = 42):
+        def construct_covariance_ellipsoid(alpha, beta, rng_comp):
+            """
+            Constructs a covariance matrix for a 2D ellipsoid where:
+            - Direction is determined by a random angle θ ~ U(0, 2π).
+            - Semi-axis lengths are determined by two independent inverse gamma distributions.
+
+            Args:
+                alpha (float): Shape parameter for the inverse gamma distribution.
+                beta (float): Scale parameter for the inverse gamma distribution.
+                seed (int, optional): Random seed for reproducibility.
+
+            Returns:
+                np.ndarray: 2x2 covariance matrix representing the ellipsoid.
+            """
+
+            # Sample angle θ from U(0, 2π)
+            theta = rng_comp.uniform(0, 2 * np.pi)
+            random_state_a = rng_comp.randint(0, 2**32 - 1)
+            random_state_b = rng_comp.randint(0, 2**32 - 1)
+
+            # Sample semi-axis lengths from the inverse gamma distribution
+            a = invgamma.rvs(alpha, scale=beta, random_state = random_state_a) * 200 # First semi-axis length
+            b = invgamma.rvs(alpha, scale=beta, random_state = random_state_b) * 200 # Second semi-axis length
+
+            # Construct the rotation matrix R
+            cos_theta = np.cos(theta)
+            sin_theta = np.sin(theta)
+            R = np.array([
+                [cos_theta, -sin_theta],
+                [sin_theta, cos_theta]
+            ])
+
+            # Construct the diagonal matrix D (semi-axis lengths)
+            D = np.diag([a, b])
+
+            # Construct the covariance matrix as R * D * R^T
+            covariance_matrix = R @ D @ R.T
+
+            return covariance_matrix
+        
         self.num_components = num_components
         self.seed = seed
         dim = self.dim
         rng_comp = np.random.RandomState(seed)
         for _ in range(num_components):
-            mean = (rng_comp.rand(dim) - 0.5) * 100
-            A = rng_comp.rand(dim, dim) - 0.5
-            cov = (np.dot(A, A.T) + np.eye(dim)) * 100
+            mean = (rng_comp.randn(dim)) * 30
+            cov = construct_covariance_ellipsoid(3, 4, rng_comp)
             self.add_gaussian(mean, cov)
-        weights = rng_comp.rand(num_components)
+        if uniform_weights:
+            weights = np.ones(num_components)
+        else:
+            weights = rng_comp.rand(num_components)
         self.set_weights(weights)
+
+
+    def pdf(self, x):
+        """
+        Compute the probability density function (PDF) of the mixture at point(s) x.
+        Args:
+            x: A single point (1D array) or multiple points (2D array of shape [N, dim])
+        Returns:
+            PDF value(s) at x.
+        """
+        if len(x.shape) == 1:
+            x = x[np.newaxis, :]  # Convert to 2D for consistency
+
+        # sum up the squares of all columns of x
+        x_sum_squared_columns = np.sum(x**2, axis = 1)
+        x_norms = np.sqrt(x_sum_squared_columns)
+
+        if self.truncation:
+            # convert x_norms into binary column vector by comparing row norms with radius
+            x_norms = x_norms[:, np.newaxis]
+            x_norms = np.where(x_norms > self.radius, 0, 1)
+            x_norms = x_norms.flatten()
+
+        pdf_values = np.zeros(x.shape[0])  # Initialize result array
+        for weight, (mean, cov) in zip(self.weights, self.gaussians):
+            pdf_values += weight * multivariate_normal.pdf(x, mean=mean, cov=cov)
+
+        pdf_values *= x_norms  # apply truncation
+        # rescale pdf values to sum to 1
+        pdf_values /= np.sum(pdf_values)
+
+        return pdf_values
 
     def sample(self, n, seed = None, multiplication_factor = 1):
         dim = self.dim
