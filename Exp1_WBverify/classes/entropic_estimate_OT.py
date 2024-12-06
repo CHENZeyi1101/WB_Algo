@@ -52,7 +52,7 @@ class entropic_OT_map_estimate:
         # c.f. https://ott-jax.readthedocs.io/en/latest/_modules/ott/problems/linear/potentials.html#EntropicPotentials
         self.epsilon = dual_potentials.f.keywords['epsilon']
 
-        print(f"epsilon: {self.epsilon}")
+        # print(f"epsilon: {self.epsilon}")
 
     def construct_entropic_OT_map(self, x):
         Y = self.Y

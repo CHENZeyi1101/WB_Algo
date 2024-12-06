@@ -11,6 +11,7 @@ class entropic_input_sampler:
     def __init__(self, dim, num_measures, auxiliary_measure_sampler_set, source_sampler, n_k = 500, seed = 100):
         self.dim = dim
         self.num_measures = num_measures
+        self.auxiliary_measure_sampler_set = auxiliary_measure_sampler_set
         self.tilde_K = len(auxiliary_measure_sampler_set)
         self.source_sampler = source_sampler
         self.n_k = n_k # we assume that $n_k$ across 1, \dots, \tilde{K} are the same
@@ -29,12 +30,14 @@ class entropic_input_sampler:
         X = source_sampler.sample(n_k)
         Y_matrix_dict = {}
         g_vector_dict = {}
-        for auxiliary_measure_sampler in auxiliary_measure_sampler_set:
+        for i in range(len(auxiliary_measure_sampler_set)):
+            auxiliary_measure_sampler = auxiliary_measure_sampler_set[i]
             Y = auxiliary_measure_sampler.sample(n_k)
             entropic_OT_map_generator = entropic_OT_map_estimate(X, Y, log = False)
             entropic_OT_map_generator.get_dual_potential(epsilon = epsilon)
-            Y_matrix_dict[auxiliary_measure_sampler] = Y
-            g_vector_dict[auxiliary_measure_sampler] = entropic_OT_map_generator.g_potential
+            Y_matrix_dict[i] = Y
+            g_vector_dict[i] = entropic_OT_map_generator.g_potential
+            print(f"Finished generating Y matrix and g vector for auxiliary measure {i}")
         self.Y_matrix_dict = Y_matrix_dict
         self.g_vector_dict = g_vector_dict
 

@@ -89,7 +89,7 @@ class entropic_iterative_scheme:
 
     '''
 
-    def __init__(self, dim, num_measures, source_sampler, entropic_sampler, log = False):
+    def __init__(self, dim, num_measures, source_sampler, entropic_sampler, source_sampler_seed, log = False):
         self.dim = dim
         self.num_measures = num_measures
         self.source_sampler = source_sampler
@@ -98,6 +98,8 @@ class entropic_iterative_scheme:
         self.G_samples = {}
         self.V_values = {}
         self.OT_collections = {}
+        self.W2_to_true_bary = {}
+        self.source_sampler_seed = source_sampler_seed
         self.log = log   
 
     def iterative_sample(self, iter, num_samples = 1000, truncate_radius = 100, sample_logger = None):
@@ -173,7 +175,32 @@ class entropic_iterative_scheme:
         os.makedirs(G_sample_dir, exist_ok=True)
         save_data(G_samples_json, G_sample_dir, f"G_samples.json")
 
-    def V_value_save(self, accepted_G_samples, bary_samples, iter, save_pathname = None):
+    def V_value_compute(self, bary_samples, input_sample_collection, iter = None, save_pathname = None):
+        # Compute the V-value (i.e.,\@ the weighted sum of the Wasserstein distances between the input measures and the generated samples)
+        # Notice that when iter = None, this returns the true V_value given by the ground-truth barycenter;
+        # Otherwise, it is the V_value returned by an approximated barycenter.
+        # The input_sample_collection is a dictionary with k keys, each key corresponds to the samples from the k-th input measure.
+
+        V_value = 0
+        for measure_index in range(self.num_measures):
+            input_samples = np.array(input_sample_collection[measure_index])
+            V_value += W2_pot(input_samples, bary_samples)
+        
+        # normalize the V_value by the number of input measures
+        V_value /= self.num_measures
+
+        if iter is None:
+            self.V_values["true_V_value"] = V_value
+        else:
+            self.V_values[f"iteration_{iter}"] = V_value
+        if save_pathname != None:
+            V_values_json = self.V_values
+            V_value_dir = f"{save_pathname}/V_values"
+            os.makedirs(V_value_dir, exist_ok=True)
+            save_data(V_values_json, V_value_dir, f"V_values.json")
+
+
+    def W2_to_true_bary_compute(self, accepted_G_samples, bary_samples, iter, save_pathname = None):
 
         # Compute the Wasserstein distance between the generated samples from the G-mapping
         # and the barycenter samples at each iteration;
@@ -181,13 +208,13 @@ class entropic_iterative_scheme:
         # "bary_samples" is the barycenter samples generated from the input measure at the current iteration;
 
         W2_sq = W2_pot(accepted_G_samples, bary_samples)
-        self.V_values[f"iteration_{iter}"] = W2_sq
-        V_values_json = self.V_values
-        V_value_dir = f"{save_pathname}/V_values"
-        os.makedirs(V_value_dir, exist_ok=True)
-        save_data(V_values_json, V_value_dir, f"V_values.json")
+        self.W2_to_true_bary[f"iteration_{iter}"] = W2_sq
+        W2_to_true_bary_json = self.W2_to_true_bary
+        W2_to_true_bary_dir = f"{save_pathname}/W2_to_true_bary"
+        os.makedirs(W2_to_true_bary_dir, exist_ok=True)
+        save_data(W2_to_true_bary_json, W2_to_true_bary_dir, f"W2_to_true_bary.json")
     
-    def map_construct(self, accepted_samples, iter, epsilon, map_logger = None):
+    def map_construct(self, accepted_samples, iter, epsilon, save_pathname, map_logger = None):
 
         # Construct OT map estimators from the current measure to each of the input measures
         # based on the generated samples after iterations;
@@ -198,22 +225,15 @@ class entropic_iterative_scheme:
         # entropic_sampler = self.entropic_sampler
         input_measures_samples = self.entropic_sampler.sample(num_samples) # this is a dictionary with k keys
 
-        print(type(input_measures_samples))
+        # print(type(input_measures_samples))
 
         BX = accepted_samples
+
+        # Compute the V_value
+        self.V_value_compute(BX, input_measures_samples, iter = iter, save_pathname=save_pathname)
+
         for measure_index in tqdm(range(num_measures)):
             BY = np.array(input_measures_samples[measure_index])
-
-
-            # input_sample_collection = self.input_sample_collection
-            
-            # idx_start, idx_end = iter * num_samples, (iter + 1) * num_samples
-            # BX = accepted_samples
-            # BY = input_sample_collection[f"measure_{measure_index}"][idx_start:idx_end, :]
-            
-            # log_dir = f"iterations/iteration_{iter}_logs"
-            # os.makedirs(log_dir, exist_ok=True)
-            # map_logger, map_logger_path = configure_logging(f'iter_{iter}_map_logger', log_dir, f'iter_{iter}_map_logger.log')
 
             if self.log:
                 map_logger.info(f"\n"
@@ -222,6 +242,8 @@ class entropic_iterative_scheme:
                                 f"OT map estimation for Measure_{measure_index}\n"
                                 f"################################################################\n"
                                 )
+                
+            # Store the V-value (i.e.,\@ the weighted sum of the Wasserstein distances between the input measures and the generated samples)
 
             OT_map_estimator = entropic_OT_map_estimate(BX, BY, log = True)
             OT_map_estimator.get_dual_potential(epsilon = epsilon)
@@ -240,9 +262,11 @@ class entropic_iterative_scheme:
         source_sampler = self.source_sampler
         entropic_sampler = self.entropic_sampler
         num_measures = self.num_measures
+        seed = self.source_sampler_seed
+
         result_dir = "results"
         os.makedirs(result_dir, exist_ok=True)
-        save_pathname = f"{result_dir}/entropic_measures_{num_measures}_samples_{num_samples}_dim_{dim}_epsilon_{epsilon}"
+        save_pathname = f"{result_dir}/entropic_measures_{num_measures}_seed_{seed}_samples_{num_samples}_dim_{dim}_epsilon_{epsilon}"
 
         # source_sampler information
         source_sampler_info = {
@@ -271,12 +295,15 @@ class entropic_iterative_scheme:
         os.makedirs(plot_dirc, exist_ok=True)
 
         source_measure_samples = source_sampler.sample(num_samples)
-        plot_2d_source_measures(source_measure_samples, plot_dirc = plot_dirc, scatter = scatter)
+        plot_2d_source_measures_kde(source_measure_samples, plot_dirc = plot_dirc, scatter = scatter)
 
         input_measure_samples = entropic_sampler.sample(num_samples)
         for measure_index in range(num_measures):
             measure_samples = np.array(input_measure_samples[measure_index])
-            plot_2d_input_measures(measure_samples, measure_index, plot_dirc = plot_dirc, scatter = scatter)
+            plot_2d_input_measure_kde(measure_samples, measure_index, scatter = scatter, plot_dirc = plot_dirc)
+
+        # Compute the true V-value
+        self.V_value_compute(source_measure_samples, input_measure_samples, iter = None, save_pathname = save_pathname)
         
         # start the iterations
         while iter < max_iter:
@@ -288,12 +315,12 @@ class entropic_iterative_scheme:
             accepted = self.iterative_sample(iter, num_samples, sample_logger = sample_logger)
             source_samples = source_sampler.sample(num_samples)
             self.G_sample_save(accepted, iter, save_pathname = save_pathname)   
-            self.V_value_save(accepted, source_samples, iter, save_pathname = save_pathname)
+            self.W2_to_true_bary_compute(accepted, source_samples, iter, save_pathname = save_pathname)
             if plot == 1:
-                plot_2d_compare_with_source(source_samples, accepted, iter, plot_dirc = plot_dirc, scatter = scatter)
+                plot_2d_compare_with_source_kde(source_samples, accepted, iter, plot_dirc = plot_dirc, scatter = scatter)
                 
             # construct maps
-            self.map_construct(accepted, iter, epsilon, map_logger=map_logger)
+            self.map_construct(accepted, iter, epsilon, save_pathname, map_logger=map_logger)
             iter += 1
 
 # from input_generate_entropy import *

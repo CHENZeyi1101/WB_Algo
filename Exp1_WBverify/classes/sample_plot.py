@@ -11,8 +11,8 @@ def get_kde_data(samples, bins=1000):
     # Perform KDE
     kde = gaussian_kde([x, y])
     # Generate a grid
-    x_min, x_max = x.min() - 10, x.max() + 10
-    y_min, y_max = y.min() - 10, y.max() + 10
+    x_min, x_max = x.min() - 20, x.max() + 20
+    y_min, y_max = y.min() - 20, y.max() + 20
     x_grid = np.linspace(x_min, x_max, bins)
     y_grid = np.linspace(y_min, y_max, bins)
     x_mesh, y_mesh = np.meshgrid(x_grid, y_grid)
@@ -41,8 +41,8 @@ def plot_2d_input_measure_kde(samples, measure_index, scatter = False, plot_dirc
         ax.scatter(samples[:, 0], samples[:, 1], s=5, color='green', alpha=0.5)
 
     # Set axis limits to include all samples and contours
-    ax.set_xlim(samples[:, 0].min(), samples[:, 0].max())
-    ax.set_ylim(samples[:, 1].min(), samples[:, 1].max())
+    ax.set_xlim(samples[:, 0].min() - 30, samples[:, 0].max() + 30)
+    ax.set_ylim(samples[:, 1].min() - 30, samples[:, 1].max() + 30)
 
     # Set title and labels
     ax.set_title('Samples', color='white')
@@ -81,8 +81,8 @@ def plot_2d_source_measures_kde(samples, scatter = False, plot_dirc = None):
     print(samples[:, 0].min(), samples[:, 0].max())
     print(samples[:, 1].min(), samples[:, 1].max())
 
-    ax.set_xlim(samples[:, 0].min() - 100, samples[:, 0].max() + 100)
-    ax.set_ylim(samples[:, 1].min() - 100, samples[:, 1].max() + 100)
+    ax.set_xlim(samples[:, 0].min() - 30, samples[:, 0].max() + 30)
+    ax.set_ylim(samples[:, 1].min() - 30, samples[:, 1].max() + 30)
     # Get KDE data
     x_mesh, y_mesh, kde_values = get_kde_data(samples)
     # Plot KDE as a contour plot
@@ -134,8 +134,8 @@ def plot_2d_compare_with_source_kde(source_samples, accepted, iter, scatter = Fa
     if scatter:
         ax2.scatter(source_samples[:, 0], source_samples[:, 1], s=5, color='green', alpha=0.5)  # Overlay scatter plot
     # Set axis limits to include all samples and contours
-    ax2.set_xlim(source_samples[:, 0].min(), source_samples[:, 0].max())
-    ax2.set_ylim(source_samples[:, 1].min(), source_samples[:, 1].max())
+    ax2.set_xlim(source_samples[:, 0].min() - 30, source_samples[:, 0].max() + 30)
+    ax2.set_ylim(source_samples[:, 1].min() - 30, source_samples[:, 1].max() + 30)
     ax2.set_title('Source_samples', color='white')
     ax2.set_xlabel('X1', color='white')
     ax2.set_ylabel('X2', color='white')
@@ -155,8 +155,8 @@ def plot_2d_compare_with_source_kde(source_samples, accepted, iter, scatter = Fa
     if scatter:
         ax1.scatter(accepted[:, 0], accepted[:, 1], s=5, color='green', alpha=0.5)  # Overlay scatter plot
     # Set axis limits to include all samples and contours
-    ax1.set_xlim(accepted[:, 0].min(), accepted[:, 0].max())
-    ax1.set_ylim(accepted[:, 1].min(), accepted[:, 1].max())
+    ax1.set_xlim(accepted[:, 0].min() - 30, accepted[:, 0].max() + 30)
+    ax1.set_ylim(accepted[:, 1].min() - 30, accepted[:, 1].max() + 30)
     ax1.set_title('G_samples', color='white')  # White text for contrast on black background
     ax1.set_xlabel('X1', color='white')
     ax1.set_ylabel('X2', color='white')
