@@ -7,10 +7,10 @@ import ot.plot
 from true_WB import *
 # from input_generate_plugin import *
 from entropic_estimate_OT import *
-import json
 
 from config_log import *
 from sample_plot import *
+import json
 
 from tqdm import tqdm, tqdm_notebook
 
