@@ -5,7 +5,7 @@ import ot
 import ot.plot
 
 from true_WB import *
-from input_generate_plugin import *
+# from input_generate_plugin import *
 from entropic_estimate_OT import *
 from ADMM import *
 from config_log import *
@@ -295,12 +295,12 @@ class entropic_iterative_scheme:
         os.makedirs(plot_dirc, exist_ok=True)
 
         source_measure_samples = source_sampler.sample(num_samples)
-        plot_2d_source_measures_kde(source_measure_samples, plot_dirc = plot_dirc, scatter = scatter)
+        # plot_2d_source_measures_kde(source_measure_samples, plot_dirc = plot_dirc, scatter = scatter)
 
         input_measure_samples = entropic_sampler.sample(num_samples)
-        for measure_index in range(num_measures):
-            measure_samples = np.array(input_measure_samples[measure_index])
-            plot_2d_input_measure_kde(measure_samples, measure_index, scatter = scatter, plot_dirc = plot_dirc)
+        # for measure_index in range(num_measures):
+        #     measure_samples = np.array(input_measure_samples[measure_index])
+        #     plot_2d_input_measure_kde(measure_samples, measure_index, scatter = scatter, plot_dirc = plot_dirc)
 
         # Compute the true V-value
         self.V_value_compute(source_measure_samples, input_measure_samples, iter = None, save_pathname = save_pathname)

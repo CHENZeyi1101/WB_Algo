@@ -1,8 +1,52 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal, invgamma
+from tqdm import tqdm, tqdm_notebook
 
 # from tqdm import tqdm, tqdm_notebook
+
+def construct_2d_covariance_ellipsoid(alpha = 3, beta = 4, rng_comp = None):
+        """
+        Constructs a covariance matrix for a 2D ellipsoid where:
+        - Direction is determined by a random angle θ ~ U(0, 2π).
+        - Semi-axis lengths are determined by two independent inverse gamma distributions.
+
+        Args:
+            alpha (float): Shape parameter for the inverse gamma distribution.
+            beta (float): Scale parameter for the inverse gamma distribution.
+            seed (int, optional): Random seed for reproducibility.
+
+        Returns:
+            np.ndarray: 2x2 covariance matrix representing the ellipsoid.
+
+        Remark:
+        The mean of the inverse gamma distribution is beta / (alpha - 1) for alpha > 1.
+        The variance of the inverse gamma distribution is beta^2 / ((alpha - 1)^2 * (alpha - 2)) for alpha > 2.
+        """
+        # Sample angle θ from U(0, 2π)
+        theta = rng_comp.uniform(0, 2 * np.pi)
+        random_state_a = rng_comp.randint(0, 2**32 - 1)
+        random_state_b = rng_comp.randint(0, 2**32 - 1)
+
+        # Sample semi-axis lengths from the inverse gamma distribution
+        a = invgamma.rvs(alpha, scale=beta, random_state = random_state_a) * 200 # First semi-axis length
+        b = invgamma.rvs(alpha, scale=beta, random_state = random_state_b) * 200 # Second semi-axis length
+
+        # Construct the rotation matrix R
+        cos_theta = np.cos(theta)
+        sin_theta = np.sin(theta)
+        R = np.array([
+            [cos_theta, -sin_theta],
+            [sin_theta, cos_theta]
+        ])
+
+        # Construct the diagonal matrix D (semi-axis lengths)
+        D = np.diag([a, b])
+
+        # Construct the covariance matrix as R * D * R^T
+        covariance_matrix = R @ D @ R.T
+
+        return covariance_matrix
 
 class MixtureOfGaussians:
 ### For generating samples from a mixture of Gaussian distributions (underlying barycenter measure) ###
@@ -32,45 +76,6 @@ class MixtureOfGaussians:
         self.radius = radius
 
     def random_components(self, num_components, uniform_weights = True, seed = 42):
-        def construct_covariance_ellipsoid(alpha, beta, rng_comp):
-            """
-            Constructs a covariance matrix for a 2D ellipsoid where:
-            - Direction is determined by a random angle θ ~ U(0, 2π).
-            - Semi-axis lengths are determined by two independent inverse gamma distributions.
-
-            Args:
-                alpha (float): Shape parameter for the inverse gamma distribution.
-                beta (float): Scale parameter for the inverse gamma distribution.
-                seed (int, optional): Random seed for reproducibility.
-
-            Returns:
-                np.ndarray: 2x2 covariance matrix representing the ellipsoid.
-            """
-
-            # Sample angle θ from U(0, 2π)
-            theta = rng_comp.uniform(0, 2 * np.pi)
-            random_state_a = rng_comp.randint(0, 2**32 - 1)
-            random_state_b = rng_comp.randint(0, 2**32 - 1)
-
-            # Sample semi-axis lengths from the inverse gamma distribution
-            a = invgamma.rvs(alpha, scale=beta, random_state = random_state_a) * 200 # First semi-axis length
-            b = invgamma.rvs(alpha, scale=beta, random_state = random_state_b) * 200 # Second semi-axis length
-
-            # Construct the rotation matrix R
-            cos_theta = np.cos(theta)
-            sin_theta = np.sin(theta)
-            R = np.array([
-                [cos_theta, -sin_theta],
-                [sin_theta, cos_theta]
-            ])
-
-            # Construct the diagonal matrix D (semi-axis lengths)
-            D = np.diag([a, b])
-
-            # Construct the covariance matrix as R * D * R^T
-            covariance_matrix = R @ D @ R.T
-
-            return covariance_matrix
         
         self.num_components = num_components
         self.seed = seed
@@ -78,7 +83,7 @@ class MixtureOfGaussians:
         rng_comp = np.random.RandomState(seed)
         for _ in range(num_components):
             mean = (rng_comp.randn(dim)) * 30
-            cov = construct_covariance_ellipsoid(3, 4, rng_comp)
+            cov = construct_2d_covariance_ellipsoid(3, 4, rng_comp)
             self.add_gaussian(mean, cov)
         if uniform_weights:
             weights = np.ones(num_components)
@@ -125,16 +130,15 @@ class MixtureOfGaussians:
         rng_sample = np.random.RandomState(seed)
         np.random.seed(seed)
 
-        # with tqdm(total=n, desc="source sampling") as pbar:
-        while count < n:
-            choice = rng_sample.choice(len(self.gaussians), p=self.weights)
-            mean, cov = self.gaussians[choice]
-            sample = rng_sample.multivariate_normal(mean, cov)
-            if not self.truncation or np.linalg.norm(sample) <= self.radius:
-                samples[count] = sample
-                count += 1
-                # if (count + 1) % 1024 == 0:
-                #     pbar.update(1024)
+        with tqdm(total=n, desc="source sampling") as pbar:
+            while count < n:
+                choice = rng_sample.choice(len(self.gaussians), p=self.weights)
+                mean, cov = self.gaussians[choice]
+                sample = rng_sample.multivariate_normal(mean, cov)
+                if not self.truncation or np.linalg.norm(sample) <= self.radius:
+                    samples[count] = sample
+                    count += 1
+                    pbar.update(1)
         samples *= multiplication_factor
         return samples
     
