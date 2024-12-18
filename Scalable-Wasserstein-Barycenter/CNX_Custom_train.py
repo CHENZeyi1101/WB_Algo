@@ -46,6 +46,22 @@ def train(epoch):
     miu_mean_value_epoch = 0
     miu_var_value_epoch = 0
 
+    """""""""""""""""""""""""""""""""""""""""""""""""""
+                            Data
+    """""""""""""""""""""""""""""""""""""""""""""""""""
+    total_data = torch.empty(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM, cfg.NUM_DISTRIBUTION + 1)
+
+    for marg_id in range(cfg.NUM_DISTRIBUTION):
+        df = pd.read_csv(f"../LocalSaveFiles/MT/WassersteinBarycenter_Exp/input_measure_{marg_id + 1}_samples_epoch_{epoch}.csv", header=None)
+        total_data[:, :, marg_id] = torch.from_numpy(df.to_numpy())
+
+    total_data[:, :, -1] = torch.randn(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM)
+
+    train_loader = torch.utils.data.DataLoader(
+        total_data, batch_size=cfg.BATCH_SIZE, shuffle=True, **kwargs)
+
+
+
     for batch_idx, real_data in enumerate(train_loader):
         # real_data = real_data.cuda(PTU.device)
         real_data = real_data.cpu()
@@ -255,19 +271,7 @@ if __name__ == '__main__':
     # kwargs = {'num_workers': 4, 'pin_memory': True}
     kwargs = {'pin_memory': True}
 
-    """""""""""""""""""""""""""""""""""""""""""""""""""
-                            Data
-    """""""""""""""""""""""""""""""""""""""""""""""""""
-    total_data = torch.empty(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM, cfg.NUM_DISTRIBUTION + 1)
-
-    for marg_id in range(cfg.NUM_DISTRIBUTION):
-        df = pd.read_csv(f"./CNX_inputs/Custom/input_measure_{marg_id + 1}_samples.csv", header=None)
-        total_data[:, :, marg_id] = torch.from_numpy(df.to_numpy())
-
-    total_data[:, :, -1] = torch.randn(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM)
-
-    train_loader = torch.utils.data.DataLoader(
-        total_data, batch_size=cfg.BATCH_SIZE, shuffle=True, **kwargs)
+    
     convex_f, convex_g, generator_h = g_NN.generate_FixedWeight_NN(cfg)
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

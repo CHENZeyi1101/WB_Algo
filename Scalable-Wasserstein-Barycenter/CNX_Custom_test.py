@@ -1,7 +1,7 @@
 import numpy as np
 import GPUtil
 
-from CNX.cfg import CNXCfgGaussian as Cfg_class
+from CNX.cfg import CNXCfgCustom as Cfg_class
 import CNX.compare_dist_results as CDR
 import optimal_transport_modules.pytorch_utils as PTU
 import optimal_transport_modules.plot_utils as PLU
@@ -17,10 +17,10 @@ cfg = Cfg_class()
 PTU.set_gpu_mode(False, 0)
 
 #! For the error:
-for epoch_to_load in range(1, 2):
+for epoch_to_load in range(1, 12):
     barycenter_samples = CDR.barycenter_sampler(
         cfg, PTU.device, load_epoch=epoch_to_load
     )
 
     df = pd.DataFrame(barycenter_samples.detach().numpy())
-    df.to_csv(f"./CNX_outputs/Custom/outputs_NWBFanTaghvaeiChen_samples_epoch_{epoch_to_load}.csv",index=False, header=False)
+    df.to_csv(f"../LocalSaveFiles/MT/WassersteinBarycenter_Exp/outputs_NWBFanTaghvaeiChen_samples_epoch_{epoch_to_load}.csv",index=False, header=False)
