@@ -32,7 +32,7 @@ class entropic_input_sampler:
         # strong_convexity_param = rng_entropy.uniform(low = 0, high = upper_bound, size = tilde_K)
         # make it a dictionary
         # 
-        self.strong_convexity_param_dict = {i: 0 for i in range(tilde_K)}
+        self.strong_convexity_param_dict = {i: 0.0001 for i in range(tilde_K)}
 
     def assign_theta(self):
         r'''
@@ -148,7 +148,7 @@ class entropic_input_sampler:
         for tilde_k in range(tilde_K):
             max_eigenvalue, _ = self.solve_maxeigen_problem(tilde_k)
             smoothness_param = max_eigenvalue / theta_dict[tilde_k] + 2 * strong_convexity_param_dict[tilde_k]
-            smoothness_param_dict[tilde_k] = smoothness_param
+            smoothness_param_dict[tilde_k] = 1.2 * smoothness_param # buffering for the maximization problem
         self.smoothness_param_dict = smoothness_param_dict
 
     # def generate_Y_and_g(self):
