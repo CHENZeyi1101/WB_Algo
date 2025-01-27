@@ -33,10 +33,19 @@ class CNXCfgCustom(optimal_transport_modules.cfg.Cfg3loop_F):
     NUM_LAYERS_h: int = 3
     epochs: int = 40
     N_TEST: int = 5000
+    DIM: int = None  # Initialize with a default value (None)
+    NUM_DISTRIBUTION: int = None
+
+    def __post_init__(self):
+        # Prompt user for `dim` if not set
+        if self.DIM is None:
+            self.DIM = int(input("Please enter the value for dim: "))
+        if self.NUM_DISTRIBUTION is None:
+            self.NUM_DISTRIBUTION = int(input("Please enter the value for num_distribution: "))
 
     def get_save_path(self):
-        return './CNX_outputs/Custom'
+        return f'./CNX_outputs/Custom_dim{self.DIM}_measures{self.NUM_DISTRIBUTION}'
 
     def get_save_path_F(self):
-        return './CNX_outputs/Custom'
+        return f'./CNX_outputs/Custom_dim{self.DIM}_measures{self.NUM_DISTRIBUTION}'
     

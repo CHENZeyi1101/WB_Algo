@@ -6,47 +6,78 @@ from tqdm import tqdm, tqdm_notebook
 # from tqdm import tqdm, tqdm_notebook
 
 def construct_2d_covariance_ellipsoid(alpha = 3, beta = 4, rng_comp = None):
-        """
-        Constructs a covariance matrix for a 2D ellipsoid where:
-        - Direction is determined by a random angle θ ~ U(0, 2π).
-        - Semi-axis lengths are determined by two independent inverse gamma distributions.
+    """
+    Constructs a covariance matrix for a 2D ellipsoid where:
+    - Direction is determined by a random angle θ ~ U(0, 2π).
+    - Semi-axis lengths are determined by two independent inverse gamma distributions.
 
-        Args:
-            alpha (float): Shape parameter for the inverse gamma distribution.
-            beta (float): Scale parameter for the inverse gamma distribution.
-            seed (int, optional): Random seed for reproducibility.
+    Args:
+        alpha (float): Shape parameter for the inverse gamma distribution.
+        beta (float): Scale parameter for the inverse gamma distribution.
+        seed (int, optional): Random seed for reproducibility.
 
-        Returns:
-            np.ndarray: 2x2 covariance matrix representing the ellipsoid.
+    Returns:
+        np.ndarray: 2x2 covariance matrix representing the ellipsoid.
 
-        Remark:
-        The mean of the inverse gamma distribution is beta / (alpha - 1) for alpha > 1.
-        The variance of the inverse gamma distribution is beta^2 / ((alpha - 1)^2 * (alpha - 2)) for alpha > 2.
-        """
-        # Sample angle θ from U(0, 2π)
-        theta = rng_comp.uniform(0, 2 * np.pi)
-        random_state_a = rng_comp.randint(0, 2**32 - 1, dtype=np.int64)
-        random_state_b = rng_comp.randint(0, 2**32 - 1, dtype=np.int64)
+    Remark:
+    The mean of the inverse gamma distribution is beta / (alpha - 1) for alpha > 1.
+    The variance of the inverse gamma distribution is beta^2 / ((alpha - 1)^2 * (alpha - 2)) for alpha > 2.
+    """
+    # Sample angle θ from U(0, 2π)
+    theta = rng_comp.uniform(0, 2 * np.pi)
+    random_state_a = rng_comp.randint(0, 2**32 - 1, dtype=np.int64)
+    random_state_b = rng_comp.randint(0, 2**32 - 1, dtype=np.int64)
 
-        # Sample semi-axis lengths from the inverse gamma distribution
-        a = invgamma.rvs(alpha, scale=beta, random_state = random_state_a) * 200 # First semi-axis length
-        b = invgamma.rvs(alpha, scale=beta, random_state = random_state_b) * 200 # Second semi-axis length
+    # Sample semi-axis lengths from the inverse gamma distribution
+    a = invgamma.rvs(alpha, scale=beta, random_state = random_state_a) * 200 # First semi-axis length
+    b = invgamma.rvs(alpha, scale=beta, random_state = random_state_b) * 200 # Second semi-axis length
 
-        # Construct the rotation matrix R
-        cos_theta = np.cos(theta)
-        sin_theta = np.sin(theta)
-        R = np.array([
-            [cos_theta, -sin_theta],
-            [sin_theta, cos_theta]
-        ])
+    # Construct the rotation matrix R
+    cos_theta = np.cos(theta)
+    sin_theta = np.sin(theta)
+    R = np.array([
+        [cos_theta, -sin_theta],
+        [sin_theta, cos_theta]
+    ])
 
-        # Construct the diagonal matrix D (semi-axis lengths)
-        D = np.diag([a, b])
+    # Construct the diagonal matrix D (semi-axis lengths)
+    D = np.diag([a, b])
 
-        # Construct the covariance matrix as R * D * R^T
-        covariance_matrix = R @ D @ R.T
+    # Construct the covariance matrix as R * D * R^T
+    covariance_matrix = R @ D @ R.T
 
-        return covariance_matrix
+    return covariance_matrix
+
+def construct_high_dim_covariance_ellipsoid(alpha = 3, beta = 4, dim = 10, rng_comp = None):
+    """
+    Constructs a covariance matrix for a high-dimensional ellipsoid where:
+    - Direction is determined by a random orthogonal matrix.
+    - Semi-axis lengths are determined by independent inverse gamma distributions.
+
+    Args:
+        alpha (float): Shape parameter for the inverse gamma distribution.
+        beta (float): Scale parameter for the inverse gamma distribution.
+        dim (int): Dimensionality of the covariance matrix.
+        rng_comp (np.random.Generator): Random number generator.
+
+    Returns:
+        np.ndarray: Covariance matrix of shape (dim, dim).
+    """
+    if rng_comp is None:
+        rng_comp = np.random.default_rng()
+
+    # Sample a random orthogonal matrix R
+    random_matrix = rng_comp.normal(size=(dim, dim))
+    Q, _ = np.linalg.qr(random_matrix)  # QR decomposition ensures Q is orthogonal
+
+    # Sample semi-axis lengths from the inverse gamma distribution
+    semi_axes = invgamma.rvs(alpha, scale=beta, size=dim, random_state=rng_comp) * 200
+    D = np.diag(semi_axes)
+
+    # Construct the covariance matrix: R * D * R^T
+    covariance_matrix = Q @ D @ Q.T
+
+    return covariance_matrix
 
 class MixtureOfGaussians:
 ### For generating samples from a mixture of Gaussian distributions (underlying barycenter measure) ###
@@ -83,7 +114,10 @@ class MixtureOfGaussians:
         rng_comp = np.random.RandomState(seed)
         for _ in range(num_components):
             mean = (rng_comp.randn(dim)) * 30
-            cov = construct_2d_covariance_ellipsoid(3, 4, rng_comp)
+            if dim == 2:
+                cov = construct_2d_covariance_ellipsoid(3, 4, rng_comp)
+            else:
+                cov = construct_high_dim_covariance_ellipsoid(3, 4, dim, rng_comp)
             self.add_gaussian(mean, cov)
         if uniform_weights:
             weights = np.ones(num_components)

@@ -10,7 +10,17 @@ class entropic_input_sampler:
     r'''
     Python class for generating samples from input measures using entropic transportation maps
     '''
-    def __init__(self, dim, num_measures, auxiliary_measure_sampler_set, source_sampler, n_k = 1000, seed = 120):
+    def __init__(self, 
+                 dim, 
+                 num_measures, 
+                 auxiliary_measure_sampler_set, 
+                 source_sampler, 
+                 n_k = 1000, 
+                 seed = 120, 
+                 gamma = 0.3, 
+                 manual = True, 
+                 truncated_radius = 100,
+                 bound_type = "eigen_bound"):
         self.dim = dim
         self.num_measures = num_measures
         self.auxiliary_measure_sampler_set = auxiliary_measure_sampler_set
@@ -20,19 +30,24 @@ class entropic_input_sampler:
         # num_measures < 2 * tilde_K
         self.seed = seed
         self.rng_entropy = np.random.RandomState(seed)
+        self.gamma = gamma
+        self.manual = manual
+        self.truncated_radius = truncated_radius
+        self.bound_type = bound_type
+        self.grid_size = 200
 
     def generate_strong_convexity_param(self):
         r'''
         Generate the strong convexity parameter for the entropic OT map estimator
         '''
-        rng_entropy = self.rng_entropy
+        # rng_entropy = self.rng_entropy
         tilde_K = self.tilde_K
         # lower_bound = 0.0001
         # upper_bound = 0.00001
         # strong_convexity_param = rng_entropy.uniform(low = 0, high = upper_bound, size = tilde_K)
         # make it a dictionary
         # 
-        self.strong_convexity_param_dict = {i: 0 for i in range(tilde_K)}
+        self.strong_convexity_param_dict = {i: 0.0001 for i in range(tilde_K)}
 
     def assign_theta(self):
         r'''
@@ -103,7 +118,7 @@ class entropic_input_sampler:
 
         return weight_vector
         
-    def solve_maxeigen_problem(self, tilde_k, grid_size = 200, truncate_radius = 100):
+    def solve_maxeigen_problem(self, tilde_k):
         r'''
         We aim to maximize the maximum eigenvalue of the covariance matrix, corresponding to the data collected from auxiliary measure tilde_k.
         Due to the highly nonlinear structure of w(x), we traverse the grid space to find the optimal solution.
@@ -113,6 +128,8 @@ class entropic_input_sampler:
         Y_matrix = self.Y_matrix_dict[tilde_k]
         g_vector = self.g_vector_dict[tilde_k]
         theta = self.theta_dict[tilde_k]
+        grid_size = self.grid_size
+        truncate_radius = self.truncated_radius
         grid_space = np.linspace(-truncate_radius, truncate_radius, grid_size)
         max_eigenvalue = 0
         optimal_x = None
@@ -145,10 +162,19 @@ class entropic_input_sampler:
         theta_dict = self.theta_dict
         strong_convexity_param_dict = self.strong_convexity_param_dict
         smoothness_param_dict = {}
-        for tilde_k in range(tilde_K):
-            max_eigenvalue, _ = self.solve_maxeigen_problem(tilde_k)
-            smoothness_param = max_eigenvalue / theta_dict[tilde_k] + 2 * strong_convexity_param_dict[tilde_k]
-            smoothness_param_dict[tilde_k] = smoothness_param
+
+        if self.bound_type == "eigen_bound": # only used in 2d case for visually non-trivial measures
+            for tilde_k in range(tilde_K):
+                max_eigenvalue, _ = self.solve_maxeigen_problem(tilde_k)
+                smoothness_param = max_eigenvalue / theta_dict[tilde_k] + 2 * strong_convexity_param_dict[tilde_k]
+                smoothness_param_dict[tilde_k] = 1.2 * smoothness_param # buffering for the maximization problem
+        if self.bound_type == "norm_bound":
+            for tilde_k in range(tilde_K):
+                # find the max norm in row vectors of Y_matrix
+                Y_matrix = self.Y_matrix_dict[tilde_k]
+                max_norm = np.max(np.linalg.norm(Y_matrix, axis = 1))
+                smoothness_param = max_norm / theta_dict[tilde_k] + 2 * strong_convexity_param_dict[tilde_k]
+                smoothness_param_dict[tilde_k] = 1.2 * smoothness_param
         self.smoothness_param_dict = smoothness_param_dict
 
     # def generate_Y_and_g(self):
@@ -333,7 +359,10 @@ class entropic_input_sampler:
         num_matrices = num_measures
         covariance_list = []
         for _ in range(num_matrices):
-            cov = construct_2d_covariance_ellipsoid(3, 4, rng_comp)
+            if dim == 2:
+                cov = construct_2d_covariance_ellipsoid(3, 4, rng_comp)
+            else:
+                cov = construct_high_dim_covariance_ellipsoid(3, 4, dim, rng_comp)
             covariance_list.append(cov)
 
         # initialize Sigma
@@ -390,7 +419,7 @@ class entropic_input_sampler:
             candidate_map_dict[2 * i + 1] = candidate_map_minus
         return candidate_map_dict
 
-    def generate_input_measure_sample(self, x, gamma = 0.3, manual = True, check_empty = False):
+    def generate_input_measure_sample(self, x, check_empty = False):
         r'''
         Generate the input measure sample by sampling from the candidate maps
         '''
@@ -400,6 +429,8 @@ class entropic_input_sampler:
         surjective_mapping = self.surjective_mapping
         smoothness_param_dict = self.smoothness_param_dict
         A_matrices_dict = self.A_matrices_dict
+        gamma = self.gamma
+        manual = self.manual
 
         candidate_allocation = {k: [] for k in range(num_measures)}
         for i in range(2 * tilde_K):
@@ -448,7 +479,7 @@ class entropic_input_sampler:
 
         return measure_samples_dict, candidate_map_dict
     
-    def sample(self, sample_size = 1000, show_candidate = False, gamma = 0.3, manual = True):
+    def sample(self, sample_size = 1000, show_candidate = False):
         r'''
         Generate the input measure samples for a given sample size
         '''
@@ -464,7 +495,8 @@ class entropic_input_sampler:
         
         for i in tqdm(range(sample_size), desc= f"Generating {sample_size} input measure samples"):
             x = source_samples[i]
-            measure_samples_dict, candidate_map_dict = self.generate_input_measure_sample(x, gamma, manual=manual) # a dictionary with k keys
+            measure_samples_dict, candidate_map_dict = self.generate_input_measure_sample(x) # a dictionary with k keys
+            # one can take the truncation radius to be large enough such that the generated samples from input measures are accepted.
             for k in range(num_measures):
                 batch_sample_collection[k].append(measure_samples_dict[k])
         if show_candidate:

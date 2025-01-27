@@ -60,8 +60,6 @@ def train(epoch):
     train_loader = torch.utils.data.DataLoader(
         total_data, batch_size=cfg.BATCH_SIZE, shuffle=True, **kwargs)
 
-
-
     for batch_idx, real_data in enumerate(train_loader):
         # real_data = real_data.cuda(PTU.device)
         real_data = real_data.cpu()
