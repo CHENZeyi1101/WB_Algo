@@ -21,6 +21,54 @@ def get_kde_data(samples, bins=1000):
     kde_values = kde(np.vstack([x_mesh.ravel(), y_mesh.ravel()])).reshape(x_mesh.shape)
     return x_mesh, y_mesh, kde_values
 
+def plot_2d_input_measure_kde_row(samples, measure_index, scatter=False, ax=None):
+    # dimension of the samples
+    dim = samples.shape[1]
+    if dim > 2:
+        # Perform PCA to reduce dimensions to 2D
+        pca = PCA(n_components=2)
+        samples = pca.fit_transform(samples)
+
+    # If ax is not provided, create a new figure and axis (for standalone plot)
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)
+        # Use a black background
+        fig.patch.set_facecolor('black')
+        ax.set_facecolor('black')
+    else:
+        # Set black background for the provided axis
+        ax.set_facecolor('black')
+
+    # Get KDE data
+    x_mesh, y_mesh, kde_values = get_kde_data(samples)
+
+    # Plot KDE as a contour plot
+    h = ax.contourf(x_mesh, y_mesh, kde_values, levels=200, cmap='hot')
+
+    # Overlay scatter plot if requested
+    if scatter:
+        ax.scatter(samples[:, 0], samples[:, 1], s=5, color='green', alpha=0.5)
+
+    # Set axis limits to include all samples and contours
+    t = (samples[:, 0].max() - samples[:, 0].min()) / 2
+    ax.set_xlim(samples[:, 0].min() - t, samples[:, 0].max() + t)
+    ax.set_ylim(samples[:, 1].min() - t, samples[:, 1].max() + t)
+
+    # Set title and labels
+    ax.set_title(f'Measure {measure_index}', color='black')
+    ax.set_xlabel('X1', color='black')
+    ax.set_ylabel('X2', color='black')
+
+    # Adjust axis colors for visibility on black background
+    ax.tick_params(colors='black')
+
+    # Add a colorbar to the subplot
+    cbar = plt.colorbar(h, ax=ax, orientation='vertical', pad=0.05)
+    cbar.ax.yaxis.set_tick_params(color='black')
+    cbar.outline.set_edgecolor('black')
+    cbar.ax.tick_params(colors='black')
+
+
 def plot_2d_input_measure_kde(samples, measure_index, scatter = False, plot_dirc = None):
     # dimension of the samples
     dim = samples.shape[1]
@@ -183,7 +231,7 @@ def plot_2d_compare_with_source_kde(source_samples, accepted, iter, scatter = Fa
         plt.show()
 
 
-def plot_2d_gmm_pdf(gmm_sampler, truncated_radius, grid_size=1000, plot_contour=False, save_path=None):
+def plot_2d_gmm_pdf(gmm_sampler, truncated_radius, grid_size=1000, plot_contour=False, save_path=None, file_name=None, title_name = None):
     """
     Plots the PDF of a Gaussian Mixture Model (GMM) over a 2D grid.
     
@@ -220,10 +268,11 @@ def plot_2d_gmm_pdf(gmm_sampler, truncated_radius, grid_size=1000, plot_contour=
     # Set axis labels and title
     ax.set_xlabel('X1')
     ax.set_ylabel('X2')
-    ax.set_title('GMM PDF')
+    ax.set_title(title_name)
 
     if save_path:
-        plt.savefig(save_path)
+        # save as "soource_measure_pdf.png"
+        plt.savefig(f"{save_path}/{file_name}.png")
         # set the name to be "GMM_pdf.png"
         plt.close()
     else:

@@ -102,7 +102,6 @@ class entropic_iterative_scheme:
         self.source_sampler_seed = source_sampler_seed
         self.log = log   
         self.truncate_radius = truncate_radius
-        self.save_trajectory = save_trajectory
 
     def iterative_sample(self, iter, num_samples = 1000, sample_logger = None):
         '''

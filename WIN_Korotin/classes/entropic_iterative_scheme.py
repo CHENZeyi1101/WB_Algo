@@ -7,10 +7,10 @@ import ot.plot
 from true_WB import *
 # from input_generate_plugin import *
 from entropic_estimate_OT import *
+import json
 
 from config_log import *
 from sample_plot import *
-import json
 
 from tqdm import tqdm, tqdm_notebook
 
@@ -30,7 +30,6 @@ def W2_pot(X, Y): # solving the OT simplex problem using POT package
     M = ot.dist(X, Y)
     a, b = np.ones((X.shape[0],)) / X.shape[0], np.ones((Y.shape[0],)) / Y.shape[0]
     W2_sq = ot.emd2(a, b, M, numItermax=1e6)
-  
     return W2_sq
 
 # def W2(X, Y):
@@ -90,7 +89,7 @@ class entropic_iterative_scheme:
 
     '''
 
-    def __init__(self, dim, num_measures, source_sampler, entropic_sampler, source_sampler_seed, log = False):
+    def __init__(self, dim, num_measures, source_sampler, entropic_sampler, source_sampler_seed, truncate_radius, log = False, save_trajectory = False):
         self.dim = dim
         self.num_measures = num_measures
         self.source_sampler = source_sampler
@@ -102,8 +101,9 @@ class entropic_iterative_scheme:
         self.W2_to_true_bary = {}
         self.source_sampler_seed = source_sampler_seed
         self.log = log   
+        self.truncate_radius = truncate_radius
 
-    def iterative_sample(self, iter, num_samples = 1000, truncate_radius = 100, sample_logger = None):
+    def iterative_sample(self, iter, num_samples = 1000, sample_logger = None):
         '''
         Inputs:
               iter: current iteration number (to sample from \mu_{iter})
@@ -132,7 +132,7 @@ class entropic_iterative_scheme:
                     sum_sample = np.zeros(dim)
                     for measure_index in range(num_measures):
                         OT_map_estimator = self.OT_collections[(t, measure_index)]
-                        sub_sample = OT_map_estimator.regularize_entropic_OT_map(truncate_radius**2, sample)
+                        sub_sample = OT_map_estimator.regularize_entropic_OT_map(self.truncate_radius**2, sample)
                         # the pushforward image (as the samples collected by the approximated input measure)
                         if self.log:
                                 sample_logger.info(f"\n"
@@ -151,7 +151,7 @@ class entropic_iterative_scheme:
                                         )
 
                 # Check if the sample is within the truncation radius
-                if np.linalg.norm(sample) < truncate_radius:
+                if np.linalg.norm(sample) < self.truncate_radius:
                     accepted[count, :] = sample
                     count += 1
                     if (count + 1) % 10 == 0:
@@ -257,51 +257,20 @@ class entropic_iterative_scheme:
                             f"################################################################\n"
                             )
         
-    def converge(self, iter, num_samples = 5000, max_iter = 20, epsilon = 1, plot = True, scatter = False):
+    def converge(self, source_measure_samples, input_measure_samples, iter, num_samples = 5000, max_iter = 20, epsilon = 10, plot = True, scatter = False):
         # source_sampler samples from the initialized measure (mixture of gaussians in our experiment).
         dim = self.dim
-        source_sampler = self.source_sampler
-        entropic_sampler = self.entropic_sampler
         num_measures = self.num_measures
         seed = self.source_sampler_seed
 
         result_dir = "results"
         os.makedirs(result_dir, exist_ok=True)
+        # save_pathname = f"{result_dir}/entropic_measures_{num_measures}_seed_{seed}_samples_{num_samples}_dim_{dim}_epsilon_{epsilon}_boring"
         save_pathname = f"{result_dir}/entropic_measures_{num_measures}_seed_{seed}_samples_{num_samples}_dim_{dim}_epsilon_{epsilon}"
-
-        # source_sampler information
-        source_sampler_info = {
-            "dim": dim,
-            "radius": source_sampler.radius,
-            "seed": source_sampler.seed,
-            "num_components": source_sampler.num_components
-        }
-        source_sampler_info_dir = f"{save_pathname}/source_sampler_info"
-        os.makedirs(source_sampler_info_dir, exist_ok=True)
-        save_data(source_sampler_info, source_sampler_info_dir, f"source_sampler_info.json")
-
-        # entropic_sampler information
-        entropic_sampler_info = {
-            "num_measures": num_measures,
-            "dim": dim,
-            "n_k": entropic_sampler.n_k,
-            "seed": entropic_sampler.seed
-        }
-        entropic_sampler_info_dir = f"{save_pathname}/entropic_sampler_info"
-        os.makedirs(entropic_sampler_info_dir, exist_ok=True)
-        save_data(entropic_sampler_info, entropic_sampler_info_dir, f"entropic_sampler_info.json")
 
         # measure visualization
         plot_dirc = f"{save_pathname}/plots"
         os.makedirs(plot_dirc, exist_ok=True)
-
-        source_measure_samples = source_sampler.sample(num_samples)
-        # plot_2d_source_measures_kde(source_measure_samples, plot_dirc = plot_dirc, scatter = scatter)
-
-        input_measure_samples = entropic_sampler.sample(num_samples)
-        # for measure_index in range(num_measures):
-        #     measure_samples = np.array(input_measure_samples[measure_index])
-        #     plot_2d_input_measure_kde(measure_samples, measure_index, scatter = scatter, plot_dirc = plot_dirc)
 
         # Compute the true V-value
         self.V_value_compute(source_measure_samples, input_measure_samples, iter = None, save_pathname = save_pathname)
@@ -314,11 +283,13 @@ class entropic_iterative_scheme:
             map_logger, _ = configure_logging(f'iter_{iter}_map_logger', log_dir, f'iter_{iter}_map_logger.log')
 
             accepted = self.iterative_sample(iter, num_samples, sample_logger = sample_logger)
-            source_samples = source_sampler.sample(num_samples)
+            # source_samples = source_sampler.sample(num_samples)
             self.G_sample_save(accepted, iter, save_pathname = save_pathname)   
-            self.W2_to_true_bary_compute(accepted, source_samples, iter, save_pathname = save_pathname)
+            self.W2_to_true_bary_compute(accepted, source_measure_samples, iter, save_pathname = save_pathname)
             if plot == 1:
-                plot_2d_compare_with_source_kde(source_samples, accepted, iter, plot_dirc = plot_dirc, scatter = scatter)
+                print("start to plot")
+                plot_2d_compare_with_source_kde(source_measure_samples[:500], accepted[:500], iter, plot_dirc = plot_dirc, scatter = scatter)
+                print("finish plotting")
                 
             # construct maps
             self.map_construct(accepted, iter, epsilon, save_pathname, map_logger=map_logger)
