@@ -117,45 +117,45 @@ class entropic_iterative_scheme:
         count = 0
         accepted = np.zeros((num_samples, dim))
 
-        with tqdm(total=num_samples, desc=f"sampling from the pushforward measure at iteration_{iter}") as pbar:
-            while count < num_samples:
+        # with tqdm(total=num_samples, desc=f"sampling from the pushforward measure at iteration_{iter}") as pbar:
+        while count < num_samples:
+            if self.log:
+                sample_logger.info(f"\n"
+                                f"########## Sampling started at Iteration_{iter} for sample_{count} ##########\n"
+                                )
+                
+            # the initial sample is generated from the standard normal distribution
+            sample = np.random.multivariate_normal(np.zeros(dim), np.eye(dim))
+
+            for t in range(iter):
+                # to be executed only when iter > 0
+                sum_sample = np.zeros(dim)
+                for measure_index in range(num_measures):
+                    OT_map_estimator = self.OT_collections[(t, measure_index)]
+                    sub_sample = OT_map_estimator.regularize_entropic_OT_map(self.truncate_radius**2, sample)
+                    # the pushforward image (as the samples collected by the approximated input measure)
+                    if self.log:
+                            sample_logger.info(f"\n"
+                                            f"####### Pushforward generation by the mapping towards Measure_{measure_index} #######\n"
+                                            f"####### Round number: {t} #######\n"
+                                            )   
+
+                    # Accumulate the pushforward samples from each measure
+                    sum_sample += sub_sample
+
+                # Average the pushforward samples from all measures
+                sample = sum_sample / num_measures
                 if self.log:
                     sample_logger.info(f"\n"
-                                    f"########## Sampling started at Iteration_{iter} for sample_{count} ##########\n"
+                                    f"####### G-mapping completed at Round_{t} #######\n"
                                     )
-                    
-                # the initial sample is generated from the standard normal distribution
-                sample = np.random.multivariate_normal(np.zeros(dim), np.eye(dim))
 
-                for t in range(iter):
-                    # to be executed only when iter > 0
-                    sum_sample = np.zeros(dim)
-                    for measure_index in range(num_measures):
-                        OT_map_estimator = self.OT_collections[(t, measure_index)]
-                        sub_sample = OT_map_estimator.regularize_entropic_OT_map(self.truncate_radius**2, sample)
-                        # the pushforward image (as the samples collected by the approximated input measure)
-                        if self.log:
-                                sample_logger.info(f"\n"
-                                                f"####### Pushforward generation by the mapping towards Measure_{measure_index} #######\n"
-                                                f"####### Round number: {t} #######\n"
-                                                )   
-
-                        # Accumulate the pushforward samples from each measure
-                        sum_sample += sub_sample
-
-                    # Average the pushforward samples from all measures
-                    sample = sum_sample / num_measures
-                    if self.log:
-                        sample_logger.info(f"\n"
-                                        f"####### G-mapping completed at Round_{t} #######\n"
-                                        )
-
-                # Check if the sample is within the truncation radius
-                if np.linalg.norm(sample) < self.truncate_radius:
-                    accepted[count, :] = sample
-                    count += 1
-                    if (count + 1) % 10 == 0:
-                        pbar.update(10)
+            # Check if the sample is within the truncation radius
+            if np.linalg.norm(sample) < self.truncate_radius:
+                accepted[count, :] = sample
+                count += 1
+                    # if (count + 1) % 10 == 0:
+                    #     pbar.update(10)
         
         if self.log:
             sample_logger.info(f"\n"
@@ -165,16 +165,16 @@ class entropic_iterative_scheme:
                             
         return accepted
     
-    def G_sample_save(self, accepted_G_samples, iter, save_pathname = None):
+    # def G_sample_save(self, accepted_G_samples, iter, save_pathname = None):
 
-        # Save the generated samples from the G-mapping at each iteration;
-        # "accepted_G_samples" is the accepted samples generated from the G-mapping at the current iteration;
+    #     # Save the generated samples from the G-mapping at each iteration;
+    #     # "accepted_G_samples" is the accepted samples generated from the G-mapping at the current iteration;
 
-        self.G_samples[f"iteration_{iter}"] = accepted_G_samples
-        G_samples_json = {str(k): v.tolist() for k, v in self.G_samples.items()}
-        G_sample_dir = f"{save_pathname}/G_samples"
-        os.makedirs(G_sample_dir, exist_ok=True)
-        save_data(G_samples_json, G_sample_dir, f"G_samples.json")
+    #     self.G_samples[f"iteration_{iter}"] = accepted_G_samples
+    #     G_samples_json = {str(k): v.tolist() for k, v in self.G_samples.items()}
+    #     G_sample_dir = f"{save_pathname}/G_samples"
+    #     os.makedirs(G_sample_dir, exist_ok=True)
+    #     save_data(G_samples_json, G_sample_dir, f"G_samples.json")
 
     def V_value_compute(self, bary_samples, input_sample_collection, iter = None, save_pathname = None):
         # Compute the V-value (i.e.,\@ the weighted sum of the Wasserstein distances between the input measures and the generated samples)
@@ -230,9 +230,6 @@ class entropic_iterative_scheme:
 
         BX = accepted_samples
 
-        # Compute the V_value
-        self.V_value_compute(BX, input_measures_samples, iter = iter, save_pathname=save_pathname)
-
         for measure_index in tqdm(range(num_measures)):
             BY = np.array(input_measures_samples[measure_index])
 
@@ -257,7 +254,7 @@ class entropic_iterative_scheme:
                             f"################################################################\n"
                             )
         
-    def converge(self, source_measure_samples, input_measure_samples, iter, num_samples = 5000, max_iter = 20, epsilon = 10, plot = True, scatter = False):
+    def converge(self, source_measure_samples, input_measure_samples, iter, num_samples = 5000, max_iter = 20, epsilon = 10, plot = True, scatter = False, MC_size = 1):
         # source_sampler samples from the initialized measure (mixture of gaussians in our experiment).
         dim = self.dim
         num_measures = self.num_measures
@@ -282,10 +279,21 @@ class entropic_iterative_scheme:
             sample_logger, _ = configure_logging(f'iter_{iter}_sample_logger', log_dir, f'iter_{iter}_sample_logger.log')
             map_logger, _ = configure_logging(f'iter_{iter}_map_logger', log_dir, f'iter_{iter}_map_logger.log')
 
-            accepted = self.iterative_sample(iter, num_samples, sample_logger = sample_logger)
-            # source_samples = source_sampler.sample(num_samples)
-            self.G_sample_save(accepted, iter, save_pathname = save_pathname)   
+            accepted_dict = {}
+            for count in tqdm(range(MC_size), desc = "Monte Carlo Sampling"): # Monte carlo sample size
+                accepted = self.iterative_sample(iter, num_samples, sample_logger = sample_logger)
+                accepted_dict[count] = accepted
+                accepted_dict_json = {str(k): v.tolist() for k, v in accepted_dict.items()}
+            self.G_samples[f"iteration_{iter}"] = accepted_dict_json
+            G_sample_dir = f"{save_pathname}/G_samples"
+            os.makedirs(G_sample_dir, exist_ok=True)
+            save_data(self.G_samples, G_sample_dir, f"G_samples.json")
+
+            # Compute the W2_to_true_bary
             self.W2_to_true_bary_compute(accepted, source_measure_samples, iter, save_pathname = save_pathname)
+            # Compute the V_value
+            self.V_value_compute(accepted, input_measure_samples, iter = iter, save_pathname=save_pathname)
+
             if plot == 1:
                 print("start to plot")
                 plot_2d_compare_with_source_kde(source_measure_samples[:500], accepted[:500], iter, plot_dirc = plot_dirc, scatter = scatter)
