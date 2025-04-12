@@ -268,7 +268,7 @@ def plot_2d_gmm_pdf(gmm_sampler, truncated_radius, grid_size=1000, plot_contour=
     # Set axis labels and title
     ax.set_xlabel('X1')
     ax.set_ylabel('X2')
-    ax.set_title(title_name)
+    ax.set_title(title_name, fontsize =20)
 
     if save_path:
         # save as "soource_measure_pdf.png"
