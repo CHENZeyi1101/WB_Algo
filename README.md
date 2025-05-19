@@ -5,7 +5,7 @@
 ## Table of Contents
 
 - [Abstract](#abstract)
-- [Descriptions of folders and files](#descriptions-of-folders-and-files)
+- [Descriptions of folders](#descriptions-of-folders-and-files)
 - [Environment Setup](#environment-setup)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -54,8 +54,20 @@ The `ICNN_Fan/` folder contains code and resources for implementing and evaluati
   - [`ICNN_Fan/Notebooks/results/`](ICNN_Fan/Notebooks/results/)  
     Stores numerical outputs, plots, and evaluations generated during experiments and notebook runs.
 
+## 📁 WIN_Korotin
 
+The `WIN_Korotin/` folder contains code and resources for implementing the **Wasserstein Incremental Networks (WIN)** method for approximating Wasserstein-2 barycenters. This implementation is based on the original work by [Korotin et al. (2022)](https://github.com/iamalexkorotin/WassersteinIterativeNetworks), and is adapted to align with our experimental pipeline for comparative analysis.
 
+### Subfolder Structure
+
+- [`WIN_Korotin/classes/`](WIN_Korotin/classes/)  
+  Defines neural network architectures, loss functions, and utility modules required to train and evaluate WIN-based barycenter models.
+
+- [`WIN_Korotin/Notebooks/`](WIN_Korotin/Notebooks/)  
+  Jupyter notebooks used to generate synthetic barycenter problems, train WIN models, and visualize their output.
+
+  - [`WIN_Korotin/Notebooks/results/`](WIN_Korotin/Notebooks/results/)  
+    Stores the output from training runs, including plots and evaluation metrics.
 
 
 # Environment Setup
