@@ -28,7 +28,7 @@ Keywords: Wasserstein barycenter, optimal transport, information aggregation, tr
 
 The `Stochastic_FP/` folder contains all files and code for our proposed **stochastic fixed-point algorithm** (Algorithm 2 in the paper), used to approximate Wasserstein barycenters.
 
-### Subfolder Structure
+### Subfolder structure
 
 - [`Stochastic_FP/classes/`](Stochastic_FP/classes/)  
   Contains essential Python classes and Python functions that implement the stochastic fixed-point algorithm logic.
@@ -43,34 +43,34 @@ The `Stochastic_FP/` folder contains all files and code for our proposed **stoch
 
 The `ICNN_Fan/` folder contains code and resources for implementing and evaluating an **Input-Convex Neural Network (ICNN)**-based approach, as introduced in [Fan et al. (2021)](https://github.com/sbyebss/Scalable-Wasserstein-Barycenter). This module supports instance generation, model training, and evaluation for barycenter approximation and related optimal transport tasks.
 
-### Subfolder Structure
+### Subfolder structure
 
 - [`ICNN_Fan/classes/`](ICNN_Fan/classes/)  
   Contains core Python classes and helper functions used to define and train ICNN models, including architectures, loss functions, and optimizers.
 
-- [`ICNN_Fan/Notebooks/`](ICNN_Fan/Notebooks/)  
+- [`ICNN_Fan/notebooks/`](ICNN_Fan/notebooks/)  
   Jupyter notebooks used to create problem instances, visualize training behavior, and assess model performance in line with the experimental settings described in the paper.
 
-  - [`ICNN_Fan/Notebooks/results/`](ICNN_Fan/Notebooks/results/)  
+  - [`ICNN_Fan/notebooks/results/`](ICNN_Fan/notebooks/results/)  
     Stores numerical outputs, plots, and evaluations generated during experiments and notebook runs.
 
 ## 📁 WIN_Korotin
 
 The `WIN_Korotin/` folder contains code and resources for implementing the **Wasserstein Incremental Networks (WIN)** method for approximating Wasserstein-2 barycenters. This implementation is based on the original work by [Korotin et al. (2022)](https://github.com/iamalexkorotin/WassersteinIterativeNetworks), and is adapted to align with our experimental pipeline for comparative analysis.
 
-### Subfolder Structure
+### Subfolder structure
 
 - [`WIN_Korotin/classes/`](WIN_Korotin/classes/)  
   Defines neural network architectures, loss functions, and utility modules required to train and evaluate WIN-based barycenter models.
 
-- [`WIN_Korotin/Notebooks/`](WIN_Korotin/Notebooks/)  
+- [`WIN_Korotin/notebooks/`](WIN_Korotin/notebooks/)  
   Jupyter notebooks used to generate synthetic barycenter problems, train WIN models, and visualize their output.
 
-  - [`WIN_Korotin/Notebooks/results/`](WIN_Korotin/Notebooks/results/)  
+  - [`WIN_Korotin/notebooks/results/`](WIN_Korotin/notebooks/results/)  
     Stores the output from training runs, including plots and evaluation metrics.
 
 
-# Environment Setup
+# Environment setup
 
 To replicate the environment and run the project, you are encouraged to create a new Conda environment and install dependencies via `requirements.txt`:
 
@@ -79,7 +79,16 @@ conda create -n myenv python=3.11
 conda activate myenv
 pip install -r requirements.txt
 ```
+
+Notice that Gurobi optimization (version 9.5.0 or above) must be installed on the machine.
    
-# Code Structure
+# Instructions to run numerical experiments
+
+## 2D case
+
+### Configure the problem instance
+
+- [`Stochastic_FP/Notebooks/input_measure_select.ipynb`](Stochastic_FP/Notebooks/input_measure_select.ipynb)
+
 
 
