@@ -7,11 +7,7 @@
 - [Abstract](#abstract)
 - [Descriptions of folders](#descriptions-of-folders-and-files)
 - [Environment Setup](#environment-setup)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Examples](#examples)
-- [Contributing](#contributing)
-- [License](#license)
+- [Instructions to run numerical experiments](#instructions-to-run-numerical-experiments)
 
 # Abstract 
 
