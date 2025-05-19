@@ -6,6 +6,7 @@ This repository contains the code implementations of numerical experiments for t
 
 - [Abstract](#abstract)
 - [Main Contributions](#main-contributions)
+- [Environment Setup](#environment-setup)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Examples](#examples)
@@ -40,6 +41,21 @@ Keywords: Wasserstein barycenter, optimal transport, information aggregation, tr
    We propose a simple and efficient method to generate synthetic instances of the W₂-barycenter problem, where the input measures are continuous and non-parametric, and the true barycenter is known (see *Proposition 5.2*).  
    These instances allow benchmarking and evaluating the effectiveness of W₂-barycenter algorithms.  
    Our numerical experiments demonstrate that the algorithm is empirically accurate, efficient, and stable compared with state-of-the-art alternatives, and supports parallel/distributed computing — making it well suited for large-scale applications.
+
+# Environment Setup
+
+To replicate the environment and run the project, follow these steps:
+
+### Option 1: Using Conda (recommended)
+
+Create a new Conda environment and install dependencies via `requirements.txt`:
+
+```bash
+conda create -n myenv python=3.11
+conda activate myenv
+pip install -r requirements.txt
+```
+   
 # Code Structure
 
 ## 📁 Stochastic_FP
