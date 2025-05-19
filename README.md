@@ -1,6 +1,6 @@
 # Project Title
 
-A brief description of your project — what it does, why it matters, and how to use it.
+This repository contains the code implementations of numerical experiments for the project $PROVABLY CONVERGENT STOCHASTIC FIXED-POINT ALGORITHM FOR FREE-SUPPORT WASSERSTEIN BARYCENTER OF CONTINUOUS NON-PARAMETRIC MEASURES$.
 
 ## Table of Contents
 
