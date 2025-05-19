@@ -5,7 +5,7 @@ This repository contains the code implementations of numerical experiments for t
 ## Table of Contents
 
 - [Abstract](#abstract)
-- [Project Structure](#project-structure)
+- [Main Contributions](#main-contributions)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Examples](#examples)
@@ -23,6 +23,23 @@ This gives rise to a computationally tractable stochastic fixed-point algorithm 
 In our numerical experiments, we propose a method of generating non-trivial instances of 2-Wasserstein barycenter problems where the ground-truth barycenter measure is known. The results showcase the capability of our algorithm in developing high-quality approximations of the 2-Wasserstein barycenter, as well as its superiority over state-of-the-art methods based on generative neural networks in terms of accuracy, stability and efficiency.
 
 Keywords: Wasserstein barycenter, optimal transport, information aggregation, transportation map estimation
+
+# Main Contributions
+
+1. **Stochastic Fixed-Point Algorithm**  
+   We provide a computationally tractable stochastic fixed-point algorithm (i.e., *Algorithm 2*) for approximately computing the \( W_2 \)-barycenter of general input measures \( \nu_1, \ldots, \nu_K \).  
+   Our iterative algorithm is characterized by a tailored truncating operation and an “admissible” class of OT map estimators (see *Assumption 3.4*).  
+   In particular, we do not restrict the support of the approximate \( W_2 \)-barycenter to a finite collection of points, nor do we require \( \nu_1, \ldots, \nu_K \) to be discrete or to follow specific parametric families. Only mild regularity conditions are needed (see *Assumption 3.1* and *Setting 3.6*).
+
+2. **Theoretical Convergence Guarantee**  
+   We conduct a rigorous convergence analysis to show that our algorithm converges to the true \( W_2 \)-barycenter of \( \nu_1, \ldots, \nu_K \) in an almost sure sense (see *Setting 3.13* and *Theorem 3.14*).  
+   Specifically, we adapt the computationally efficient entropic OT map estimator by Pooladian and Niles-Weed [52], incorporating tailored modifications to ensure convergence (see *Corollary 4.3*).  
+   To the best of our knowledge, this is the first computationally tractable extension of the fixed-point iterative scheme by Álvarez-Esteban et al. [3] with a convergence guarantee.
+
+3. **Synthetic Benchmark Generation**  
+   We propose a simple and efficient method to generate synthetic instances of the \( W_2 \)-barycenter problem, where the input measures are continuous and non-parametric, and the true barycenter is known (see *Proposition 5.2*).  
+   These instances allow benchmarking and evaluating the effectiveness of \( W_2 \)-barycenter algorithms.  
+   Our numerical experiments demonstrate that the algorithm is empirically accurate, efficient, and stable compared with state-of-the-art alternatives, and supports parallel/distributed computing—making it well suited for large-scale applications.
 
 # Code Structure
 
