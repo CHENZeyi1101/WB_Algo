@@ -88,7 +88,19 @@ Notice that Gurobi optimization (version 9.5.0 or above) must be installed on th
 
 ### Configure the problem instance
 
-- [`Stochastic_FP/Notebooks/input_measure_select.ipynb`](Stochastic_FP/Notebooks/input_measure_select.ipynb)
+- Select the approximate ground-truth measure and the auxiliary measures for generating problem instances in [`Stochastic_FP/Notebooks/input_measure_select.ipynb`](Stochastic_FP/Notebooks/input_measure_select.ipynb).
+
+### Evaluate the performance of our proposed stochastic-fixed algorithm
+
+- Configure parameters and variables, generate the problem instance (with seed specified), and run the iteration algorithm via [`Stochastic_FP/Notebooks/Entropic_run_dim_2.ipynb`](Stochastic_FP/Notebooks/Entropic_run_dim_2.ipynb).
+- The results are saved in [`Stochastic_FP/Notebooks/results/`](Stochastic_FP/Notebooks/results/).
+- Plots in paper can be replicated using [`Stochastic_FP/Notebooks/plot_manipulate_dim2.ipynb`](Stochastic_FP/Notebooks/plot_manipulate_dim2.ipynb).
+
+### Evaluate the performance of Fan et al.'s algorithm
+
+- Generate a pool of samples from the generated input measures via [`ICNN_Fan/notebooks/input_samples_generate_dim2.ipynb`](ICNN_Fan/notebooks/input_samples_generate_dim2.ipynb).
+- Run the ICNN-based algorithm for approximating the Wasserstein barycenter via [`ICNN_Fan/notebooks/ICNN_run_dim2.ipynb`](ICNN_Fan/notebooks/ICNN_run_dim2.ipynb).
+- Evaluate the V-values and the Wasserstein distance to the ground-truth measure of the approximated barycenter via [`ICNN_Fan/notebooks/ICNN_evaluate_dim2.ipynb`](ICNN_Fan/notebooks/ICNN_evaluate_dim2.ipynb).
 
 
 
