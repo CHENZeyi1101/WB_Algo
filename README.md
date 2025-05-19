@@ -98,9 +98,17 @@ Notice that Gurobi optimization (version 9.5.0 or above) must be installed on th
 
 ### Evaluate the performance of Fan et al.'s algorithm
 
-- Generate a pool of samples from the generated input measures via [`ICNN_Fan/notebooks/input_samples_generate_dim2.ipynb`](ICNN_Fan/notebooks/input_samples_generate_dim2.ipynb).
+- Configure parameters and variables, generate the problem instance (with seed specified), and draw a pool of samples from the generated input measures via [`ICNN_Fan/notebooks/input_samples_generate_dim2.ipynb`](ICNN_Fan/notebooks/input_samples_generate_dim2.ipynb).
 - Run the ICNN-based algorithm for approximating the Wasserstein barycenter via [`ICNN_Fan/notebooks/ICNN_run_dim2.ipynb`](ICNN_Fan/notebooks/ICNN_run_dim2.ipynb).
-- Evaluate the V-values and the Wasserstein distance to the ground-truth measure of the approximated barycenter via [`ICNN_Fan/notebooks/ICNN_evaluate_dim2.ipynb`](ICNN_Fan/notebooks/ICNN_evaluate_dim2.ipynb).
+- Evaluate the (approximate) V-values and the (approximate) Wasserstein distance to the ground-truth measure of the approximated barycenter via [`ICNN_Fan/notebooks/ICNN_evaluate_dim2.ipynb`](ICNN_Fan/notebooks/ICNN_evaluate_dim2.ipynb).
+- The results are saved in [`ICNN_Fan/notebooks/results/`](ICNN_Fan/notebooks/results/).
+- Plot results using [`ICNN_Fan/notebooks/ICNN_plot_manipulate.ipynb`](ICNN_Fan/notebooks/ICNN_plot_manipulate.ipynb).
+
+### Evaluate the performance of Korotin et al.'s algorithm
+
+- Configure parameters and variables, generate the problem instance (with seed specified), and run the WIN algorithm via [`WIN_Korotin/notebooks/WIN_run_dim2.ipynb`](WIN_Korotin/notebooks/WIN_run_dim2.ipynb).
+- The results are saved in [`WIN_Korotin/notebooks/results/`](WIN_Korotin/notebooks/results/).
+- Plot results using [`WIN_Korotin/notebooks/WIN_plot_manipulate_dim2.ipynb`](WIN_Korotin/notebooks/WIN_plot_manipulate_dim2.ipynb).
 
 
 
