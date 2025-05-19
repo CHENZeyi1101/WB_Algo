@@ -44,11 +44,7 @@ Keywords: Wasserstein barycenter, optimal transport, information aggregation, tr
 
 # Environment Setup
 
-To replicate the environment and run the project, follow these steps:
-
-### Option 1: Using Conda (recommended)
-
-Create a new Conda environment and install dependencies via `requirements.txt`:
+To replicate the environment and run the project, you are encouraged to create a new Conda environment and install dependencies via `requirements.txt`:
 
 ```bash
 conda create -n myenv python=3.11
