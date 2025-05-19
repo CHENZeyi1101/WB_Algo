@@ -1,5 +1,0 @@
-{
-    "python.analysis.extraPaths": [
-        "./Stochastic_FP/classes"
-    ]
-}
