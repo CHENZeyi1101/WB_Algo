@@ -159,7 +159,7 @@ class entropic_iterative_scheme:
 
     def converge(self, 
                  bary_samples,
-                 input_samples_collection: dict,
+                #  input_samples_collection: dict,
                  max_iter, 
                  num_samples, 
                  epsilon, 
@@ -193,6 +193,8 @@ class entropic_iterative_scheme:
         os.makedirs(W2_to_bary_dir, exist_ok=True)
         os.makedirs(G_samples_dir, exist_ok=True)
 
+        input_samples_collection: dict = self.input_sampler.sample(num_samples = num_samples)
+
         # Compute the true V-value
         true_V_value = self.V_value_compute(bary_samples, input_samples_collection)
         self.V_values_dict["true_V_value"] = true_V_value
@@ -207,6 +209,7 @@ class entropic_iterative_scheme:
             accepted_samples_list = []
             for _ in tqdm(range(MC_size), desc = f"Monte Carlo Sampling at iteration {iter}"): # Monte carlo sample size
                 accepted_samples = self.iterative_sampling(iter, num_samples, sample_logger)
+                input_samples_collection: dict = self.input_sampler.sample(num_samples = num_samples)
                 V_value = self.V_value_compute(accepted_samples, input_samples_collection)
                 W2_to_bary = self.W2_to_bary_compute(bary_samples, accepted_samples)
                 accepted_samples_list.append(accepted_samples.tolist())

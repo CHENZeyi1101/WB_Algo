@@ -3,6 +3,8 @@ import math
 from scipy.linalg import sqrtm, norm
 from tqdm import tqdm, tqdm_notebook
 from .true_WB import *
+import pandas as pd
+from .samplers_dim2 import *
 
 from .entropic_estimate_OT import *
 
@@ -505,18 +507,70 @@ class entropic_input_sampler:
             return batch_sample_collection, candidate_sample_collection
         else:
             return batch_sample_collection
-            
-
-# Example of usage
-# entropic_sampler = entropic_input_sampler(dim = 2, num_measures = 4, auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, source_sampler = source_sampler, n_k = 500, seed = 100)
-# entropic_sampler.generate_strong_convexity_param()
-# entropic_sampler.assign_theta()
-# entropic_sampler.generate_Y_matrices()
-# entropic_sampler.generate_g_vectors()
-# entropic_sampler.generate_smoothness_param()
-# entropic_sampler.construct_surjective_mapping()
-# entropic_sampler.generate_A_matrices()
-# entropic_sampler.sample(sample_size = 1000, show_candidate = False)
-
         
+
+class csv_input_sampler:
+    '''
+    A simple class to load the csv files as input measure samplers
+    '''
+    def __init__(self, dim, num_measures, csv_path):
+        self.dim = dim
+        self.num_measures = num_measures
+        self.csv_path = csv_path
+    
+    def sample(self, sample_size):
+        batch_sample_collection = {k: [] for k in range(self.num_measures)}
+        for marg_id in range(self.num_measures):
+            df = pd.read_csv(
+                f"{self.csv_path}/input_measure_samples_{marg_id}.csv",
+                header=None
+            ).to_numpy()
+
+            # Randomly choose indices
+            idx = np.random.choice(df.shape[0], size=sample_size, replace=False)
+
+            # For each chosen row, append a 1D array
+            selected_rows = [df[i] for i in idx]
+
+            batch_sample_collection[marg_id] = selected_rows
+
+        return batch_sample_collection
+    
+if __name__ == "__main__":
+
+    dim = 2
+    num_components = 5
+    num_measures = 5
+    truncated_radius = 150
+    seed = 1009
+
+    load_dir = "./WB_Algo/Experiments/Synthetic_Generation/dim2_data/samplers_info"
+
+    # Load the samplers
+    source_sampler = MixtureOfGaussians(dim)
+    auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(dim, num_components)
+    entropic_sampler = characterize_entropic_sampler(dim = dim, 
+                                                        num_measures = num_measures, 
+                                                        auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, 
+                                                        source_sampler = source_sampler,
+                                                        truncated_radius = truncated_radius,
+                                                        manual = True)
+
+    source_sampler = load_sampler(load_dir, source_sampler, sampler_type="source")
+    entropic_sampler = load_sampler(load_dir, entropic_sampler, sampler_type="entropic")
+    print("done")
+
+    csv_path = "./WB_Algo/Experiments/Synthetic_Generation/dim2_data/input_samples/csv_files"
+    csv_sampler = csv_input_sampler(dim = dim, num_measures = num_measures, csv_path = csv_path)
+
+    entropic_sample_collection = entropic_sampler.sample(sample_size = 3)
+    csv_sample_collection = csv_sampler.sample(sample_size = 3)
+
+    print(entropic_sample_collection[0])
+    print(csv_sample_collection[0])
+
+    # checked: types and formats are the same
+
+
+
         

@@ -2,6 +2,7 @@ from ...Algorithms.Stochastic_FP.entropic_iterative_scheme import *
 from ...Algorithms.data_manage import *
 from .samplers_dim2 import *
 from .visualize_measures_dim2 import *
+from .input_generate_entropic import *
 
 if __name__ == "__main__":
     dim = 2
@@ -13,8 +14,13 @@ if __name__ == "__main__":
 
     load_dir = "./WB_Algo/Experiments/Synthetic_Generation/dim2_data/samplers_info"
 
+    csv_path = "./WB_Algo/Experiments/Synthetic_Generation/dim2_data/input_samples/csv_files"
+    csv_sampler = csv_input_sampler(dim = dim, num_measures = num_measures, csv_path = csv_path)
+
     # Load the samplers
     source_sampler = MixtureOfGaussians(dim)
+    source_sampler = load_sampler(load_dir, source_sampler, sampler_type="source")
+
     auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(dim, num_components)
     entropic_sampler = characterize_entropic_sampler(dim = dim, 
                                                      num_measures = num_measures, 
@@ -22,8 +28,6 @@ if __name__ == "__main__":
                                                      source_sampler = source_sampler,
                                                      truncated_radius = truncated_radius,
                                                      manual = True)
-    
-    source_sampler = load_sampler(load_dir, source_sampler, sampler_type="source")
     entropic_sampler = load_sampler(load_dir, entropic_sampler, sampler_type="entropic")
     print("done")
     
@@ -31,7 +35,7 @@ if __name__ == "__main__":
     entropic_iterative_computer = entropic_iterative_scheme(dim = dim, 
                                                             num_measures = num_measures, 
                                                             bary_sampler = source_sampler, 
-                                                            input_sampler = entropic_sampler, 
+                                                            input_sampler = csv_sampler, # alternative: entropic_sampler
                                                             truncate_radius = truncated_radius)
     bary_samples = entropic_iterative_computer.bary_sampling(num_samples = num_samples)
     input_samples_collection = entropic_iterative_computer.input_sampling(num_samples = num_samples)
@@ -40,7 +44,7 @@ if __name__ == "__main__":
     os.makedirs(data_dir, exist_ok=True)
 
     entropic_iterative_computer.converge(bary_samples,
-                                        input_samples_collection,
+                                        # input_samples_collection,
                                         max_iter = 5,
                                         num_samples = num_samples,
                                         epsilon = 10,
