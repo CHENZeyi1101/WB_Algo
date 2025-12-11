@@ -12,7 +12,7 @@ if __name__ == "__main__":
 
     num_samples_in_preparation = int(1e7)
 
-    load_dir = "./WB_Algo/Experiments/Synthetic_Generation/dim2_data/samplers_info"
+    load_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/samplers_info"
 
     # Load the samplers
     source_sampler = MixtureOfGaussians(dim)
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     print("done")
 
     # Generate input samples
-    csv_path = "./WB_Algo/Experiments/Synthetic_Generation/dim2_data/input_samples/csv_files"
+    csv_path = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/input_samples/csv_files"
     os.makedirs(csv_path, exist_ok=True)
     
     input_measure_samples = entropic_sampler.sample(num_samples_in_preparation)

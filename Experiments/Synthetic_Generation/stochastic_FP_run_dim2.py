@@ -12,9 +12,9 @@ if __name__ == "__main__":
     truncated_radius = 150
     seed = 1009
 
-    load_dir = "./WB_Algo/Experiments/Synthetic_Generation/dim2_data/samplers_info"
+    load_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/samplers_info"
 
-    csv_path = "./WB_Algo/Experiments/Synthetic_Generation/dim2_data/input_samples/csv_files"
+    csv_path = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/input_samples/csv_files"
     csv_sampler = csv_input_sampler(dim = dim, num_measures = num_measures, csv_path = csv_path)
 
     # Load the samplers
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     bary_samples = entropic_iterative_computer.bary_sampling(num_samples = num_samples)
     input_samples_collection = entropic_iterative_computer.input_sampling(num_samples = num_samples)
 
-    data_dir = "./WB_Algo/Experiments/Synthetic_Generation/dim2_data/stochastic_FP_outputs"
+    data_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/stochastic_FP_outputs"
     os.makedirs(data_dir, exist_ok=True)
 
     entropic_iterative_computer.converge(bary_samples,
