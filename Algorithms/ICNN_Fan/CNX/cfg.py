@@ -43,9 +43,15 @@ class CNXCfgCustom(optimal_transport_modules.cfg.Cfg3loop_F):
         if self.NUM_DISTRIBUTION is None:
             self.NUM_DISTRIBUTION = int(input("Please enter the value for num_distribution: "))
 
-    def get_save_path(self):
-        return f'./CNX_outputs/Custom_dim{self.DIM}_measures{self.NUM_DISTRIBUTION}'
+    def get_save_path(self, path_name = None):
+        if path_name is None:
+            return f'./CNX_outputs/Custom_dim{self.DIM}_measures{self.NUM_DISTRIBUTION}'
+        else:
+            return path_name
 
-    def get_save_path_F(self):
-        return f'./CNX_outputs/Custom_dim{self.DIM}_measures{self.NUM_DISTRIBUTION}'
+    def get_save_path_F(self, path_name = None):
+        if path_name is None:
+            return f'./CNX_outputs/Custom_dim{self.DIM}_measures{self.NUM_DISTRIBUTION}'
+        else:
+            return path_name
     

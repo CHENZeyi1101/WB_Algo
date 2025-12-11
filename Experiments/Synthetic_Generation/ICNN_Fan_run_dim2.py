@@ -270,8 +270,6 @@ if __name__ == '__main__':
     seed = 1009
     cfg = Cfg_class(DIM = dim, NUM_DISTRIBUTION=num_measures)
 
-    num_samples_in_preparation = 1e5
-
     csv_path = "./WB_Algo/Experiments/Synthetic_Generation/dim2_data/input_samples/csv_files"
     os.makedirs(csv_path, exist_ok=True)
 
@@ -280,12 +278,15 @@ if __name__ == '__main__':
     # PTU.set_gpu_mode(True, gpus_choice[0])
     PTU.set_gpu_mode(False, 0)
 
-    cfg.INPUT_DIM = 2
+    cfg.INPUT_DIM = dim
     cfg.OUTPUT_DIM = cfg.INPUT_DIM
-    cfg.NUM_DISTRIBUTION = 5
+    cfg.NUM_DISTRIBUTION = num_measures
     cfg.high_dim_flag = False
     cfg.epochs = 500
-    results_save_path, model_save_path, results, testresults = LLU.init_path(cfg)
+    _, _, results, testresults = LLU.init_path(cfg)
+    results_save_path = f'./dim{dim}_data/ICNN_Fan_outputs/CNX_outputs/Custom_dim{dim}_measures{num_measures}'
+    model_save_path = results_save_path + '/storing_models'
+    
     # kwargs = {'num_workers': 4, 'pin_memory': True}
     kwargs = {'pin_memory': True}
 
