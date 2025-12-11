@@ -8,6 +8,10 @@ from .true_WB import *
 from .input_generate_entropic import *  
 from .sample_plot import *
 
+''' 
+This module characterizes and sets up samplers for synthetic experiments in 2D.
+'''
+
 def characterize_source_sampler(dim, num_components = 5, seed = None, save_dir = None):
     """
     Characterize the source sampler (mixture of Gaussians) and auxiliary measure samplers for synthetic experiments.
