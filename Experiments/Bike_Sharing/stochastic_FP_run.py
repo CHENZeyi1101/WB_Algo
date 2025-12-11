@@ -3,6 +3,10 @@ from ...Algorithms.data_manage import *
 from .posterior_sampler import *
 from .visualize_posteriors import *
 
+'''
+Running command from terminal: python -m WB_Algo.Experiments.Bike_Sharing.stochastic_FP_run
+'''
+
 if __name__ == "__main__":
     dim = 8
     num_samples = 2000
