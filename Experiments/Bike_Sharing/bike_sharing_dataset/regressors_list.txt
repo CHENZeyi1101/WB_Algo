@@ -1,0 +1,1 @@
+season, hour, workingday, weathersit, temp, atemp, hum, windspeed, intercept
