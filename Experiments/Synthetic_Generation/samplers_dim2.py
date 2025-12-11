@@ -5,7 +5,7 @@ from tqdm import tqdm
 import pickle
 
 from .true_WB import *
-from .input_generate_entropic import *  
+from .input_generate_entropic import entropic_input_sampler, csv_input_sampler 
 from .sample_plot import *
 
 ''' 
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     truncated_radius = 150
     seed = 1009
 
-    save_dir = "./WB_Algo/Experiments/Synthetic_Generation/dim2_data/samplers_info"
+    save_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/samplers_info"
     os.makedirs(save_dir, exist_ok=True)
 
     source_sampler = characterize_source_sampler(dim, num_components, seed, save_dir)
@@ -130,7 +130,7 @@ if __name__ == "__main__":
                                                      auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, 
                                                      source_sampler = source_sampler,
                                                      truncated_radius = truncated_radius,
-                                                     manual = True)
+                                                     manual = False)
     entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir)
     
     
