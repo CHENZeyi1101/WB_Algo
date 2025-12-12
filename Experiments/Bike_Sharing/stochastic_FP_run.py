@@ -9,7 +9,7 @@ Running command from terminal: python -m WB_Algo.Experiments.Bike_Sharing.stocha
 
 if __name__ == "__main__":
     dim = 8
-    num_samples = 2000
+    num_samples = 10000
     num_measures = 5
     truncated_radius = 500
     multiplication_factor = 10
