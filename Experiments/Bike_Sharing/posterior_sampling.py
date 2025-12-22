@@ -59,7 +59,7 @@ if __name__ == "__main__":
     OUTPUT_MODEL_DIR = os.path.join(DATA_DIR, "models_meta")
     OUTPUT_SAMPLES_DIR = os.path.join(DATA_DIR, "samples")
 
-    num_samples = 10000
+    num_samples = 5000
     
     # ensure output directories
     os.makedirs(OUTPUT_MODEL_DIR, exist_ok=True)

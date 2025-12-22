@@ -270,7 +270,7 @@ if __name__ == '__main__':
     seed = 1009
     cfg = Cfg_class(DIM = dim, NUM_DISTRIBUTION=num_measures)
 
-    csv_path = "./WB_Algo/Experiments/Synthetic_Generation/dim2_data/input_samples/csv_files"
+    csv_path = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/input_samples/csv_files"
     os.makedirs(csv_path, exist_ok=True)
 
     # gpus_choice = GPUtil.getFirstAvailable(
