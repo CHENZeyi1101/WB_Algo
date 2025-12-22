@@ -11,13 +11,9 @@ parameters {
   vector[d] theta;     // auxiliary parameter
 }
 
-transformed parameters {
-  vector[n] f;
-  f = theta0 + x * theta;
-}
-
 model {
   theta0 ~ normal(0, 1);
   theta ~ normal(0, 1);
+  vector[n] f = theta0 + x * theta;
   target += n_rep * poisson_log_lpmf(y | f);
 }

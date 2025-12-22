@@ -86,7 +86,7 @@ if __name__ == "__main__":
     for i, part in enumerate(splits):
         Xi = X[part]
         Yi = Y[part].astype(int)
-        data_i = {'x': Xi, 'y': Yi, 'd': d, 'n': len(part), 'n_rep': n_splits}
+        data_i = {'x': Xi, 'y': Yi, 'd': d, 'n': len(part), 'n_rep': N / len(part)}
         meta_model_save(f"model_split_{i}", data_i, stan_code, seed=i)
 
     # sample from full model
