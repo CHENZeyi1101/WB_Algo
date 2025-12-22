@@ -49,6 +49,10 @@ def sample_from_meta(meta_filename, num_chains=1, num_samples=1000, save_samples
         samples_path = os.path.join(save_dir, samples_name)
         np.save(samples_path, draws)
         print("Saved samples to:", samples_path) # file type: npy
+        # csv_name = meta['model_name'] + "_samples.csv"
+        # csv_path = os.path.join(save_dir, csv_name)
+        # draws.to_csv(csv_path)
+        # print("Saved samples to:", csv_path) # file type: csv
     return draws  # (chains, draws, d)
     
 if __name__ == "__main__":
@@ -60,7 +64,6 @@ if __name__ == "__main__":
     OUTPUT_SAMPLES_DIR = os.path.join(DATA_DIR, "samples")
 
     num_samples = 10000
-    
     # ensure output directories
     os.makedirs(OUTPUT_MODEL_DIR, exist_ok=True)
     os.makedirs(OUTPUT_SAMPLES_DIR, exist_ok=True)
