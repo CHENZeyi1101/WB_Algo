@@ -4,3 +4,4 @@
 *G_samples.json
 *.zip
 # *.csv
+.vscode/settings.json
