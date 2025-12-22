@@ -40,7 +40,7 @@ if __name__ == '__main__':
         stan_code = f.read()
 
     # Load and prepare data
-    dnm = 'biketrips_large.npz'
+    dnm = 'bike_sharing_dataset/biketrips_large.npz'
     X, Y = load_data(dnm)
     n_max = X.shape[0] - (X.shape[0] % n_splits)
 
@@ -82,8 +82,7 @@ if __name__ == '__main__':
     fit = posterior.sample(
         num_chains=1,
         num_samples=num_samples,
-        num_warmup=warmup,
-        thin=g_thin
+        num_warmup=warmup
     )
 
     # Extract posterior draws

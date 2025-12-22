@@ -89,14 +89,14 @@ if __name__ == "__main__":
 
     # sample from full model
     print("Sampling from full model...")
-    full_samples = sample_from_meta(os.path.join(OUTPUT_MODEL_DIR, "model_total.meta.pkl"), num_chains=1, num_samples=1000, save_samples=True, save_dir=OUTPUT_SAMPLES_DIR) 
+    full_samples = sample_from_meta(os.path.join(OUTPUT_MODEL_DIR, "model_total.meta.pkl"), num_chains=1, num_samples=10000, save_samples=True, save_dir=OUTPUT_SAMPLES_DIR) 
     print("Full model samples shape:", full_samples.shape)
     print(full_samples[0:5])  # print first 5 samples
 
     # sample from split models
     for i in range(n_splits):
         print(f"Sampling from split model {i}...")
-        split_samples = sample_from_meta(os.path.join(OUTPUT_MODEL_DIR, f"model_split_{i}.meta.pkl"), num_chains=1, num_samples=1000, save_samples=True, save_dir=OUTPUT_SAMPLES_DIR)
+        split_samples = sample_from_meta(os.path.join(OUTPUT_MODEL_DIR, f"model_split_{i}.meta.pkl"), num_chains=1, num_samples=10000, save_samples=True, save_dir=OUTPUT_SAMPLES_DIR)
         print(f"Split model {i} samples shape:", split_samples.shape)
         print(split_samples[0:5])  # print first 5 samples
 
