@@ -1,4 +1,4 @@
-make ./experiments/bike_sharing_PoissonGLM
+make ./experiments/bike_sharing/bike_sharing_PoissonGLM
 
 ./experiments/bike_sharing/bike_sharing_PoissonGLM sample num_warmup=10000 num_samples=10000000  data file=./experiments/bike_sharing/data_full.json output file=./experiments/bike_sharing/posterior_full.csv random seed=9000
 
