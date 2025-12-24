@@ -3,7 +3,7 @@ data {
   int<lower=0> d;           // number of predictors
   array[n] int<lower=0> y;  // outputs (integer array of length n)
   matrix[n, d] x;           // inputs (n × d matrix)
-  int<lower=0> n_rep;
+  real<lower=0> n_rep;
 }
 
 parameters {
