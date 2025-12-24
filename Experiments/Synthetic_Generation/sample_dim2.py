@@ -22,7 +22,8 @@ if __name__ == "__main__":
                                                         auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, 
                                                         source_sampler = source_sampler,
                                                         truncated_radius = truncated_radius,
-                                                        manual = True)
+                                                        manual = True, 
+                                                        bound_type="eigen_bound")
 
     source_sampler = load_sampler(load_dir, source_sampler, sampler_type="source")
     entropic_sampler = load_sampler(load_dir, entropic_sampler, sampler_type="entropic")

@@ -43,7 +43,8 @@ def characterize_entropic_sampler(dim,
                                  auxiliary_measure_sampler_set, 
                                  source_sampler,
                                  truncated_radius,
-                                 manual = False):
+                                 manual = False,
+                                 bound_type = "norm_bound"):
     """
     Characterize the entropic sampler for synthetic experiments.
     """
@@ -56,7 +57,7 @@ def characterize_entropic_sampler(dim,
                                           gamma = 0.3, 
                                           manual = manual,
                                           truncated_radius = truncated_radius,
-                                          bound_type = "eigen_bound")
+                                          bound_type = bound_type)
     
     return entropic_sampler
     
@@ -115,7 +116,7 @@ def load_sampler(load_dir, sampler, sampler_type = "entropic"):
 if __name__ == "__main__":
     dim = 10
     num_components = 5
-    num_samples = 5000
+    # num_samples = 5000
     num_measures = 10
     truncated_radius = 5000
     seed = 1009
@@ -130,7 +131,8 @@ if __name__ == "__main__":
                                                      auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, 
                                                      source_sampler = source_sampler,
                                                      truncated_radius = truncated_radius,
-                                                     manual = True)
+                                                     manual = False,
+                                                     bound_type = "norm_bound")
     entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir)
     
     

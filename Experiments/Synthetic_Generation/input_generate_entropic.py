@@ -4,7 +4,7 @@ from scipy.linalg import sqrtm, norm
 from tqdm import tqdm, tqdm_notebook
 from .true_WB import *
 import pandas as pd
-from .samplers_dim2 import *
+# from .samplers_dim2 import *
 
 from .entropic_estimate_OT import *
 
@@ -452,7 +452,7 @@ class entropic_input_sampler:
             # # measure_samples = {b: np.sum(candidate_allocation[b], axis = 0) for b in range(num_measures)}
             measure_samples_dict = {b: alpha * np.sum(candidate_allocation[b], axis = 0) + gamma * beta * A_matrices_dict[b] @ x for b in range(num_measures)}
 
-        else: # we design the combination of candidates and A-matrices manually in a tailored way for "fancy" measures.
+        else: # we design the combination of candidates and A-matrices manually in a tailored way for nontrivial measures.
 
             # The below operations are reverse-engineered for the case of num_measures = 5 and tilde_K = 5. The seed for this entropic sampler is 120. 
             measure_samples_dict = {}
@@ -537,6 +537,7 @@ class csv_input_sampler:
         return batch_sample_collection
     
 if __name__ == "__main__":
+    from .samplers_dim2 import *
 
     dim = 2
     num_components = 5
