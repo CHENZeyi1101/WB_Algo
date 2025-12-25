@@ -1,28 +1,31 @@
 import numpy as np
 import ot
-from .posterior_sampler import *
+from .samplers_dim10 import *
 from .metrics_to_compare import *
+from .input_generate_entropic import *
 import json, os
 from ...Algorithms.Fast_Cuturi.free_support_WB import w2_barycenter_free_support_from_samples
 
 if __name__ == "__main__":
-    dim = 9
+    dim = 10
     num_samples = 10000
     num_measures = 5
     truncated_radius = 500
-    multiplication_factor = 10
+    # multiplication_factor = 10
     MC_size = 20
 
-    posterior_csv_dir = f"../WB_data/Bike_Sharing"
-    total_posterior_sampler = csv_posterior_sampler(csv_dir=posterior_csv_dir, num_measures=1, multiplication_factor=multiplication_factor, type="full")
-    split_posterior_sampler = csv_posterior_sampler(csv_dir=posterior_csv_dir, num_measures=num_measures, multiplication_factor=multiplication_factor, type="split")
+    load_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/samplers_info"
+    source_sampler = MixtureOfGaussians(dim)
+    source_sampler = load_sampler(load_dir, source_sampler, sampler_type="source")
+    csv_path = f"../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files"
+    csv_sampler = csv_input_sampler(dim = dim, num_measures = num_measures, csv_path = csv_path)
 
-    bary_sample_path = f"./WB_Algo/Experiments/Bike_Sharing/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
+    bary_sample_path = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
 
-    data_dir = f"./WB_Algo/Experiments/Bike_Sharing/data_outputs/Fast_Cuturi_outputs"
+    data_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/Fast_Cuturi_outputs"
     os.makedirs(data_dir, exist_ok=True)
     V_values_dir = os.path.join(data_dir, "V_values")
     W2_to_bary_dir = os.path.join(data_dir, "W2_to_bary")
@@ -33,7 +36,7 @@ if __name__ == "__main__":
     W2_to_bary_list = []
     for i in range(MC_size):
         print(f"Computing barycenter sample {i+1}/{MC_size}...")
-        input_samples_collection = split_posterior_sampler.sample(num_samples)
+        input_samples_collection = csv_sampler.sample(num_samples)
         samples_list = [np.array(input_samples_collection[key]) for key in sorted(input_samples_collection.keys())]
         approx_bary = w2_barycenter_free_support_from_samples(
             samples_list,

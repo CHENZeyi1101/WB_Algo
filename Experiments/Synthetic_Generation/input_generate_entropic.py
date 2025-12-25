@@ -509,6 +509,61 @@ class entropic_input_sampler:
             return batch_sample_collection
         
 
+def reservoir_sample_csv(
+    csv_filename,
+    num_samples,
+    skiprows=0,
+    usecols=None, # selected columns corresponding to targeted coefficients
+    chunksize=5000,
+    seed=None,
+):
+    """
+    Uniformly sample num_samples rows from a CSV using reservoir sampling.
+    Does NOT load the full CSV into memory.
+    """
+    rng = np.random.default_rng(seed)
+
+    # Count total rows for progress bar (cheap, no parsing)
+    with open(csv_filename, "r") as f:
+        total_rows = sum(1 for _ in f) - skiprows
+
+    reservoir = None
+    seen = 0
+
+    reader = pd.read_csv(
+        csv_filename,
+        skiprows=skiprows,
+        usecols=usecols,
+        chunksize=chunksize,
+    )
+
+    with tqdm(
+        total=total_rows,
+        desc=f"Reservoir sampling {os.path.basename(csv_filename)}",
+        unit="rows",
+    ) as pbar: # count how many rows have been read so far
+        for chunk in reader:
+            arr = chunk.to_numpy()
+            for row in arr:
+                if seen < num_samples:
+                    if reservoir is None:
+                        reservoir = np.empty((num_samples, arr.shape[1]))
+                    reservoir[seen] = row
+                else:
+                    j = rng.integers(0, seen + 1)
+                    if j < num_samples:
+                        reservoir[j] = row
+                seen += 1
+            pbar.update(len(arr))
+
+    if seen < num_samples:
+        raise ValueError(
+            f"Requested {num_samples} samples but only {seen} rows available in {csv_filename}"
+        )
+
+    return reservoir
+        
+
 class csv_input_sampler:
     '''
     A simple class to load the csv files as input measure samplers
@@ -518,21 +573,32 @@ class csv_input_sampler:
         self.num_measures = num_measures
         self.csv_path = csv_path
     
-    def sample(self, sample_size):
+    def sample(self, sample_size, seed=None):
         batch_sample_collection = {k: [] for k in range(self.num_measures)}
         for marg_id in range(self.num_measures):
-            df = pd.read_csv(
+            # df = pd.read_csv(
+            #     f"{self.csv_path}/input_measure_samples_{marg_id}.csv",
+            #     header=None
+            # ).to_numpy()
+            # # Randomly choose indices
+            # idx = np.random.choice(df.shape[0], size=sample_size, replace=False)
+
+            # # For each chosen row, append a 1D array
+            # selected_rows = [df[i] for i in idx]
+
+            # batch_sample_collection[marg_id] = selected_rows
+
+            # use reservior sampling
+            df = reservoir_sample_csv(
                 f"{self.csv_path}/input_measure_samples_{marg_id}.csv",
-                header=None
-            ).to_numpy()
-
-            # Randomly choose indices
-            idx = np.random.choice(df.shape[0], size=sample_size, replace=False)
-
-            # For each chosen row, append a 1D array
-            selected_rows = [df[i] for i in idx]
-
-            batch_sample_collection[marg_id] = selected_rows
+                num_samples=sample_size,
+                skiprows=0,
+                usecols=None,
+                chunksize = 5000,
+                seed=None if seed is None else seed + marg_id
+            )
+            
+            batch_sample_collection[marg_id] = [row for row in df]
 
         return batch_sample_collection
     

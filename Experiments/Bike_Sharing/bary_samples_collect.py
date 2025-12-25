@@ -2,7 +2,7 @@ import os
 import json
 from .posterior_sampler import *
 if __name__ == "__main__":
-    dim = 8
+    dim = 9
     bary_MC_size = 50
     num_samples = 10000
 

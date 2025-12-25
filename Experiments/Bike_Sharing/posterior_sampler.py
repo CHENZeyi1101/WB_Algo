@@ -27,9 +27,9 @@ class posterior_sampler:
 def reservoir_sample_csv(
     csv_filename,
     num_samples,
-    skiprows=52,
-    usecols=range(8, 16), # selected columns corresponding to targeted coefficients
-    chunksize=500,
+    skiprows=0,
+    usecols=None, # selected columns corresponding to targeted coefficients
+    chunksize=5000,
     seed=None,
 ):
     """
@@ -56,7 +56,7 @@ def reservoir_sample_csv(
         total=total_rows,
         desc=f"Reservoir sampling {os.path.basename(csv_filename)}",
         unit="rows",
-    ) as pbar:
+    ) as pbar: # count how many rows have been read so far
         for chunk in reader:
             arr = chunk.to_numpy()
             for row in arr:
@@ -98,7 +98,7 @@ class csv_posterior_sampler:
                 num_samples=num_samples,
                 skiprows=52,
                 usecols=range(7, 16),
-                chunksize = 2 * num_samples,
+                chunksize = 5000,
                 seed=seed,
             )
             return self.multiplication_factor * samples
@@ -115,17 +115,18 @@ class csv_posterior_sampler:
                     num_samples=num_samples,
                     skiprows=52,
                     usecols=range(7, 16),
-                    chunksize = 2 * num_samples,
+                    chunksize = 5000,
                     seed=None if seed is None else seed + measure_idx,
                 )
-                batch_sample_collection[measure_idx] = (
-                    self.multiplication_factor * samples
-                )
+                batch_sample_collection[measure_idx] = [row for row in samples]
 
             return batch_sample_collection
 
 if __name__ == "__main__":
     posterior_csv_dir = f"../WB_data/Bike_Sharing"
     total_posterior_sampler = csv_posterior_sampler(csv_dir=posterior_csv_dir, num_measures=1, multiplication_factor=1, type="full")
-    total_posterior_samples = total_posterior_sampler.sample(10000)
-
+    split_posterior_sampler = csv_posterior_sampler(csv_dir=posterior_csv_dir, num_measures=5, multiplication_factor=1, type="split")
+    batch_sample_collection = split_posterior_sampler.sample(num_samples=10)
+    print(np.array(batch_sample_collection[0]))
+    print(np.array(batch_sample_collection[0][0]))
+    

@@ -8,11 +8,12 @@ Running command from terminal: python -m WB_Algo.Experiments.Bike_Sharing.stocha
 '''
 
 if __name__ == "__main__":
-    dim = 8
+    dim = 9
     num_samples = 10000
     num_measures = 5
     truncated_radius = 500
     multiplication_factor = 10
+    MC_size = 20
 
     # DATA_DIR = os.path.dirname(__file__)
     # MODEL_DIR = os.path.join(DATA_DIR, "models_meta")
@@ -49,7 +50,7 @@ if __name__ == "__main__":
                                         max_iter = 5,
                                         num_samples = num_samples,
                                         epsilon = 10,
-                                        MC_size = 20,
+                                        MC_size = MC_size,
                                         logger = {'sample_logger': None, 'map_logger': None},
                                         data_dir = data_dir,
                                         warm_start = True
