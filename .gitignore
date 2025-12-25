@@ -1,6 +1,6 @@
 
 *.log
-#*.json
+*.json
 *G_samples.json
 *.zip
 # *.csv

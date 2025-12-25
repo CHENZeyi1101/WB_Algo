@@ -4,6 +4,10 @@ import pickle
 import numpy as np
 import stan  # PyStan 3
 
+'''
+This module implements functions to save model metadata, load data, and sample from posterior distributions using Stan.
+'''
+
 
 def load_data(dnm):
     data = np.load(dnm)

@@ -10,7 +10,7 @@ if __name__ == "__main__":
     truncated_radius = 150
     seed = 1009
 
-    num_samples_in_preparation = int(1e7)
+    num_samples_in_preparation = int(1e6)
 
     load_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/samplers_info"
 
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     print("done")
 
     # Generate input samples
-    csv_path = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/input_samples/csv_files"
+    csv_path = f"../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files"
     os.makedirs(csv_path, exist_ok=True)
     
     input_measure_samples = entropic_sampler.sample(num_samples_in_preparation)

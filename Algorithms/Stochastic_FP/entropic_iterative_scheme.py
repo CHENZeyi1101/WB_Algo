@@ -15,7 +15,7 @@ def W2_pot(X, Y):
     '''
     M = ot.dist(X, Y)
     a, b = np.ones((X.shape[0],)) / X.shape[0], np.ones((Y.shape[0],)) / Y.shape[0]
-    W2_sq = ot.emd2(a, b, M, numItermax=1e6)
+    W2_sq = ot.emd2(a, b, M, numItermax=1e7)
     return W2_sq
 
 class entropic_iterative_scheme:
@@ -158,7 +158,7 @@ class entropic_iterative_scheme:
         return true_V_value
 
     def converge(self, 
-                 bary_samples,
+                 bary_sample_collection,
                 #  input_samples_collection: dict,
                  max_iter, 
                  num_samples, 
@@ -193,13 +193,17 @@ class entropic_iterative_scheme:
         os.makedirs(W2_to_bary_dir, exist_ok=True)
         os.makedirs(G_samples_dir, exist_ok=True)
 
-        input_samples_collection: dict = self.input_sampler.sample(num_samples = num_samples)
-
         # Compute the true V-value
-        true_V_value = self.V_value_compute(bary_samples, input_samples_collection)
-        self.V_values_dict["true_V_value"] = true_V_value
-        save_json(self.V_values_dict, V_values_dir, "V_values.json")
-        print(f"True V-value computed: {true_V_value}")
+        true_V_value_list = []
+        for i in range(MC_size):
+            bary_samples = bary_sample_collection[str(i)]
+            input_samples_collection: dict = self.input_sampler.sample(num_samples)
+            true_V_value = self.V_value_compute(bary_samples, input_samples_collection)
+            true_V_value_list.append(true_V_value)
+        self.V_values_dict["true_V_value"] = true_V_value_list
+        save_json(self.V_values_dict, V_values_dir, "true_V_values.json")
+        mean_true_V_value = np.mean(true_V_value_list)
+        print(f"True V-value computed: {mean_true_V_value}")
 
         # Start the iterations
         iter = 0
@@ -207,9 +211,10 @@ class entropic_iterative_scheme:
             V_values_list = []
             W2_to_bary_list = []
             accepted_samples_list = []
-            for _ in tqdm(range(MC_size), desc = f"Monte Carlo Sampling at iteration {iter}"): # Monte carlo sample size
+            for i in tqdm(range(MC_size), desc = f"Monte Carlo Sampling at iteration {iter}"): # Monte carlo sample size
+                bary_samples = bary_sample_collection[str(i)]
                 accepted_samples = self.iterative_sampling(iter, num_samples, sample_logger)
-                input_samples_collection: dict = self.input_sampler.sample(num_samples = num_samples)
+                input_samples_collection: dict = self.input_sampler.sample(num_samples)
                 V_value = self.V_value_compute(accepted_samples, input_samples_collection)
                 W2_to_bary = self.W2_to_bary_compute(bary_samples, accepted_samples)
                 accepted_samples_list.append(accepted_samples.tolist())
@@ -219,9 +224,11 @@ class entropic_iterative_scheme:
             self.V_values_dict[f"iteration_{iter}"] = V_values_list
             self.W2_to_bary_dict[f"iteration_{iter}"] = W2_to_bary_list
             self.G_samples_dict[f"iteration_{iter}"] = accepted_samples_list
-            save_json(self.V_values_dict, V_values_dir, "V_values.json")
-            save_json(self.W2_to_bary_dict, W2_to_bary_dir, "W2_to_bary.json")
-            save_json(self.G_samples_dict, G_samples_dir, "G_samples.json")
+            save_json(self.V_values_dict, V_values_dir, f"V_values_iter{iter}.json")
+            save_json(self.W2_to_bary_dict, W2_to_bary_dir, f"W2_to_bary_iter{iter}.json")
+            save_json(self.G_samples_dict, G_samples_dir, f"G_samples_iter{iter}.json")
             iter += 1
+
+
 
     
