@@ -44,7 +44,8 @@ def characterize_entropic_sampler(dim,
                                  source_sampler,
                                  truncated_radius,
                                  manual = False,
-                                 bound_type = "norm_bound"):
+                                 bound_type = "norm_bound",
+                                 theta = 10):
     """
     Characterize the entropic sampler for synthetic experiments.
     """
@@ -57,7 +58,8 @@ def characterize_entropic_sampler(dim,
                                           gamma = 0.3, 
                                           manual = manual,
                                           truncated_radius = truncated_radius,
-                                          bound_type = bound_type)
+                                          bound_type = bound_type,
+                                          theta = theta)
     
     return entropic_sampler
     
@@ -132,7 +134,8 @@ if __name__ == "__main__":
                                                      source_sampler = source_sampler,
                                                      truncated_radius = truncated_radius,
                                                      manual = False,
-                                                     bound_type = "norm_bound")
+                                                     bound_type = "norm_bound", 
+                                                     theta = 10)
     entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir)
     
     

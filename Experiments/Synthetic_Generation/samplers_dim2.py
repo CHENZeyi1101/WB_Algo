@@ -44,7 +44,8 @@ def characterize_entropic_sampler(dim,
                                  source_sampler,
                                  truncated_radius,
                                  manual = False,
-                                 bound_type = "eigen_bound"):
+                                 bound_type = "eigen_bound",
+                                 theta = 10):
     """
     Characterize the entropic sampler for synthetic experiments.
     """
@@ -57,11 +58,12 @@ def characterize_entropic_sampler(dim,
                                           gamma = 0.3, 
                                           manual = manual,
                                           truncated_radius = truncated_radius,
-                                          bound_type = bound_type)
+                                          bound_type = bound_type,
+                                          theta = theta)
     
     return entropic_sampler
     
-def set_up_entropic_sampler(entropic_sampler, save_dir = None):
+def set_up_entropic_sampler(entropic_sampler, save_dir = None): # epsilon is the regularization parameter
     """
     Set up the entropic sampler by generating all necessary parameters and matrices. Once set up, the configuration is saved to load for future use.
     """
@@ -120,6 +122,7 @@ if __name__ == "__main__":
     num_measures = 5
     truncated_radius = 150
     seed = 1009
+    epsilon = 10
 
     save_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/samplers_info"
     os.makedirs(save_dir, exist_ok=True)
@@ -132,7 +135,9 @@ if __name__ == "__main__":
                                                      source_sampler = source_sampler,
                                                      truncated_radius = truncated_radius,
                                                      manual = False,
-                                                     bound_type="eigen_bound")
+                                                     bound_type="eigen_bound",
+                                                     theta = 10)
     entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir)
+    
     
     

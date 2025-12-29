@@ -23,7 +23,8 @@ class entropic_input_sampler:
                  gamma = 0.3, 
                  manual = True, 
                  truncated_radius = 100,
-                 bound_type = "eigen_bound"):
+                 bound_type = "eigen_bound",
+                 theta = 10):
         self.dim = dim
         self.num_measures = num_measures
         self.auxiliary_measure_sampler_set = auxiliary_measure_sampler_set
@@ -38,7 +39,7 @@ class entropic_input_sampler:
         self.truncated_radius = truncated_radius
         self.bound_type = bound_type
         self.grid_size = 200
-        self.theta = 10
+        self.theta = theta
 
     def generate_strong_convexity_param(self):
         r'''
