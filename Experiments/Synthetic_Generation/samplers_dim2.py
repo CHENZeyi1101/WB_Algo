@@ -124,7 +124,7 @@ if __name__ == "__main__":
     seed = 1009
     epsilon = 10
 
-    save_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/samplers_info"
+    save_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data_test/samplers_info"
     os.makedirs(save_dir, exist_ok=True)
 
     source_sampler = characterize_source_sampler(dim, num_components, seed, save_dir)
@@ -138,6 +138,6 @@ if __name__ == "__main__":
                                                      bound_type="eigen_bound",
                                                      theta = 10)
     entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir)
-    
+
     
     
