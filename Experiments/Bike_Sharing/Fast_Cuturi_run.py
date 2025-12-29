@@ -9,8 +9,8 @@ if __name__ == "__main__":
     dim = 9
     num_samples = 10000
     num_measures = 5
-    truncated_radius = 500
-    multiplication_factor = 10
+    truncated_radius = 1000
+    multiplication_factor = 1
     MC_size = 20
 
     posterior_csv_dir = f"../WB_data/Bike_Sharing"
@@ -37,9 +37,9 @@ if __name__ == "__main__":
         samples_list = [np.array(input_samples_collection[key]) for key in sorted(input_samples_collection.keys())]
         approx_bary = w2_barycenter_free_support_from_samples(
             samples_list,
-            k=10000,
+            k=100,
             init="kmeans",
-            numItermax=300,
+            numItermax=200,
             verbose=True,
             seed=42,
         )

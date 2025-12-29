@@ -2,12 +2,12 @@ import numpy as np
 import ot
 
 def w2_barycenter_free_support_from_samples(
-    samples_list,
+    samples_list, # a list of np.arrays
     k=5000,
     weights=None,
     init="kmeans",
-    numItermax=1000,
-    stopThr=1e-7,
+    numItermax=200,
+    stopThr=1e-6,
     verbose=False,
     numThreads=1,
     seed=0,
@@ -57,7 +57,7 @@ def w2_barycenter_free_support_from_samples(
     if not isinstance(samples_list, (list, tuple)) or len(samples_list) == 0:
         raise ValueError("samples_list must be a non-empty list of arrays.")
     N = len(samples_list)
-    d = np.asarray(samples_list[0]).shape[1]
+    d = np.asarray(samples_list[0]).shape[1] # shape of samples_list[0] is (m_0, d)
     for i, Xi in enumerate(samples_list):
         Xi = np.asarray(Xi)
         if Xi.ndim != 2 or Xi.shape[1] != d:

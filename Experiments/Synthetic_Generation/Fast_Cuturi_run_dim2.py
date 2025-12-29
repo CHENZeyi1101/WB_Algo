@@ -40,9 +40,9 @@ if __name__ == "__main__":
         samples_list = [np.array(input_samples_collection[key]) for key in sorted(input_samples_collection.keys())]
         approx_bary = w2_barycenter_free_support_from_samples(
             samples_list,
-            k=10000,
+            k=5000,
             init="kmeans",
-            numItermax=300,
+            numItermax=200,
             verbose=True,
             seed=42,
         )

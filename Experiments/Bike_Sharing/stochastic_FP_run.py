@@ -11,8 +11,8 @@ if __name__ == "__main__":
     dim = 9
     num_samples = 10000
     num_measures = 5
-    truncated_radius = 500
-    multiplication_factor = 10
+    truncated_radius = 1000
+    multiplication_factor = 1
     MC_size = 20
 
     # DATA_DIR = os.path.dirname(__file__)
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     # print(bary_samples_collection_loaded["0"])
 
-    data_dir = f"./WB_Algo/Experiments/Bike_Sharing/data_outputs/stochastic_FP_outputs"
+    data_dir = f"./WB_Algo/Experiments/Bike_Sharing/data_outputs/stochastic_FP_outputs_test"
     os.makedirs(data_dir, exist_ok=True)
 
     entropic_iterative_computer.converge(bary_samples_collection_loaded,

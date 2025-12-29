@@ -4,6 +4,7 @@ from scipy.linalg import sqrtm, norm
 from tqdm import tqdm, tqdm_notebook
 from .true_WB import *
 import pandas as pd
+import os
 # from .samplers_dim2 import *
 
 from .entropic_estimate_OT import *
