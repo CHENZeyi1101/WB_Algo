@@ -9,7 +9,7 @@ from scipy.stats import gaussian_kde
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-from .posterior_sampling import *
+from Experiments.CSV_read import *
 
 def get_kde_data(samples, bins=1000, xlim=None, ylim=None):
     x = samples[:, 0]
@@ -93,20 +93,39 @@ def plot_2d_measures_kde(
 
 
 if __name__ == "__main__":
-    n_splits = 5  # ensure matches training splits
+    num_measures = 5  # ensure matches training splits
     DATA_DIR = os.path.dirname(__file__)
     print("Current working directory:", DATA_DIR)
     MODEL_DIR = os.path.join(DATA_DIR, "models_meta")
     PLOT_DIR = os.path.join(DATA_DIR, "plots")
-    multiplication_factor = 10
+    multiplication_factor = 1
+    num_samples_to_plot = 2000
 
-    # sample from full model
-    print("Sampling from full model...")
-    full_samples = sample_from_meta(os.path.join(MODEL_DIR, "model_total.meta.pkl"), num_chains=1, num_samples=2000, save_samples=False) * multiplication_factor
-    print("Full model samples shape:", full_samples.shape)
+    csv_dir = f"../../WB_data/Bike_Sharing"
+    print("CSV directory exists.")
+    total_posterior_sampler = csv_posterior_sampler_BikeSharing(csv_dir=csv_dir, 
+                                                    num_measures=num_measures, 
+                                                    multiplication_factor=multiplication_factor, 
+                                                    type="full",
+                                                    usecols=range(7, 16),
+                                                    skiprows=52)
+    total_posterior_sampler.set_streamers()
+    print("Total posterior sampler set up.")
+    split_posterior_sampler = csv_posterior_sampler_BikeSharing(csv_dir, 
+                                                num_measures, 
+                                                multiplication_factor, 
+                                                type="split",
+                                                usecols=range(7, 16),
+                                                skiprows=52)
+    split_posterior_sampler.set_streamers()
+    print("Split posterior sampler set up.")
+
+    total_posterior_samples = total_posterior_sampler.sample(num_samples_to_plot)
+    split_posterior_samples_collection = split_posterior_sampler.sample(num_samples_to_plot)
+
 
     # plot full samples
-    plot_2d_measures_kde(full_samples.T, 
+    plot_2d_measures_kde(total_posterior_samples.T, 
                          truncated_radius=None, 
                          scatter=False, 
                          plot_dirc=PLOT_DIR, 
@@ -114,10 +133,8 @@ if __name__ == "__main__":
                          title="Full Model Samples KDE")
 
     # sample from split models
-    for i in range(n_splits):
-        print(f"Sampling from split model {i}...")
-        split_samples = sample_from_meta(os.path.join(MODEL_DIR, f"model_split_{i}.meta.pkl"), num_chains=1, num_samples=2000, save_samples=False) * multiplication_factor
-
+    for i in tqdm(range(num_measures), desc=f"Sampling from split models..."):
+        split_samples = np.asarray(split_posterior_samples_collection[i])
         # plot split samples
         plot_2d_measures_kde(split_samples.reshape(-1, split_samples.shape[-1]), 
                              truncated_radius=None, 

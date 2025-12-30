@@ -2,7 +2,7 @@ import os
 import csv
 import numpy as np
 from typing import Iterator, Optional, Sequence, Union, Dict, List
-
+from tqdm import tqdm
 
 class StreamingCSVSamples:
     """
@@ -125,7 +125,7 @@ class csv_posterior_sampler_BikeSharing:
         self.usecols = usecols # G..P if 0-based depends on your earlier choice; this matches your code for bike sharing
         self.skiprows = skiprows
 
-    def streamers(self) -> Union[StreamingCSVSamples, Dict[int, StreamingCSVSamples]]:
+    def set_streamers(self) -> Union[StreamingCSVSamples, Dict[int, StreamingCSVSamples]]:
         """
         Create streaming samplers (auto pointer) without reservoir sampling.
         - For 'full': returns one streamer.
@@ -136,43 +136,43 @@ class csv_posterior_sampler_BikeSharing:
 
         if self.type == "full":
             csv_filename = os.path.join(self.csv_dir, "posterior_full.csv")
-            return StreamingCSVSamples(
+            output_streamer = StreamingCSVSamples(
                 csv_filename,
                 skiprows=skiprows,
                 usecols=usecols,
                 has_header=True,
                 dtype=float,
             )
+            self.output_streamer = output_streamer
 
-        # split
-        out: Dict[int, StreamingCSVSamples] = {}
-        for measure_idx in range(self.num_measures):
-            csv_filename = os.path.join(self.csv_dir, f"posterior_split_{measure_idx}.csv")
-            out[measure_idx] = StreamingCSVSamples(
-                csv_filename,
-                skiprows=skiprows,
-                usecols=usecols,
-                has_header=False,
-                dtype=float,
-            )
-        return out
+        else: 
+            output_streamers: Dict[int, StreamingCSVSamples] = {}
+            for measure_idx in range(self.num_measures):
+                csv_filename = os.path.join(self.csv_dir, f"posterior_split_{measure_idx}.csv")
+                output_streamers[measure_idx] = StreamingCSVSamples(
+                    csv_filename,
+                    skiprows=skiprows,
+                    usecols=usecols,
+                    has_header=False,
+                    dtype=float,
+                )
+            self.output_streamers = output_streamers
 
     def sample(self, num_samples: int):
         """
         Backward-friendly: return num_samples samples using streaming (no reservoir).
         """
         if self.type == "full":
-            streamer = self.streamers()
-            X = streamer.take(num_samples)
+            X = self.output_streamer.take(num_samples)
             return self.multiplication_factor * X
-
-        streamers = self.streamers()
-        batch_sample_collection = {}
-        for k, streamer in streamers.items():
-            X = streamer.take(num_samples)
-            batch_sample_collection[k] = [self.multiplication_factor * row for row in X]
-        return batch_sample_collection
-    
+        
+        else: 
+            batch_sample_collection = {}
+            for k, streamer in self.output_streamers.items():
+                X = streamer.take(num_samples)
+                batch_sample_collection[k] = [self.multiplication_factor * row for row in X]
+            return batch_sample_collection
+        
 
 class csv_input_sampler_SyntheticGeneration:
     def __init__(self, csv_dir, num_measures: int = 1, multiplication_factor=1, usecols: Optional[Union[Sequence[int], range]] = None, skiprows: int = 0):
@@ -182,27 +182,26 @@ class csv_input_sampler_SyntheticGeneration:
         self.usecols = usecols # G..P if 0-based depends on your earlier choice; this matches your code for bike sharing
         self.skiprows = skiprows
 
-    def streamers(self) -> Union[StreamingCSVSamples, Dict[int, StreamingCSVSamples]]:
+    def set_streamers(self) -> Union[StreamingCSVSamples, Dict[int, StreamingCSVSamples]]:
         usecols = self.usecols   # G..P if 0-based depends on your earlier choice; this matches your code
         skiprows = self.skiprows
 
         # split
-        out: Dict[int, StreamingCSVSamples] = {}
+        output_streamers: Dict[int, StreamingCSVSamples] = {}
         for measure_idx in range(self.num_measures):
             csv_filename = os.path.join(self.csv_dir, f"input_measure_samples_{measure_idx}.csv")
-            out[measure_idx] = StreamingCSVSamples(
+            output_streamers[measure_idx] = StreamingCSVSamples(
                 csv_filename,
                 skiprows=skiprows,
                 usecols=usecols,
                 has_header=False,
                 dtype=float,
             )
-        return out
+        self.output_streamers = output_streamers
 
     def sample(self, num_samples: int):
-        streamers = self.streamers()
         batch_sample_collection = {}
-        for k, streamer in streamers.items():
+        for k, streamer in self.output_streamers.items():
             X = streamer.take(num_samples)
             batch_sample_collection[k] = [self.multiplication_factor * row for row in X]
         return batch_sample_collection
@@ -211,26 +210,50 @@ class csv_input_sampler_SyntheticGeneration:
 
 if __name__ == "__main__":
 
-    # # Load Bike_Sharing dataset
-    # # Example usage
-    # csv_dir = f"../WB_data/Bike_Sharing"
-    # num_measures = 5
-    # multiplication_factor = 1
+    # Load Bike_Sharing dataset
+    # Example usage
+    csv_dir = f"../WB_data/Bike_Sharing"
+    num_measures = 5
+    multiplication_factor = 1
 
-    # sampler = csv_posterior_sampler_BikeSharing(csv_dir, 
-    #                                             num_measures, 
-    #                                             multiplication_factor, 
-    #                                             type="split",
-    #                                             usecols=range(7, 16),
-    #                                             skiprows=52)
-    # samples = sampler.sample(50) 
+    # --- full posterior ------------
+    sampler = csv_posterior_sampler_BikeSharing(csv_dir, 
+                                                num_measures, 
+                                                multiplication_factor, 
+                                                type="full",
+                                                usecols=range(7, 16),
+                                                skiprows=52)
+    sampler.set_streamers()
+    samples = sampler.sample(3) 
+    print(samples)
+    samples = sampler.sample(3)
+    print(samples)
 
-    # for measure_idx, measure_samples in samples.items():
-    #     print(f"Measure {measure_idx}:")
-    #     for sample in measure_samples:
-    #         print(sample)
+    # --- posterior split ------------
+    sampler = csv_posterior_sampler_BikeSharing(csv_dir, 
+                                                num_measures, 
+                                                multiplication_factor, 
+                                                type="split",
+                                                usecols=range(7, 16),
+                                                skiprows=52)
+    sampler.set_streamers()
 
-    # Load Synthetic_Generation dataset
+    samples = sampler.sample(3)
+    for measure_idx, measure_samples in samples.items():
+        print(f"Measure {measure_idx}:")
+        for sample in measure_samples:
+            print(sample)
+
+    print("-----")
+
+    samples = sampler.sample(3) 
+    for measure_idx, measure_samples in samples.items():
+        print(f"Measure {measure_idx}:")
+        for sample in measure_samples:
+            print(sample)
+
+
+    # --- Synthetic Generation input measures ------------
     dim = 2
     csv_dir = f"../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files"
     num_measures = 5
@@ -240,7 +263,8 @@ if __name__ == "__main__":
                                                    multiplication_factor=1,
                                                    usecols=None,
                                                    skiprows=0)
-    samples = sampler.sample(5)
+    sampler.set_streamers()
+    samples = sampler.sample(3)
     for measure_idx, measure_samples in samples.items():
         print(f"Input Measure {measure_idx}:")
         for sample in measure_samples:
@@ -248,7 +272,7 @@ if __name__ == "__main__":
 
     print("Done.")
 
-    samples = sampler.sample(5)
+    samples = sampler.sample(3)
     for measure_idx, measure_samples in samples.items():
         print(f"Input Measure {measure_idx}:")
         for sample in measure_samples:

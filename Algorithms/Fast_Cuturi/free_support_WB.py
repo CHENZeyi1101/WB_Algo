@@ -96,24 +96,24 @@ def w2_barycenter_free_support_from_samples(
         idx = rng.choice(X_all.shape[0], size=k, replace=False if X_all.shape[0] >= k else True)
         X_init = X_all[idx].copy()
 
-    elif init == "kmeans":
-        # lightweight k-means (no sklearn dependency): few Lloyd steps on a subsample
-        # (you can replace with sklearn KMeans if you have it)
-        subsz = min(20000, X_all.shape[0])
-        sub = X_all[rng.choice(X_all.shape[0], size=subsz, replace=False)]
-        # init centroids from subset
-        cent = sub[rng.choice(sub.shape[0], size=k, replace=False if sub.shape[0] >= k else True)].copy()
-        for _ in range(10):  # 10 Lloyd iterations is usually enough for init
-            # assign
-            # distances squared: (subsz,k)
-            dist2 = ((sub[:, None, :] - cent[None, :, :]) ** 2).sum(axis=2)
-            lab = dist2.argmin(axis=1)
-            # update
-            for j in range(k):
-                mask = (lab == j)
-                if np.any(mask):
-                    cent[j] = sub[mask].mean(axis=0)
-        X_init = cent
+    # elif init == "kmeans":
+    #     # lightweight k-means (no sklearn dependency): few Lloyd steps on a subsample
+    #     # (you can replace with sklearn KMeans if you have it)
+    #     subsz = min(20000, X_all.shape[0])
+    #     sub = X_all[rng.choice(X_all.shape[0], size=subsz, replace=False)]
+    #     # init centroids from subset
+    #     cent = sub[rng.choice(sub.shape[0], size=k, replace=False if sub.shape[0] >= k else True)].copy()
+    #     for _ in range(10):  # 10 Lloyd iterations is usually enough for init
+    #         # assign
+    #         # distances squared: (subsz,k)
+    #         dist2 = ((sub[:, None, :] - cent[None, :, :]) ** 2).sum(axis=2)
+    #         lab = dist2.argmin(axis=1)
+    #         # update
+    #         for j in range(k):
+    #             mask = (lab == j)
+    #             if np.any(mask):
+    #                 cent[j] = sub[mask].mean(axis=0)
+    #     X_init = cent
 
     else:
         raise ValueError('init must be one of {"kmeans","random","subset"}')

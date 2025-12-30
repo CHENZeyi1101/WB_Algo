@@ -1,28 +1,50 @@
 import numpy as np
 import ot
-from .posterior_sampler import *
-from .metrics_to_compare import *
+# from .posterior_sampler import *
+from Experiments.Bike_Sharing.metrics_to_compare import *
 import json, os
-from ...Algorithms.Fast_Cuturi.free_support_WB import w2_barycenter_free_support_from_samples
+from Algorithms.Fast_Cuturi.free_support_WB import w2_barycenter_free_support_from_samples
+from Experiments.CSV_read import *
 
 if __name__ == "__main__":
     dim = 9
-    num_samples = 10000
+    num_samples = 10
     num_measures = 5
     truncated_radius = 1000
     multiplication_factor = 1
     MC_size = 20
+    support_size = 10000
+    print("Setting up posterior samplers...")
 
-    posterior_csv_dir = f"../WB_data/Bike_Sharing"
-    total_posterior_sampler = csv_posterior_sampler(csv_dir=posterior_csv_dir, num_measures=1, multiplication_factor=multiplication_factor, type="full")
-    split_posterior_sampler = csv_posterior_sampler(csv_dir=posterior_csv_dir, num_measures=num_measures, multiplication_factor=multiplication_factor, type="split")
+    csv_dir = f"../../WB_data/Bike_Sharing"
+    print("CSV directory exists.")
+    total_posterior_sampler = csv_posterior_sampler_BikeSharing(csv_dir=csv_dir, 
+                                                    num_measures=num_measures, 
+                                                    multiplication_factor=multiplication_factor, 
+                                                    type="full",
+                                                    usecols=range(7, 16),
+                                                    skiprows=52)
+    total_posterior_sampler.set_streamers()
+    print("Total posterior sampler set up.")
+    split_posterior_sampler = csv_posterior_sampler_BikeSharing(csv_dir, 
+                                                num_measures, 
+                                                multiplication_factor, 
+                                                type="split",
+                                                usecols=range(7, 16),
+                                                skiprows=52)
+    split_posterior_sampler.set_streamers()
+    print("Split posterior sampler set up.")
 
-    bary_sample_path = f"./WB_Algo/Experiments/Bike_Sharing/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
+    # posterior_csv_dir = f"../WB_data/Bike_Sharing"
+    # total_posterior_sampler = csv_posterior_sampler(csv_dir=posterior_csv_dir, num_measures=1, multiplication_factor=multiplication_factor, type="full")
+    # split_posterior_sampler = csv_posterior_sampler(csv_dir=posterior_csv_dir, num_measures=num_measures, multiplication_factor=multiplication_factor, type="split")
+
+    bary_sample_path = f"./Experiments/Bike_Sharing/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
 
-    data_dir = f"./WB_Algo/Experiments/Bike_Sharing/data_outputs/Fast_Cuturi_outputs"
+    data_dir = f"./Experiments/Bike_Sharing/data_outputs/Fast_Cuturi_outputs_test"
     os.makedirs(data_dir, exist_ok=True)
     V_values_dir = os.path.join(data_dir, "V_values")
     W2_to_bary_dir = os.path.join(data_dir, "W2_to_bary")
@@ -37,8 +59,8 @@ if __name__ == "__main__":
         samples_list = [np.array(input_samples_collection[key]) for key in sorted(input_samples_collection.keys())]
         approx_bary = w2_barycenter_free_support_from_samples(
             samples_list,
-            k=100,
-            init="kmeans",
+            k=support_size,
+            init="random",
             numItermax=200,
             verbose=True,
             seed=42,

@@ -1,4 +1,4 @@
-from .posterior_sampling import *
+from Experiments.Bike_Sharing.posterior_sampling import *
 import pandas as pd
 import os
 import numpy as np
