@@ -2,7 +2,7 @@ import numpy as np
 import math
 from scipy.linalg import sqrtm, norm
 from tqdm import tqdm, tqdm_notebook
-from .true_WB import *
+from Experiments.Synthetic_Generation.true_WB import *
 import pandas as pd
 import os
 # from .samplers_dim2 import *

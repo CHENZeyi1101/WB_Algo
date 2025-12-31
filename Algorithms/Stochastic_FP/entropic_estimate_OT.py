@@ -1,4 +1,6 @@
 import jax
+jax.config.update("jax_enable_x64", True)
+
 import jax.numpy as jnp
 import warnings
 import pdb
@@ -71,13 +73,23 @@ class entropic_OT_map_estimate:
         self.epsilon = None
         self.dual_potentials = None
     
-    def get_dual_potential(self, epsilon = None, initializer = "default"):
+    def get_dual_potential(self, epsilon = None):
+        '''
+        In ott, the default cost function is the squared Euclidean distance (without the 0.5 factor).
+        In our paper, we follow the convention in OT literature by using the 0.5 factor in front of the squared Euclidean distance, therefore the corresponding potential functions differ by a factor of 2.
+
+        In the current version of ott-jax (0.6.0), the dual potential functions evaluated at X and Y are given by SinkhornOutput.f and SinkhornOutput.g, respectively. They can be directly accessed after solving the OT problem.
+
+        For detailed information, refer to the source code: 
+        ./src/ott/solvers/linear/sinkhorn.py
+        '''
+
         X, Y = self.X, self.Y
         geom = pointcloud.PointCloud(X, Y, epsilon = epsilon) # set the epsilon parameter for the entropic regularization
         prob = linear_problem.LinearProblem(geom) # uniform weights
 
         t0 = time.perf_counter()
-        solver = sinkhorn.Sinkhorn(initializer=initializer)
+        solver = sinkhorn.Sinkhorn()
         out = solver(prob) # <class 'ott.solvers.linear.sinkhorn.SinkhornOutput'>
         # Make sure to wait for completion if using JAX with device async
         out = jax.block_until_ready(out)  # if available
@@ -86,21 +98,25 @@ class entropic_OT_map_estimate:
         elapsed = t1 - t0
         print(f"Solver constructed and run with warm-start initializer in {elapsed:.4f} seconds")
 
-        self.dual_potentials = out.to_dual_potentials() # <class 'ott.problems.linear.potentials.EntropicPotentials'>
-        # EntropicPotential object
-        # c.f. https://ott-jax.readthedocs.io/en/latest/tutorials/geometry/000_point_cloud.html#transport-map-using-sinkhorn-potentials
+        self.dual_potentials = out.potentials
+        self.g_potential = out.g
+        self.epsilon = epsilon
 
-        g_potential_machine = self.dual_potentials.g # <class 'jax.tree_util.Partial'>
-        self.g_potential = g_potential_machine(Y)
-        # potential function g evaluated at Y
-        # c.f. https://ott-jax.readthedocs.io/en/latest/_modules/ott/problems/linear/potentials.html#EntropicPotentials
-        self.epsilon = self.dual_potentials.f.keywords['epsilon']
+        # self.dual_potentials = out.to_dual_potentials() # <class 'ott.problems.linear.potentials.EntropicPotentials'>
+        # # EntropicPotential object
 
+        # g_potential_machine = self.dual_potentials.g # <class 'jax.tree_util.Partial'>
+        # self.g_potential = g_potential_machine(Y)
+        # # potential function g evaluated at Y
+
+        # self.epsilon = self.dual_potentials.f.keywords['epsilon']
+
+        
         # print(f"epsilon: {self.epsilon}")
 
     def customize_initializers(self):
-        f_init = self.dual_potentials.f(self.X)
-        g_init = self.dual_potentials.g(self.Y)
+        f_init = self.dual_potentials[0]
+        g_init = self.dual_potentials[1]
         custom_initializer = WarmStartInitializer(f_init, g_init)
         return custom_initializer
     

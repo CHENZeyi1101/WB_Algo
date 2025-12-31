@@ -1,6 +1,6 @@
-from .visualize_measures_dim2 import *
-from .true_WB import *
-from .samplers_dim2 import *
+from Experiments.Synthetic_Generation.visualize_measures_dim2 import *
+from Experiments.Synthetic_Generation.true_WB import *
+from Experiments.Synthetic_Generation.samplers_dim2 import *
 from tqdm import tqdm
 
 if __name__ == "__main__":
@@ -8,9 +8,9 @@ if __name__ == "__main__":
     num_measures = 5
     num_samples = 1000
     truncated_radius = 150
-    theta = 30
+    theta = 2000
 
-    plot_dir = "./WB_Algo/Experiments/Synthetic_Generation/dim2_plots/measure_selection"
+    plot_dir = "./Experiments/Synthetic_Generation/dim2_plots/measure_selection"
     os.makedirs(plot_dir, exist_ok=True)
     
     # # select measures over several random seeds

@@ -6,7 +6,7 @@ import pickle
 from sklearn.decomposition import PCA
 from scipy.stats import gaussian_kde
 
-from .samplers_dim2 import *
+from Experiments.Synthetic_Generation.samplers_dim2 import *
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg

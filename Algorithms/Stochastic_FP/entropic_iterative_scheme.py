@@ -6,8 +6,8 @@ import ot.plot
 import os
 from tqdm import tqdm
 
-from .entropic_estimate_OT import *
-from ..data_manage import *
+from Algorithms.Stochastic_FP.entropic_estimate_OT import *
+from Algorithms.data_manage import *
 
 def W2_pot(X, Y): 
     r'''
@@ -139,7 +139,7 @@ class entropic_iterative_scheme:
                 OT_map_estimator.get_dual_potential(epsilon = epsilon, initializer= customized_potential_initializer)
             else: 
                 print("No warm-starting")
-                OT_map_estimator.get_dual_potential(epsilon = epsilon, initializer= "default")
+                OT_map_estimator.get_dual_potential(epsilon = epsilon)
 
             # store the OT map estimator (python class) in the OT_collctions dictionary
             self.OT_collections[(iter, measure_index)] = OT_map_estimator

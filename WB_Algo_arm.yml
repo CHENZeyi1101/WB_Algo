@@ -1,0 +1,39 @@
+name: WB_Algo_arm
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+
+  # Core scientific stack
+  - numpy=1.24.4
+  - pandas
+  - scipy
+  - scikit-learn
+  - h5py
+  - tqdm
+
+  # Optimal transport
+  - pot
+  - ott-jax
+  - jax
+  - jaxlib
+
+  # PyTorch (ARM-safe via conda-forge)
+  - pytorch
+  - torchvision
+  - torchaudio
+
+  # Stan / modeling
+  - pystan
+
+  # Dev / notebooks
+  - ipython
+  - ipykernel
+  - ipywidgets
+
+  # Utilities
+  - wandb
+
+  # Gurobi (if licensed on this machine)
+  - gurobi

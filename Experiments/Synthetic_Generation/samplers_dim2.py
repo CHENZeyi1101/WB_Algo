@@ -4,9 +4,9 @@ import numpy as np
 from tqdm import tqdm
 import pickle
 
-from .true_WB import *
-from .input_generate_entropic import entropic_input_sampler, csv_input_sampler 
-from .sample_plot import *
+from Experiments.Synthetic_Generation.true_WB import *
+from Experiments.Synthetic_Generation.input_generate_entropic import entropic_input_sampler, csv_input_sampler 
+from Experiments.Synthetic_Generation.sample_plot import *
 
 ''' 
 This module characterizes and sets up samplers for synthetic experiments in 2D.

@@ -125,7 +125,7 @@ class csv_posterior_sampler_BikeSharing:
         self.usecols = usecols # G..P if 0-based depends on your earlier choice; this matches your code for bike sharing
         self.skiprows = skiprows
 
-    def set_streamers(self) -> Union[StreamingCSVSamples, Dict[int, StreamingCSVSamples]]:
+    def set_streamers(self):
         """
         Create streaming samplers (auto pointer) without reservoir sampling.
         - For 'full': returns one streamer.
@@ -182,7 +182,7 @@ class csv_input_sampler_SyntheticGeneration:
         self.usecols = usecols # G..P if 0-based depends on your earlier choice; this matches your code for bike sharing
         self.skiprows = skiprows
 
-    def set_streamers(self) -> Union[StreamingCSVSamples, Dict[int, StreamingCSVSamples]]:
+    def set_streamers(self):
         usecols = self.usecols   # G..P if 0-based depends on your earlier choice; this matches your code
         skiprows = self.skiprows
 
@@ -205,6 +205,33 @@ class csv_input_sampler_SyntheticGeneration:
             X = streamer.take(num_samples)
             batch_sample_collection[k] = [self.multiplication_factor * row for row in X]
         return batch_sample_collection
+    
+class csv_auxiliary_sampler_SyntheticGeneration:
+    def __init__(self, csv_dir, auxiliary_seed, multiplication_factor=1, usecols: Optional[Union[Sequence[int], range]] = None, skiprows: int = 0):
+        self.csv_dir = csv_dir
+        self.auxiliary_seed = auxiliary_seed
+        self.multiplication_factor = multiplication_factor
+        self.usecols = usecols 
+        self.skiprows = skiprows
+
+    def set_streamer(self):
+        usecols = self.usecols   
+        skiprows = self.skiprows
+
+        csv_filename = os.path.join(self.csv_dir, f"auxiliary_measure_seed_{self.auxiliary_seed}.csv")
+        output_streamer = StreamingCSVSamples(
+            csv_filename,
+            skiprows=skiprows,
+            usecols=usecols,
+            has_header=True,
+            dtype=float,
+        )
+        self.output_streamer = output_streamer
+
+    def sample(self, num_samples: int):
+        X = self.output_streamer.take(num_samples)
+        return self.multiplication_factor * X
+    
     
 
 
