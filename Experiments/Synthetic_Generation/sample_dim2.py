@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     # Load the samplers
     source_sampler = MixtureOfGaussians(dim)
-    auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(dim, num_components)
+    auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(dim, auxiliary_seeds_list = [1010, 1018, 1014, 1016, 1003])
     entropic_sampler = characterize_entropic_sampler(dim = dim, 
                                                         num_measures = num_measures, 
                                                         auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, 
