@@ -27,12 +27,12 @@ def characterize_source_sampler(dim, num_components = 5, seed = None, save_dir =
 
     return source_sampler
 
-def characterize_auxiliary_sampler_set(dim, auxiliary_seeds_list = [1010, 1018, 1014, 1016, 1003]):
+def characterize_auxiliary_sampler_set(csv_dir, auxiliary_seeds_list = [1010, 1018, 1014, 1016, 1003]):
     """
     Characterize a set of auxiliary measure samplers (mixture of Gaussians) for synthetic experiments.
     """
     auxiliary_measure_sampler_set = []
-    csv_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/auxiliary_samples/csv_files"
+    # csv_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/auxiliary_samples/csv_files"
     for auxiliary_seed in auxiliary_seeds_list:
         # auxiliary_measure_sampler = MixtureOfGaussians(dim)
         # auxiliary_measure_sampler.random_components(num_components = num_components, uniform_weights = True, seed = auxiliary_seed)
@@ -131,8 +131,10 @@ if __name__ == "__main__":
     save_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data_test/samplers_info"
     os.makedirs(save_dir, exist_ok=True)
 
+    auxiliary_csv_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/auxiliary_samples/csv_files"
+
     source_sampler = characterize_source_sampler(dim, num_components, seed, save_dir)
-    auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(dim, num_components)
+    auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(auxiliary_csv_dir, auxiliary_seeds_list = [1010, 1018, 1014, 1016, 1003])
     entropic_sampler = characterize_entropic_sampler(dim = dim, 
                                                      num_measures = num_measures, 
                                                      auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, 
