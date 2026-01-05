@@ -8,7 +8,6 @@ import pandas as pd
 import os
 # from .samplers_dim2 import *
 
-
 class entropic_input_sampler:
     '''
     Python class for generating samples from input measures using entropic transportation maps
@@ -214,45 +213,45 @@ class entropic_input_sampler:
     #         print(f"Finished generating Y matrix and g vector for auxiliary measure {i}")
     #     self.g_vector_dict = g_vector_dict
 
-    def construct_surjective_mapping(self, seed = 120):
-        r'''
-        Construct a surjective mapping from 2 * tilde_K to num_measures
-        To ensure no cancellation of mappings, we will use the following strategy:
-        1. We map the maps with odd indices to the first half of the measures
-        2. We map the maps with even indices to the second half of the measures
-        '''
-        tilde_K = self.tilde_K
-        num_measures = self.num_measures
-        rng_entropy = np.random.RandomState(seed)
+    # def construct_surjective_mapping(self, seed = 120):
+    #     r'''
+    #     Construct a surjective mapping from 2 * tilde_K to num_measures
+    #     To ensure no cancellation of mappings, we will use the following strategy:
+    #     1. We map the maps with odd indices to the first half of the measures
+    #     2. We map the maps with even indices to the second half of the measures
+    #     '''
+    #     tilde_K = self.tilde_K
+    #     num_measures = self.num_measures
+    #     rng_entropy = np.random.RandomState(seed)
 
-        A = list(range(2 * tilde_K))
-        B = list(range(num_measures))
+    #     A = list(range(2 * tilde_K))
+    #     B = list(range(num_measures))
 
-        A_odd = [a for a in A if a % 2 == 1]
-        A_even = [a for a in A if a % 2 == 0]
+    #     A_odd = [a for a in A if a % 2 == 1]
+    #     A_even = [a for a in A if a % 2 == 0]
 
-        B_1 = [b for b in B if b < num_measures // 2]
-        B_2 = [b for b in B if b >= num_measures // 2]
+    #     B_1 = [b for b in B if b < num_measures // 2]
+    #     B_2 = [b for b in B if b >= num_measures // 2]
 
-        mapping = {a: None for a in A}
+    #     mapping = {a: None for a in A}
 
-        # map the odd indices to the first half of the measures
-        chosen_A_odd = rng_entropy.choice(A_odd, size=len(B_1), replace=False)
-        for b, a in zip(B_1, chosen_A_odd):
-            mapping[a] = b
-        remaining_A_odd = [a for a in A_odd if mapping[a] is None]
-        for a in remaining_A_odd:
-            mapping[a] = rng_entropy.choice(B_1)
+    #     # map the odd indices to the first half of the measures
+    #     chosen_A_odd = rng_entropy.choice(A_odd, size=len(B_1), replace=False)
+    #     for b, a in zip(B_1, chosen_A_odd):
+    #         mapping[a] = b
+    #     remaining_A_odd = [a for a in A_odd if mapping[a] is None]
+    #     for a in remaining_A_odd:
+    #         mapping[a] = rng_entropy.choice(B_1)
 
-        # map the even indices to the second half of the measures
-        chosen_A_even = rng_entropy.choice(A_even, size=len(B_2), replace=False)
-        for b, a in zip(B_2, chosen_A_even):
-            mapping[a] = b
-        remaining_A_even = [a for a in A_even if mapping[a] is None]
-        for a in remaining_A_even:
-            mapping[a] = rng_entropy.choice(B_2)
+    #     # map the even indices to the second half of the measures
+    #     chosen_A_even = rng_entropy.choice(A_even, size=len(B_2), replace=False)
+    #     for b, a in zip(B_2, chosen_A_even):
+    #         mapping[a] = b
+    #     remaining_A_even = [a for a in A_even if mapping[a] is None]
+    #     for a in remaining_A_even:
+    #         mapping[a] = rng_entropy.choice(B_2)
 
-        self.surjective_mapping = mapping
+    #     self.surjective_mapping = mapping
 
     # def compute_theta(self, truncated_radius = 100):
     #     r'''
@@ -333,75 +332,75 @@ class entropic_input_sampler:
 
         return measure_samples
     
-    def generate_A_matrices(self, seed = 2000):
-        r'''
-        We generate a bunch of psd matrices whose weighted sum is K * identity matrix. (the sum is to be further weighted by gamma)
-        The main idea is that, in case the generated maps seem too similar to the ground-truth measure, this part at least imposes some location-scatter transformation (e.g., rotation) to make the generated measures differ in shape.
-        In other words, we look for some middle ground between purely nonlinear transformation (but seemingly affine) and location-scatter transformation.
-        It is general challenging to generate such a group of psd matrices, but we can ues the following strategy from Proposition~4.1 and Theorem~4.2 of Alvarez-Esteban et al. (2019):
-        1. Generate $\Sigma_j$ for j = 1, \dots, J which are a collection of covariance matrices. (One can consider the problem of solving the W_2 barycenter of J Gaussian measures.)
-        2. Apply the deterministic iterative scheme in Theorem~4.2 of Alvarez-Esteban et al. (2019) to approximate $\Sigma_0$, the covariance matrix of the Gaussian barycenter.
-        3. From Proposition~4.1 we know that $H(\Sigma_0) = Id$ is a necessary and sufficient condition for $\Sigma_0$ to be a barycenter. The idea now is to use the terms without weights as the psd matrices of our interests, namely
-        $\Sigma^{-\frac{1}{2}} (\Sigma^{-\frac{1}{2}} \Sigma_j \Sigma^{-\frac{1}{2}})^{\frac{1}{2}} \Sigma^{-\frac{1}{2}}$ for j = 1, \dots, J.
-        '''
-        dim = self.dim
-        num_measures = self.num_measures
-        # the updating function from Thm 4.2 of Alvarez-Esteban et al. (2019)
-        def compute_bary_cov(covariance_list, Sigma):
-            Sigma_sum = np.zeros((dim, dim))
-            for i in range(len(covariance_list)):
-                sub_Sigma_square = sqrtm(Sigma) @ covariance_list[i] @ sqrtm(Sigma)
-                sub_Sigma = sqrtm(sub_Sigma_square)
-                Sigma_sum += sub_Sigma
-            Sigma_sum = Sigma_sum / len(covariance_list)
-            Sigma_update = np.linalg.solve(sqrtm(Sigma), np.eye(dim)) @ Sigma_sum @ Sigma_sum @ np.linalg.solve(sqrtm(Sigma), np.eye(dim))
-            return Sigma_update
+    # def generate_A_matrices(self, seed = 2000):
+    #     r'''
+    #     We generate a bunch of psd matrices whose weighted sum is K * identity matrix. (the sum is to be further weighted by gamma)
+    #     The main idea is that, in case the generated maps seem too similar to the ground-truth measure, this part at least imposes some location-scatter transformation (e.g., rotation) to make the generated measures differ in shape.
+    #     In other words, we look for some middle ground between purely nonlinear transformation (but seemingly affine) and location-scatter transformation.
+    #     It is general challenging to generate such a group of psd matrices, but we can ues the following strategy from Proposition~4.1 and Theorem~4.2 of Alvarez-Esteban et al. (2019):
+    #     1. Generate $\Sigma_j$ for j = 1, \dots, J which are a collection of covariance matrices. (One can consider the problem of solving the W_2 barycenter of J Gaussian measures.)
+    #     2. Apply the deterministic iterative scheme in Theorem~4.2 of Alvarez-Esteban et al. (2019) to approximate $\Sigma_0$, the covariance matrix of the Gaussian barycenter.
+    #     3. From Proposition~4.1 we know that $H(\Sigma_0) = Id$ is a necessary and sufficient condition for $\Sigma_0$ to be a barycenter. The idea now is to use the terms without weights as the psd matrices of our interests, namely
+    #     $\Sigma^{-\frac{1}{2}} (\Sigma^{-\frac{1}{2}} \Sigma_j \Sigma^{-\frac{1}{2}})^{\frac{1}{2}} \Sigma^{-\frac{1}{2}}$ for j = 1, \dots, J.
+    #     '''
+    #     dim = self.dim
+    #     num_measures = self.num_measures
+    #     # the updating function from Thm 4.2 of Alvarez-Esteban et al. (2019)
+    #     def compute_bary_cov(covariance_list, Sigma):
+    #         Sigma_sum = np.zeros((dim, dim))
+    #         for i in range(len(covariance_list)):
+    #             sub_Sigma_square = sqrtm(Sigma) @ covariance_list[i] @ sqrtm(Sigma)
+    #             sub_Sigma = sqrtm(sub_Sigma_square)
+    #             Sigma_sum += sub_Sigma
+    #         Sigma_sum = Sigma_sum / len(covariance_list)
+    #         Sigma_update = np.linalg.solve(sqrtm(Sigma), np.eye(dim)) @ Sigma_sum @ Sigma_sum @ np.linalg.solve(sqrtm(Sigma), np.eye(dim))
+    #         return Sigma_update
         
-        # compute V_value of a covariance matrix (Eq. (15) of Alvarez-Esteban et al. (2019))
-        def compute_V(covariance_list, Sigma):
-            trace1_list = [] # the first trace term in the equation
-            trace2_list = [] # the second trace term in the equation
-            for i in range(len(covariance_list)):
-                trace1_list.append(np.trace(covariance_list[i]))
-            for i in range(len(covariance_list)):
-                sub_Sigma_square = sqrtm(Sigma) @ covariance_list[i] @ sqrtm(Sigma)
-                trace2_list.append(np.trace(sqrtm(sub_Sigma_square)))
-            V = np.trace(Sigma) + np.mean(trace1_list) - 2 * np.mean(trace2_list)
-            return V
+    #     # compute V_value of a covariance matrix (Eq. (15) of Alvarez-Esteban et al. (2019))
+    #     def compute_V(covariance_list, Sigma):
+    #         trace1_list = [] # the first trace term in the equation
+    #         trace2_list = [] # the second trace term in the equation
+    #         for i in range(len(covariance_list)):
+    #             trace1_list.append(np.trace(covariance_list[i]))
+    #         for i in range(len(covariance_list)):
+    #             sub_Sigma_square = sqrtm(Sigma) @ covariance_list[i] @ sqrtm(Sigma)
+    #             trace2_list.append(np.trace(sqrtm(sub_Sigma_square)))
+    #         V = np.trace(Sigma) + np.mean(trace1_list) - 2 * np.mean(trace2_list)
+    #         return V
 
-        # construct covariance matrices.
-        rng_comp = np.random.RandomState(seed)
-        num_matrices = num_measures
-        covariance_list = []
-        for _ in range(num_matrices):
-            if dim == 2:
-                cov = construct_2d_covariance_ellipsoid(3, 4, rng_comp)
-            else:
-                cov = construct_high_dim_covariance_ellipsoid(3, 4, dim, rng_comp)
-            covariance_list.append(cov)
+    #     # construct covariance matrices.
+    #     rng_comp = np.random.RandomState(seed)
+    #     num_matrices = num_measures
+    #     covariance_list = []
+    #     for _ in range(num_matrices):
+    #         if dim == 2:
+    #             cov = construct_2d_covariance_ellipsoid(3, 4, rng_comp)
+    #         else:
+    #             cov = construct_high_dim_covariance_ellipsoid(3, 4, dim, rng_comp)
+    #         covariance_list.append(cov)
 
-        # initialize Sigma
-        Sigma = np.eye(dim)
-        V_Sigma = compute_V(covariance_list, Sigma)
-        V_list = [V_Sigma]
-        difference = math.inf
-        while difference > 1e-5:
-            Sigma = compute_bary_cov(covariance_list, Sigma)
-            V_Sigma = compute_V(covariance_list, Sigma)
-            difference = abs(V_Sigma - V_list[-1])
-            V_list.append(V_Sigma)
+    #     # initialize Sigma
+    #     Sigma = np.eye(dim)
+    #     V_Sigma = compute_V(covariance_list, Sigma)
+    #     V_list = [V_Sigma]
+    #     difference = math.inf
+    #     while difference > 1e-5:
+    #         Sigma = compute_bary_cov(covariance_list, Sigma)
+    #         V_Sigma = compute_V(covariance_list, Sigma)
+    #         difference = abs(V_Sigma - V_list[-1])
+    #         V_list.append(V_Sigma)
 
-        print(f"The V_value record is {V_list}.")
+    #     print(f"The V_value record is {V_list}.")
 
-        # refer to H() below Eq. (17) of Alvarez-Esteban et al. (2019)
-        A_matrices_dict = {}
-        for i in range(num_matrices):
-            sub_Sigma_square = sqrtm(Sigma) @ covariance_list[i] @ sqrtm(Sigma)
-            A_matrix = np.linalg.solve(sqrtm(Sigma), np.eye(dim)) @ sqrtm(sub_Sigma_square) @ np.linalg.solve(sqrtm(Sigma), np.eye(dim))
-            A_matrices_dict[i] = A_matrix
+    #     # refer to H() below Eq. (17) of Alvarez-Esteban et al. (2019)
+    #     A_matrices_dict = {}
+    #     for i in range(num_matrices):
+    #         sub_Sigma_square = sqrtm(Sigma) @ covariance_list[i] @ sqrtm(Sigma)
+    #         A_matrix = np.linalg.solve(sqrtm(Sigma), np.eye(dim)) @ sqrtm(sub_Sigma_square) @ np.linalg.solve(sqrtm(Sigma), np.eye(dim))
+    #         A_matrices_dict[i] = A_matrix
 
-        self.A_matrices_dict = A_matrices_dict
-        # beta_k = 1 for all k 
+    #     self.A_matrices_dict = A_matrices_dict
+    #     # beta_k = 1 for all k 
 
     def collect_candidate_maps(self, x):
         # x is the input vector to be evaluated at by the mappings
