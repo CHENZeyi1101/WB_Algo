@@ -232,6 +232,30 @@ class csv_auxiliary_sampler_SyntheticGeneration:
         X = self.output_streamer.take(num_samples)
         return self.multiplication_factor * X
     
+class csv_source_sampler_SyntheticGeneration:
+    def __init__(self, csv_file, multiplication_factor=1, usecols: Optional[Union[Sequence[int], range]] = None, skiprows: int = 0):
+        self.csv_file = csv_file
+        self.multiplication_factor = multiplication_factor
+        self.usecols = usecols 
+        self.skiprows = skiprows
+
+    def set_streamer(self):
+        usecols = self.usecols   
+        skiprows = self.skiprows
+
+        output_streamer = StreamingCSVSamples(
+            self.csv_file,
+            skiprows=skiprows,
+            usecols=usecols,
+            has_header=True,
+            dtype=float,
+        )
+        self.output_streamer = output_streamer
+
+    def sample(self, num_samples: int):
+        X = self.output_streamer.take(num_samples)
+        return self.multiplication_factor * X
+    
     
 
 
@@ -304,3 +328,14 @@ if __name__ == "__main__":
         print(f"Input Measure {measure_idx}:")
         for sample in measure_samples:
             print(sample)
+
+    # --- Synthetic Generation source measure sampler ------------
+    dim = 2
+    csv_file = f"../../WB_data/Synthetic_Generation/dim{dim}_data/source_samples/csv_files/source_measure_samples.csv"
+    sampler = csv_source_sampler_SyntheticGeneration(csv_file, 
+                                                   multiplication_factor=1,
+                                                   usecols=None,
+                                                   skiprows=0)
+    sampler.set_streamer()
+    samples = np.asarray(sampler.sample(10))
+    print(samples)

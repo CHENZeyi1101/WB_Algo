@@ -1,7 +1,7 @@
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
-from .sample_dim10 import *
+from .input_sample_dim10 import *
 from tqdm import tqdm, tqdm_notebook
 
 import warnings

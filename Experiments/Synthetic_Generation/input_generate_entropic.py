@@ -1,13 +1,13 @@
 import numpy as np
 import math
 from scipy.linalg import sqrtm, norm
-from tqdm import tqdm, tqdm_notebook
+from tqdm import tqdm
 from Experiments.Synthetic_Generation.true_WB import *
+from Algorithms.Stochastic_FP.entropic_estimate_OT import *
 import pandas as pd
 import os
 # from .samplers_dim2 import *
 
-from .entropic_estimate_OT import *
 
 class entropic_input_sampler:
     '''
@@ -24,7 +24,9 @@ class entropic_input_sampler:
                  manual = True, 
                  truncated_radius = 100,
                  bound_type = "eigen_bound",
-                 theta = 10):
+                 theta = 10,
+                 surjective_mapping : dict = None,
+                 A_matrices_dict : dict = None):
         self.dim = dim
         self.num_measures = num_measures
         self.auxiliary_measure_sampler_set = auxiliary_measure_sampler_set
@@ -40,6 +42,10 @@ class entropic_input_sampler:
         self.bound_type = bound_type
         self.grid_size = 200
         self.theta = theta
+        if surjective_mapping is not None:
+            self.surjective_mapping = surjective_mapping
+        if A_matrices_dict is not None:
+            self.A_matrices_dict = A_matrices_dict
 
     def generate_strong_convexity_param(self):
         r'''
@@ -66,19 +72,18 @@ class entropic_input_sampler:
     #         theta_dict[i] = 10 # this is empirically estimated from the iterative scheme experiment. 
     #     self.theta_dict = theta_dict
 
-    def generate_Y_matrices(self, seed = 1005):
+    def generate_Y_matrices(self):
         r'''
         Generate the Y matrices for the entropic OT map estimator (for interpolation purpose)
         '''
         auxiliary_measure_sampler_set = self.auxiliary_measure_sampler_set
         tilde_K = self.tilde_K
         n_k = self.n_k
-        rng_entropy = np.random.RandomState(seed)
+        # rng_entropy = np.random.RandomState(seed)
         Y_matrix_dict = {}
         for i in range(tilde_K):
             auxiliary_measure_sampler = auxiliary_measure_sampler_set[i]
-            seed = rng_entropy.randint(1000)
-            Y = auxiliary_measure_sampler.sample(n_k, seed = seed, multiplication_factor = 1)
+            Y = auxiliary_measure_sampler.sample(n_k)
             Y_matrix_dict[i] = Y
             print(f"Finished generating Y matrix for auxiliary measure {i}")
         self.Y_matrix_dict = Y_matrix_dict
@@ -93,7 +98,7 @@ class entropic_input_sampler:
         source_sampler = self.source_sampler
         # theta_dict = self.theta_dict
         n_k = self.n_k
-        X = source_sampler.sample(n_k, multiplication_factor = 1)
+        X = source_sampler.sample(n_k)
         Y_matrix_dict = self.Y_matrix_dict
         g_vector_dict = {}
         for i in range(tilde_K):
@@ -143,13 +148,18 @@ class entropic_input_sampler:
             for j in range(grid_size): # traverse the grid space   
                 x = np.array([grid_space[i], grid_space[j]])
                 w_tilde_k = self.entropic_weight_vector(x, Y_matrix, g_vector)
-                Y_tilde_k = Y_matrix.T # !!! Y_tilde_k is of dimension d * n
-                
-                diag_w_k = np.diag(w_tilde_k)  # Creates a diagonal matrix with w_k as its diagonal
-                outer_product_w_k = np.outer(w_tilde_k, w_tilde_k)  # Outer product of w_k * w_K^T
-                matrix_diff = diag_w_k - outer_product_w_k
-                covariance_matrix = Y_tilde_k @ matrix_diff @ Y_tilde_k.T
-                max_eigenvalue_candidate = np.max(np.linalg.eigvals(covariance_matrix)) # find the maximum eigenvalue of the covariance matrix
+
+                # # old method: slow
+                # Y_tilde_k = Y_matrix.T # !!! Y_tilde_k is of dimension d * n
+                # diag_w_k = np.diag(w_tilde_k)  # Creates a diagonal matrix with w_k as its diagonal
+                # outer_product_w_k = np.outer(w_tilde_k, w_tilde_k)  # Outer product of w_k * w_K^T
+                # matrix_diff = diag_w_k - outer_product_w_k
+                # covariance_matrix = Y_tilde_k @ matrix_diff @ Y_tilde_k.T
+                # max_eigenvalue_candidate = np.max(np.linalg.eigvals(covariance_matrix)) # find the maximum eigenvalue of the covariance matrix
+
+                # new method: fast
+                Y_centered = Y_matrix.T - Y_matrix.T @ w_tilde_k[:, np.newaxis]  # Center the Y_matrix using the weights
+                max_eigenvalue_candidate = np.max(np.linalg.eigvals(Y_centered @ (Y_centered.T * w_tilde_k[:, np.newaxis])))
 
                 if max_eigenvalue_candidate > max_eigenvalue:
                     max_eigenvalue = max_eigenvalue_candidate
@@ -400,7 +410,7 @@ class entropic_input_sampler:
         theta = self.theta
         n_k = self.n_k
         tilde_K = self.tilde_K
-        dim = self.dim
+  
 
         strong_convexity_param_dict = self.strong_convexity_param_dict
         smoothness_param_dict = self.smoothness_param_dict
@@ -494,7 +504,7 @@ class entropic_input_sampler:
         batch_sample_collection = {k: [] for k in range(num_measures)}
         candidate_sample_collection = {k: [] for k in range(2 * tilde_K)}
 
-        source_samples = source_sampler.sample(sample_size, multiplication_factor = 1)
+        source_samples = source_sampler.sample(sample_size)
         # measure_samples = self.generate_input_measure_sample(source_samples[0])
         
         for i in tqdm(range(sample_size), desc= f"Generating {sample_size} input measure samples"):
@@ -606,6 +616,7 @@ class csv_input_sampler:
     
 if __name__ == "__main__":
     from .samplers_dim2 import *
+    from ...Algorithms.Stochastic_FP.entropic_estimate_OT import *
 
     dim = 2
     num_components = 5
