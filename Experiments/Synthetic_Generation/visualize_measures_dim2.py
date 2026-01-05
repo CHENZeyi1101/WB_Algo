@@ -6,7 +6,8 @@ import pickle
 from sklearn.decomposition import PCA
 from scipy.stats import gaussian_kde
 
-from Experiments.Synthetic_Generation.samplers_dim2 import *
+from Experiments.Synthetic_Generation.samplers import *
+from Experiments.CSV_read import *
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -175,48 +176,60 @@ def combine_images_row(image_paths, save_path=None, figsize=(18, 6)):
 if __name__ == "__main__":
     dim = 2
     num_components = 5
-    num_samples = 1000
+    num_samples_to_plot = 2000
     num_measures = 5
     truncated_radius = 150
-    seed = 1009
+    source_seed = 1009
 
-    load_dir = "./Synthetic_Generation/dim2_data/samplers_info"
-    plot_dir = "./Synthetic_Generation/dim2_plots"
+    sampler_load_dir = f"./Experiments/Synthetic_Generation/dim{dim}_data/samplers_info"
+
+    plot_dir = f"./Experiments/Synthetic_Generation/dim{dim}_plots/InstanceTheta2000_visualization"
     os.makedirs(plot_dir, exist_ok=True)
 
-    # Load the samplers
+    source_csv_file = f"../../WB_data/Synthetic_Generation/dim{dim}_data/source_samples/csv_files/source_measure_samples.csv"
+    source_csv_sampler = csv_source_sampler_SyntheticGeneration(source_csv_file, 
+                                                   multiplication_factor=1,
+                                                   usecols=None,
+                                                   skiprows=0)
+    source_csv_sampler.set_streamer()
+
+    # for PDF plot
     source_sampler = MixtureOfGaussians(dim)
-    auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(dim, num_components)
-    entropic_sampler = characterize_entropic_sampler(dim = dim, 
-                                                     num_measures = num_measures, 
-                                                     auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, 
-                                                     source_sampler = source_sampler,
-                                                     truncated_radius = truncated_radius,
-                                                     manual = True)
-    
-    source_sampler = load_sampler(load_dir, source_sampler, sampler_type="source")
-    entropic_sampler = load_sampler(load_dir, entropic_sampler, sampler_type="entropic")
-    auxiliary_measure_sampler_set = entropic_sampler.auxiliary_measure_sampler_set
+    source_sampler.random_components(num_components=5, uniform_weights = True, seed = 1009)
+    source_sampler.set_truncation(truncated_radius)
+
+    # auxiliary_csv_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/auxiliary_samples/csv_files"
+    # auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(csv_dir = auxiliary_csv_dir, auxiliary_seeds_list = [1010, 1018, 1014, 1016, 1003])
+
+    input_csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files_InstanceTheta2000"
+    input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
+                                                   num_measures, 
+                                                   multiplication_factor=1)
+    input_sampler.set_streamers()
 
     ### Generate and visualize samples from the source measure
     # Plot the PDF of the source measure since it is a GM
     plot_2d_gm_pdf(source_sampler, truncated_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/source_measure", plot_name="source_measure_pdf", title=r"PDF of $\bar{\mu}$")
+    print("Source measure PDF plotted.")
     # Plot the KDE heatmap of the source measure samples
-    source_samples = source_sampler.sample(num_samples, seed=seed, multiplication_factor=1)
+    source_samples = source_csv_sampler.sample(num_samples_to_plot)
     plot_2d_measures_kde(source_samples, truncated_radius, scatter=False, plot_dirc=f"{plot_dir}/source_measure", plot_name = "source_measure_kde", title=r"KDE of $\bar{\mu}$ samples")
+    print("Source measure samples KDE plotted.")
 
-    ### Generate and visualize samples from the auxiliary measures
-    for idx, auxiliary_sampler in enumerate(auxiliary_measure_sampler_set):
-        # Plot the PDF of the auxiliary measure since it is a GM
-        plot_2d_gm_pdf(auxiliary_sampler, truncated_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/auxiliary_measures", plot_name=f"auxiliary_measure_{idx+1}_pdf", title=fr"PDF of $\varkappa_{{{idx+1}}}$")
+    for idx, auxiliary_seed in enumerate([1010, 1018, 1014, 1016, 1003]):
+        auxiliary_measure_sampler = MixtureOfGaussians(dim)
+        auxiliary_measure_sampler.random_components(num_components = num_components, uniform_weights = True, seed = auxiliary_seed)
+        plot_2d_gm_pdf(auxiliary_measure_sampler, truncated_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/auxiliary_measures", plot_name=f"auxiliary_measure_{idx+1}_pdf", title=fr"PDF of $\varkappa_{{{idx+1}}}$")
+        print(f"Auxiliary measure {idx+1} PDF plotted.")
         
     ### Generate and visualize samples from the input measures
     # Sample input measures
-    input_measure_samples = entropic_sampler.sample(num_samples)
+    input_measure_samples = input_sampler.sample(num_samples_to_plot)
     for measure_index in range(len(input_measure_samples)):
         measure_samples = np.array(input_measure_samples[measure_index])
         # Plot the KDE for each input measure
         plot_2d_measures_kde(measure_samples, truncated_radius = None, scatter=False, plot_dirc=f"{plot_dir}/input_measures", plot_name=f"input_measure_{measure_index}_kde", title=fr"KDE of $\nu_{{{measure_index + 1}}}$ samples")
+        print(f"Input measure {measure_index} KDE plotted.")
 
 
     ### Put together all plots into a single row
@@ -239,8 +252,6 @@ if __name__ == "__main__":
     ]
 
     combine_images_row(image_paths_1, save_path=f"{plot_dir}/source_auxiliary_pdf_combined.png", figsize=(24, 6))
-    combine_images_row(image_paths_2, save_path=f"{plot_dir}/source_input_kde_combined", figsize=(24, 6))
-
-
-
-    
+    print("Combined source and auxiliary measure PDFs.")
+    combine_images_row(image_paths_2, save_path=f"{plot_dir}/source_input_kde_combined.png", figsize=(24, 6))
+    print("Combined source and input measure KDEs.")

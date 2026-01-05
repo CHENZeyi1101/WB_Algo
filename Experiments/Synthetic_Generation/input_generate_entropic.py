@@ -496,24 +496,21 @@ class entropic_input_sampler:
         r'''
         Generate the input measure samples for a given sample size
         '''
-        num_measures = self.num_measures
-        source_sampler = self.source_sampler
-        tilde_K = self.tilde_K
 
-        batch_sample_collection = {k: [] for k in range(num_measures)}
-        candidate_sample_collection = {k: [] for k in range(2 * tilde_K)}
+        batch_sample_collection = {k: [] for k in range(self.num_measures)}
+        candidate_sample_collection = {k: [] for k in range(2 * self.tilde_K)}
 
-        source_samples = source_sampler.sample(sample_size)
+        source_samples = self.source_sampler.sample(sample_size)
         # measure_samples = self.generate_input_measure_sample(source_samples[0])
         
         for i in tqdm(range(sample_size), desc= f"Generating {sample_size} input measure samples"):
             x = source_samples[i]
             measure_samples_dict, candidate_map_dict = self.generate_input_measure_sample(x) # a dictionary with k keys
             # one can take the truncation radius to be large enough such that the generated samples from input measures are accepted.
-            for k in range(num_measures):
+            for k in range(self.num_measures):
                 batch_sample_collection[k].append(measure_samples_dict[k])
         if show_candidate:
-            for k in range(2 * tilde_K):
+            for k in range(2 * self.tilde_K):
                 candidate_sample_collection[k].append(candidate_map_dict[k])
             return batch_sample_collection, candidate_sample_collection
         else:
@@ -614,7 +611,7 @@ class csv_input_sampler:
         return batch_sample_collection
     
 if __name__ == "__main__":
-    from .samplers_dim2 import *
+    from .samplers import *
     from ...Algorithms.Stochastic_FP.entropic_estimate_OT import *
 
     dim = 2

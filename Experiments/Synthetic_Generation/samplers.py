@@ -47,9 +47,9 @@ def characterize_auxiliary_sampler_set(csv_dir, auxiliary_seeds_list = [1010, 10
 
 def characterize_entropic_sampler(dim, 
                                  num_measures, 
-                                 auxiliary_measure_sampler_set, 
-                                 source_sampler,
-                                 truncated_radius,
+                                 auxiliary_measure_sampler_set = [], 
+                                 source_sampler = None,
+                                 truncated_radius = None,
                                  manual = False,
                                  bound_type = "eigen_bound",
                                  theta = 10,

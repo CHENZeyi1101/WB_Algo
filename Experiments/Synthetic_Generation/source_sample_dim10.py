@@ -3,10 +3,9 @@ from Experiments.Synthetic_Generation.samplers import *
 import pandas as pd
 
 if __name__ == "__main__":
-    dim = 2
-    num_measures = 5
+    dim = 10
     num_samples = int(1e7)
-    truncated_radius = 150
+    truncated_radius = 5000
     source_sampler_seed = 1009
     sample_generating_seed = 42
 

@@ -1,6 +1,6 @@
 from Experiments.Synthetic_Generation.visualize_measures_dim2 import *
 from Experiments.Synthetic_Generation.true_WB import *
-from Experiments.Synthetic_Generation.samplers_dim2 import *
+from Experiments.Synthetic_Generation.samplers import *
 from Experiments.CSV_read import *
 
 from tqdm import tqdm

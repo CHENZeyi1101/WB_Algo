@@ -1,10 +1,11 @@
 import numpy as np
 import ot
-from .samplers_dim2 import *
-from .metrics_to_compare import *
-from .input_generate_entropic import *
+from Experiments.Synthetic_Generation.samplers import *
+from Experiments.Synthetic_Generation.metrics_to_compare import *
+from Experiments.Synthetic_Generation.input_generate_entropic import *
 import json, os
-from ...Algorithms.Fast_Cuturi.free_support_WB import w2_barycenter_free_support_from_samples
+from Algorithms.Fast_Cuturi.free_support_WB import w2_barycenter_free_support_from_samples
+from Experiments.CSV_read import *
 
 if __name__ == "__main__":
     dim = 2
@@ -13,6 +14,20 @@ if __name__ == "__main__":
     truncated_radius = 150
     # multiplication_factor = 10
     MC_size = 20
+
+    source_csv_file = f"../../WB_data/Synthetic_Generation/dim{dim}_data/source_samples/csv_files/source_measure_samples.csv"
+    source_sampler = csv_source_sampler_SyntheticGeneration(source_csv_file, 
+                                                multiplication_factor=1,
+                                                usecols=None,
+                                                skiprows=0)
+    source_sampler.set_streamer()
+
+    input_csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files_InstanceTheta2000"
+    input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
+                                                num_measures, 
+                                                multiplication_factor=1)
+    input_sampler.set_streamers()
+
 
     load_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/samplers_info"
     source_sampler = MixtureOfGaussians(dim)

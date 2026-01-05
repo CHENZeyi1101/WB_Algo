@@ -1,4 +1,4 @@
-from Experiments.Synthetic_Generation.samplers_dim2 import *
+from Experiments.Synthetic_Generation.samplers import *
 from tqdm import tqdm
 import pandas as pd
 import pickle
@@ -19,13 +19,15 @@ if __name__ == "__main__":
     auxiliary_csv_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/auxiliary_samples/csv_files"
     source_csv_file = f"../../WB_data/Synthetic_Generation/dim{dim}_data/source_samples/csv_files/source_measure_samples.csv"
 
+    auxiliary_seeds_list = [1010, 1018, 1014, 1016, 1003]
+
     source_sampler = csv_source_sampler_SyntheticGeneration(source_csv_file, 
                                                    multiplication_factor=1,
                                                    usecols=None,
                                                    skiprows=0)
     source_sampler.set_streamer()
 
-    auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(csv_dir = auxiliary_csv_dir, auxiliary_seeds_list = [1010, 1018, 1014, 1016, 1003])
+    auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(csv_dir = auxiliary_csv_dir, auxiliary_seeds_list = auxiliary_seeds_list)
     tilde_K = len(auxiliary_measure_sampler_set)
     surjective_mapping = construct_surjective_mapping(tilde_K = tilde_K, num_measures = num_measures, seed = 120)
     A_matrices_dict = generate_A_matrices(dim = dim, num_measures = num_measures, seed = 2000)
@@ -40,13 +42,15 @@ if __name__ == "__main__":
                                                      theta = instance_theta,
                                                      surjective_mapping = surjective_mapping,
                                                      A_matrices_dict = A_matrices_dict)
-    entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir = f"./Experiments/Synthetic_Generation/dim{dim}_data/samplers_info")
+    entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir = f"./Experiments/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}/samplers_info")
+    print("Entropic sampler configured.")
 
     # Generate input samples
     csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files_InstanceTheta{instance_theta}"
     os.makedirs(csv_path, exist_ok=True)
     
     input_measure_samples = entropic_sampler.sample(num_samples_in_preparation)
+
     for measure_index in range(num_measures):
         measure_samples = np.array(input_measure_samples[measure_index])
         # Save measure_samples to a CSV file

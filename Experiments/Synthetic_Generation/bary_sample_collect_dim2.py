@@ -1,5 +1,5 @@
-from .true_WB import *
-from .samplers_dim2 import *
+from Experiments.Synthetic_Generation.true_WB import *
+from Experiments.Synthetic_Generation.samplers import *
 import os
 import json
 
@@ -7,16 +7,18 @@ if __name__ == "__main__":
     dim = 2 
     bary_MC_size = 50
     num_samples = 10000
+    truncated_radius = 150
+    source_sampler_seed = 1009
 
     source_sampler = MixtureOfGaussians(dim)
-    load_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/samplers_info"
-    source_sampler = load_sampler(load_dir, source_sampler, sampler_type="source")
+    source_sampler.random_components(num_components=5, uniform_weights = True, seed = source_sampler_seed)
+    source_sampler.set_truncation(truncated_radius)
 
     bary_samples_collection = {}
     for i in range(bary_MC_size):
-        bary_samples = source_sampler.sample(num_samples)
+        bary_samples = source_sampler.sample(num_samples, seed = i+2000)
         bary_samples_collection[i] = bary_samples
-    data_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/bary_samples_collection"
+    data_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/bary_samples_collection"
     os.makedirs(data_dir, exist_ok=True)
 
     # save as json after changing numpy array to list

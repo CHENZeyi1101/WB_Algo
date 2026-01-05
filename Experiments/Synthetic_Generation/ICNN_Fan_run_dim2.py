@@ -28,7 +28,7 @@ from ...Algorithms.ICNN_Fan.optimal_transport_modules import pytorch_utils as PT
 from ...Algorithms.ICNN_Fan.optimal_transport_modules.record_mean_cov import select_mean_and_cov
 from ...Algorithms.ICNN_Fan.CNX.cfg import CNXCfgCustom as Cfg_class
 from ...Algorithms.ICNN_Fan.CNX import compare_dist_results as CDR
-from .samplers_dim2 import *
+from .samplers import *
 
 ##### For computing the constraint loss of negtive weights ######
 def compute_constraint_loss(list_of_params):
