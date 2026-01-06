@@ -116,7 +116,7 @@ def w2_barycenter_free_support_from_samples(
     #     X_init = cent
 
     else:
-        raise ValueError('init must be one of {"kmeans","random","subset"}')
+        raise ValueError('init must be one of {"random","subset"}')
 
     # --------- run POT free-support barycenter ----------
     out = ot.lp.free_support_barycenter(

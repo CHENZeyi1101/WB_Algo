@@ -14,6 +14,8 @@ if __name__ == "__main__":
     truncated_radius = 150
     # multiplication_factor = 10
     MC_size = 20
+    instance_theta = 2000
+    support_size = 5000
 
     source_csv_file = f"../../WB_data/Synthetic_Generation/dim{dim}_data/source_samples/csv_files/source_measure_samples.csv"
     source_sampler = csv_source_sampler_SyntheticGeneration(source_csv_file, 
@@ -28,19 +30,12 @@ if __name__ == "__main__":
                                                 multiplication_factor=1)
     input_sampler.set_streamers()
 
-
-    load_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/samplers_info"
-    source_sampler = MixtureOfGaussians(dim)
-    source_sampler = load_sampler(load_dir, source_sampler, sampler_type="source")
-    csv_path = f"../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files"
-    csv_sampler = csv_input_sampler(dim = dim, num_measures = num_measures, csv_path = csv_path)
-
-    bary_sample_path = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
+    bary_sample_path = f"../../WB_Data/Synthetic_Generation/dim{dim}_data/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
 
-    data_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/Fast_Cuturi_outputs"
+    data_dir = f"../../WB_Data/Synthetic_Generation/dim{dim}_data/Outputs_InstanceTheta{instance_theta}/Fast_Cuturi_outputs/SupportSize{support_size}_NumSamples{num_samples}"
     os.makedirs(data_dir, exist_ok=True)
     V_values_dir = os.path.join(data_dir, "V_values")
     W2_to_bary_dir = os.path.join(data_dir, "W2_to_bary")
@@ -51,12 +46,12 @@ if __name__ == "__main__":
     W2_to_bary_list = []
     for i in range(MC_size):
         print(f"Computing barycenter sample {i+1}/{MC_size}...")
-        input_samples_collection = csv_sampler.sample(num_samples)
+        input_samples_collection = input_sampler.sample(num_samples)
         samples_list = [np.array(input_samples_collection[key]) for key in sorted(input_samples_collection.keys())]
         approx_bary = w2_barycenter_free_support_from_samples(
             samples_list,
-            k=5000,
-            init="kmeans",
+            k=support_size,
+            init="random",
             numItermax=200,
             verbose=True,
             seed=42,

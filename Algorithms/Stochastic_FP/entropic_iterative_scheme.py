@@ -200,8 +200,8 @@ class entropic_iterative_scheme:
             input_samples_collection: dict = self.input_sampler.sample(num_samples)
             true_V_value = self.V_value_compute(bary_samples, input_samples_collection)
             true_V_value_list.append(true_V_value)
-        self.V_values_dict["true_V_value"] = true_V_value_list
-        save_json(self.V_values_dict, V_values_dir, "true_V_values.json")
+            self.V_values_dict["true_V_value"] = true_V_value_list
+            save_json(self.V_values_dict, V_values_dir, "true_V_values.json")
         mean_true_V_value = np.mean(true_V_value_list)
         print(f"True V-value computed: {mean_true_V_value}")
 

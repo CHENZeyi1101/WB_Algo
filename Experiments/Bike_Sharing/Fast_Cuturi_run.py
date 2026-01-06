@@ -8,12 +8,12 @@ from Experiments.CSV_read import *
 
 if __name__ == "__main__":
     dim = 9
-    num_samples = 10
+    num_samples = 10000
     num_measures = 5
     truncated_radius = 1000
     multiplication_factor = 1
     MC_size = 20
-    support_size = 10000
+    support_size = 5000
     print("Setting up posterior samplers...")
 
     csv_dir = f"../../WB_data/Bike_Sharing"
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
 
-    data_dir = f"./Experiments/Bike_Sharing/data_outputs/Fast_Cuturi_outputs"
+    data_dir = f"./Experiments/Bike_Sharing/data_outputs/Fast_Cuturi_outputs_test"
     os.makedirs(data_dir, exist_ok=True)
     V_values_dir = os.path.join(data_dir, "V_values")
     W2_to_bary_dir = os.path.join(data_dir, "W2_to_bary")

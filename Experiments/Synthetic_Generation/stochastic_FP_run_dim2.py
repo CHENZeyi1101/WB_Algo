@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     # print(bary_samples_collection_loaded["0"])
 
-    data_dir = f"./Experiments/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}/stochastic_FP_outputs"
+    data_dir = f"../../WB_Data/Synthetic_Generation/dim{dim}_data/Outputs_InstanceTheta{instance_theta}/stochastic_FP_outputs"
     os.makedirs(data_dir, exist_ok=True)
 
     entropic_iterative_computer.converge(bary_samples_collection_loaded,
