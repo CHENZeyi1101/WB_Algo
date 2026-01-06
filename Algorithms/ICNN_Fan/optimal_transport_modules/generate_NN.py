@@ -2,7 +2,7 @@ from __future__ import print_function
 import torch
 import torch.utils.data
 import torch.nn as nn
-import optimal_transport_modules.icnn_modules as NN_modules
+import Algorithms.ICNN_Fan.optimal_transport_modules.icnn_modules as NN_modules
 
 
 # * fixed weight -> ICNN

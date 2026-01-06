@@ -13,7 +13,7 @@ if __name__ == "__main__":
     max_iter = 5
     epsilon = 10
     warm_start = False
-    data_dir = f"./Experiments/Bike_Sharing/data_outputs/stochastic_FP_outputs"
+    data_dir = f"../../WB_Data/Bike_Sharing/data_outputs/stochastic_FP_outputs"
     os.makedirs(data_dir, exist_ok=True)
 
     ##### Set up the samplers for Bike Sharing data #####
@@ -44,7 +44,7 @@ if __name__ == "__main__":
                                                             truncate_radius = truncated_radius)
     
     ##### Load the barycenter samples (for MC comparison) #####
-    bary_sample_path = f"./Experiments/Bike_Sharing/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
+    bary_sample_path = f"../../WB_Data/Bike_Sharing/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}

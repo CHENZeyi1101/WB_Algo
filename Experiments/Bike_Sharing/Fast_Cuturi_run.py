@@ -13,7 +13,7 @@ if __name__ == "__main__":
     truncated_radius = 1000
     multiplication_factor = 1
     MC_size = 20
-    support_size = 5000
+    support_size = 100
     print("Setting up posterior samplers...")
 
     csv_dir = f"../../WB_data/Bike_Sharing"
@@ -39,17 +39,20 @@ if __name__ == "__main__":
     # total_posterior_sampler = csv_posterior_sampler(csv_dir=posterior_csv_dir, num_measures=1, multiplication_factor=multiplication_factor, type="full")
     # split_posterior_sampler = csv_posterior_sampler(csv_dir=posterior_csv_dir, num_measures=num_measures, multiplication_factor=multiplication_factor, type="split")
 
-    bary_sample_path = f"./Experiments/Bike_Sharing/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
+    bary_sample_path = f"../../WB_Data/Bike_Sharing/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
 
-    data_dir = f"./Experiments/Bike_Sharing/data_outputs/Fast_Cuturi_outputs_test"
+    data_dir = f"../../WB_Data/Bike_Sharing/data_outputs/Fast_Cuturi_outputs/SupportSize{support_size}_NumSamples{num_samples}"
     os.makedirs(data_dir, exist_ok=True)
     V_values_dir = os.path.join(data_dir, "V_values")
     W2_to_bary_dir = os.path.join(data_dir, "W2_to_bary")
     os.makedirs(V_values_dir, exist_ok=True)
     os.makedirs(W2_to_bary_dir, exist_ok=True)
+
+    V_values_path = os.path.join(V_values_dir, f"V_values.json")
+    W2_to_bary_path = os.path.join(W2_to_bary_dir, f"W2_to_bary.json")
 
     V_values_list = []
     W2_to_bary_list = []
@@ -81,12 +84,9 @@ if __name__ == "__main__":
         W2_to_bary_list.append(W2_sq)
         print(f"W2 squared to barycenter samples for barycenter sample {i}: {W2_sq}")
 
-        # save V-values and W2_to_bary values
-        V_values_path = os.path.join(V_values_dir, f"V_values.json")
         with open(V_values_path, 'w') as json_file:
             json.dump(V_values_list, json_file) 
 
-        W2_to_bary_path = os.path.join(W2_to_bary_dir, f"W2_to_bary.json")
         with open(W2_to_bary_path, 'w') as json_file:
             json.dump(W2_to_bary_list, json_file)
 

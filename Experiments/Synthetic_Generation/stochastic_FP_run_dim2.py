@@ -66,14 +66,19 @@ if __name__ == "__main__":
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
-
+ 
     # print(bary_samples_collection_loaded["0"])
 
     data_dir = f"../../WB_Data/Synthetic_Generation/dim{dim}_data/Outputs_InstanceTheta{instance_theta}/stochastic_FP_outputs"
     os.makedirs(data_dir, exist_ok=True)
 
+    input_sampler_for_evaluation = csv_input_sampler_for_evaluation_SyntheticGeneration(input_csv_path, 
+                                                num_measures, 
+                                                multiplication_factor=1)
+    input_sampler_for_evaluation.set_streamers()
+
     entropic_iterative_computer.converge(bary_samples_collection_loaded,
-                                        # input_samples_collection,
+                                        input_sampler_for_evaluation,
                                         max_iter = 5,
                                         num_samples = num_samples,
                                         epsilon = 10,

@@ -159,7 +159,7 @@ class entropic_iterative_scheme:
 
     def converge(self, 
                  bary_sample_collection,
-                #  input_samples_collection: dict,
+                 input_sampler_for_evaluation,
                  max_iter, 
                  num_samples, 
                  epsilon, 
@@ -214,7 +214,7 @@ class entropic_iterative_scheme:
             for i in tqdm(range(MC_size), desc = f"Monte Carlo Sampling at iteration {iter}"): # Monte carlo sample size
                 bary_samples = bary_sample_collection[str(i)]
                 accepted_samples = self.iterative_sampling(iter, num_samples, sample_logger)
-                input_samples_collection: dict = self.input_sampler.sample(num_samples)
+                input_samples_collection: dict = input_sampler_for_evaluation.sample(num_samples)
                 V_value = self.V_value_compute(accepted_samples, input_samples_collection)
                 W2_to_bary = self.W2_to_bary_compute(bary_samples, accepted_samples)
                 accepted_samples_list.append(accepted_samples.tolist())

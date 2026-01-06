@@ -21,14 +21,14 @@ import torch.optim as optim
 import torch
 import numpy as np
 import pandas as pd
-from ...Algorithms.ICNN_Fan.optimal_transport_modules import log_utils as LLU
-from ...Algorithms.ICNN_Fan.optimal_transport_modules import generate_data as g_data
-from ...Algorithms.ICNN_Fan.optimal_transport_modules import generate_NN as g_NN
-from ...Algorithms.ICNN_Fan.optimal_transport_modules import pytorch_utils as PTU
-from ...Algorithms.ICNN_Fan.optimal_transport_modules.record_mean_cov import select_mean_and_cov
-from ...Algorithms.ICNN_Fan.CNX.cfg import CNXCfgCustom as Cfg_class
-from ...Algorithms.ICNN_Fan.CNX import compare_dist_results as CDR
-from .samplers import *
+from Algorithms.ICNN_Fan.optimal_transport_modules import log_utils as LLU
+from Algorithms.ICNN_Fan.optimal_transport_modules import generate_data as g_data
+from Algorithms.ICNN_Fan.optimal_transport_modules import generate_NN as g_NN
+from Algorithms.ICNN_Fan.optimal_transport_modules import pytorch_utils as PTU
+from Algorithms.ICNN_Fan.optimal_transport_modules.record_mean_cov import select_mean_and_cov
+from Algorithms.ICNN_Fan.CNX.cfg import CNXCfgCustom as Cfg_class
+from Algorithms.ICNN_Fan.CNX import compare_dist_results as CDR
+from Experiments.Synthetic_Generation.samplers import *
 
 ##### For computing the constraint loss of negtive weights ######
 def compute_constraint_loss(list_of_params):
@@ -63,6 +63,8 @@ def train(epoch, csv_path):
 
     for marg_id in range(cfg.NUM_DISTRIBUTION):
         df = pd.read_csv(f"{csv_path}/input_measure_samples_{marg_id}.csv", header=None)
+        # take first cfg.N_TRAIN_SAMPLES rows
+        df = df.iloc[:cfg.N_TRAIN_SAMPLES, :]
         total_data[:, :, marg_id] = torch.from_numpy(df.to_numpy())
 
     total_data[:, :, -1] = torch.randn(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM)
@@ -265,17 +267,23 @@ def train(epoch, csv_path):
 
 if __name__ == '__main__':
     dim = 2
-    num_samples = 5000
     num_measures = 5
     seed = 1009
-    cfg = Cfg_class(DIM = dim, NUM_DISTRIBUTION=num_measures)
+    instance_theta = 2000
 
-    csv_path = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/input_samples/csv_files"
-    os.makedirs(csv_path, exist_ok=True)
+    cfg = Cfg_class(DIM = dim, NUM_DISTRIBUTION=num_measures, N_TRAIN_SAMPLES=1000000)
+
+    input_csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files_InstanceTheta2000"
+    if os.path.exists(input_csv_path):
+        print(f"The path '{input_csv_path}' exists.")
+    else:
+        print(f"The path '{input_csv_path}' does not exist.")
+
 
     # gpus_choice = GPUtil.getFirstAvailable(
     #     order='random', maxLoad=0.5, maxMemory=0.5, attempts=5, interval=900, verbose=False)
     # PTU.set_gpu_mode(True, gpus_choice[0])
+
     PTU.set_gpu_mode(False, 0)
 
     cfg.INPUT_DIM = dim
@@ -284,8 +292,10 @@ if __name__ == '__main__':
     cfg.high_dim_flag = False
     cfg.epochs = 500
     _, _, results, testresults = LLU.init_path(cfg)
-    results_save_path = f'./dim{dim}_data/ICNN_Fan_outputs/CNX_outputs/Custom_dim{dim}_measures{num_measures}'
+    results_save_path = f'../../WB_Data/Synthetic_Generation/dim{dim}_data/Outputs_InstanceTheta{instance_theta}/ICNN_Fan_outputs/CNX_outputs'
+    os.makedirs(results_save_path, exist_ok=True)
     model_save_path = results_save_path + '/storing_models'
+    os.makedirs(model_save_path, exist_ok=True)
     
     # kwargs = {'num_workers': 4, 'pin_memory': True}
     kwargs = {'pin_memory': True}
@@ -318,7 +328,7 @@ if __name__ == '__main__':
 
     optimizer_f = []
     optimizer_g = []
-    if cfg.optimizer is 'Adam':
+    if cfg.optimizer == 'Adam':
         for i in range(cfg.NUM_DISTRIBUTION):
             optimizer_f.append(optim.Adam(convex_f[i].parameters(), lr=cfg.LR_f))
             optimizer_g.append(
@@ -334,7 +344,7 @@ if __name__ == '__main__':
 
     for epoch in range(1, cfg.epochs + 1):
         # Start training
-        train(epoch, csv_path)
+        train(epoch, input_csv_path)
         if cfg.schedule_learning_rate:
             if epoch % cfg.lr_schedule_per_epoch == 0:
                 for i in range(cfg.NUM_DISTRIBUTION):

@@ -18,13 +18,13 @@ from torch.nn import functional as F
 from scipy.stats import ortho_group
 from scipy.linalg import sqrtm
 
-from ...Algorithms.data_manage import *
-from ...Algorithms.WIN_Korotin.src.icnn import DenseICNN_U
-from ...Algorithms.WIN_Korotin.src.plotters import plot_training_phase
-from ...Algorithms.WIN_Korotin.src.tools import ewma, score_gen, freeze, unfreeze
-from ...Algorithms.WIN_Korotin.src.fid_score import calculate_frechet_distance
-from ...Algorithms.WIN_Korotin.src import distributions
-from ...Algorithms.WIN_Korotin.src import bar_benchmark
+from Algorithms.data_manage import *
+from Algorithms.WIN_Korotin.src.icnn import DenseICNN_U
+from Algorithms.WIN_Korotin.src.plotters import plot_training_phase
+from Algorithms.WIN_Korotin.src.tools import ewma, score_gen, freeze, unfreeze
+from Algorithms.WIN_Korotin.src.fid_score import calculate_frechet_distance
+from Algorithms.WIN_Korotin.src import distributions
+from Algorithms.WIN_Korotin.src import bar_benchmark
 import itertools
 
 import gc
@@ -104,6 +104,8 @@ if __name__ == "__main__":
     assert dim > 1
 
     num_measures = 5
+    instance_theta = 2000
+    MC_size = 20
 
     print(torch.cuda.device_count())
     print(torch.cuda.is_available())
@@ -227,18 +229,44 @@ if __name__ == "__main__":
     last_plot_it = -1
     last_score_it = -1
 
-    load_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/samplers_info"
-    source_sampler = MixtureOfGaussians(dim)
-    source_sampler = load_sampler(load_dir, source_sampler, sampler_type="source")
-    source_measure_samples = source_sampler.sample(num_samples)
+    # load_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/samplers_info"
+    # source_sampler = MixtureOfGaussians(dim)
+    # source_sampler = load_sampler(load_dir, source_sampler, sampler_type="source")
+    # source_measure_samples = source_sampler.sample(num_samples)
 
-    # Load the input measures samplers
-    csv_path = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/input_samples/csv_files"
-    csv_sampler = csv_input_sampler(dim = dim, num_measures = num_measures, csv_path = csv_path)
+    # # Load the input measures samplers
+    # csv_path = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/input_samples/csv_files"
+    # csv_sampler = csv_input_sampler(dim = dim, num_measures = num_measures, csv_path = csv_path)
 
+    source_csv_file = f"../../WB_data/Synthetic_Generation/dim{dim}_data/source_samples/csv_files/source_measure_samples.csv"
+    source_sampler = csv_source_sampler_SyntheticGeneration(source_csv_file, 
+                                                multiplication_factor=1,
+                                                usecols=None,
+                                                skiprows=0)
+    source_sampler.set_streamer()
+
+    input_csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files_InstanceTheta2000"
+    input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
+                                                num_measures, 
+                                                multiplication_factor=1)
+    input_sampler.set_streamers()
+
+    bary_sample_path = f"../../WB_Data/Synthetic_Generation/dim{dim}_data/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
+    with open(bary_sample_path, 'r') as json_file:
+        bary_samples_collection_loaded = json.load(json_file)
+    bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
+
+    input_sampler_for_evaluation = csv_input_sampler_for_evaluation_SyntheticGeneration(input_csv_path, 
+                                                num_measures, 
+                                                multiplication_factor=1)
+    input_sampler_for_evaluation.set_streamers()
+
+
+    data_dir = f"../../WB_Data/Synthetic_Generation/dim{dim}_data/Outputs_InstanceTheta{instance_theta}/WIN_Korotin_outputs/NumSamples{num_samples}"
+    os.makedirs(data_dir, exist_ok=True)
     # define the save path
-    save_pathname = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/WIN_Korotin_outputs"
-    os.makedirs(save_pathname, exist_ok=True)
+    model_save_dir = f"{data_dir}/trained_models"
+    os.makedirs(model_save_dir, exist_ok=True)
 
     G_samples_dict = {}
     V_values_dict = {}
@@ -246,9 +274,9 @@ if __name__ == "__main__":
 
     while it < MAX_ITER:
         freeze(G)
-        input_measure_samples_for_D = csv_sampler.sample(BATCH_SIZE * D_ITERS)
-        input_measure_samples_for_T_inv = csv_sampler.sample(BATCH_SIZE * D_ITERS * T_ITERS)
-        input_measure_samples_for_D_inv = csv_sampler.sample(BATCH_SIZE * D_ITERS)
+        input_measure_samples_for_D = input_sampler.sample(BATCH_SIZE * D_ITERS)
+        input_measure_samples_for_T_inv = input_sampler.sample(BATCH_SIZE * D_ITERS * T_ITERS)
+        input_measure_samples_for_D_inv = input_sampler.sample(BATCH_SIZE * D_ITERS)
         # this is a dictionary with k keys, pointing to the samples collected from each measure
         for k in range(num_measures):
             # D and T optimization cycle
@@ -331,7 +359,7 @@ if __name__ == "__main__":
 
                 G_loss_history.append(G_loss.item())
 
-            save_path = f"{save_pathname}/trained_models_iter_{it}.pth"
+            model_save_path = f"{model_save_dir}/trained_models_iter_{it}.pth"
             # os.makedirs(save_path, exist_ok=True)
             models_to_save = {
                 "G": G.state_dict(),
@@ -343,8 +371,8 @@ if __name__ == "__main__":
             }
 
             # Save the dictionary
-            torch.save(models_to_save, save_path)
-            print(f"Models saved to {save_path}")
+            torch.save(models_to_save, model_save_path)
+            print(f"Models saved to {model_save_path}")
 
                 # Log G_loss_history to a local file
             with open("G_loss_history.log", "a") as f:
@@ -353,16 +381,42 @@ if __name__ == "__main__":
             del G_old, G_loss, T_G_old_Z, Z
             gc.collect()
 
-            # Save the generated samples from the G-mapping at each iteration
-            accepted_G_samples = G(Z_sampler.sample(num_samples)).cuda().detach().numpy() #.cpu()
-            G_sample_save(G_samples_dict, accepted_G_samples, it, save_pathname = save_pathname)
 
-            # Compute the V-value (i.e.,\@ the weighted sum of the Wasserstein distances between the input measures and the generated samples)
-            # Notice that when iter = None, this returns the true V_value given by the ground-truth barycenter;
-            V_value_compute(V_values_dict, accepted_G_samples, input_measure_samples, iter = it, save_pathname = save_pathname)
+            for MC_iter in range(MC_size):
+                print(f"Computing metrics for MC sample {MC_iter+1}/{MC_size} at iteration {it}...")
+                # Save the generated samples from the G-mapping at each iteration
+                accepted_G_samples = G(Z_sampler.sample(num_samples)).cuda().detach().numpy() #.cpu()
 
-            # Compute the Wasserstein distance between the generated samples from the G-mapping
-            # and the barycenter samples at each iteration;
-            W2_to_true_bary_compute(W2_to_true_bary_dict, accepted_G_samples, source_measure_samples, it, save_pathname = save_pathname)
+                # Save the generated samples from the G-mapping at each iteration;
+                G_samples_dict[f"iteration_{iter}"] = accepted_G_samples
+                G_samples_json = {str(k): v.tolist() for k, v in G_samples_dict.items()}
+                G_sample_dir = f"{data_dir}/G_samples"
+                os.makedirs(G_sample_dir, exist_ok=True)
+                with open(f"{G_sample_dir}/G_samples.json", 'w') as f:
+                    json.dump(G_samples_json, f, indent=4)
+
+                # Compute the V-value
+                input_samples_collection_for_evaluation = input_sampler_for_evaluation.sample(num_samples)
+                V_value = 0
+                for measure_index in range(num_measures):
+                    input_samples = np.array(input_samples_collection_for_evaluation[measure_index])
+                    V_value += W2_pot(input_samples, accepted_G_samples)
+                # normalize the V_value by the number of input measures
+                V_value /= num_measures
+                V_values_dict[f"iteration_{it}"] = V_value
+                V_value_dir = f"{data_dir}/V_values"
+                os.makedirs(V_value_dir, exist_ok=True)
+                with open(f"{V_value_dir}/V_values.json", 'w') as f:
+                    json.dump(V_values_dict, f, indent=4) 
+
+                bary_samples = bary_samples_collection_loaded[str(MC_iter)]
+                W2_sq = W2_pot(accepted_G_samples, bary_samples)
+                W2_to_true_bary_dict[f"iteration_{it}"] = W2_sq
+                W2_to_true_bary_json = W2_to_true_bary_dict
+                W2_to_true_bary_dir = f"{data_dir}/W2_to_true_bary"
+                os.makedirs(W2_to_true_bary_dir, exist_ok=True)
+                with open(f"{W2_to_true_bary_dir}/W2_to_true_bary.json", 'w') as f:
+                    json.dump(W2_to_true_bary_json, f, indent=4)
+
 
         print(f"Iteration {it} completed.")

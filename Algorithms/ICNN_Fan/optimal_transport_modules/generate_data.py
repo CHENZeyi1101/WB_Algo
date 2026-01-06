@@ -5,9 +5,9 @@ from math import isclose
 import numpy as np
 from scipy.stats import multivariate_normal
 from torchvision import datasets, transforms
-import optimal_transport_modules.pytorch_utils as PTU
-import optimal_transport_modules.data_utils as DTU
-import jacinle.io as io
+import Algorithms.ICNN_Fan.optimal_transport_modules.pytorch_utils as PTU
+import Algorithms.ICNN_Fan.optimal_transport_modules.data_utils as DTU
+import Algorithms.ICNN_Fan.jacinle.io as io
 
 #! gaussian
 

@@ -24,7 +24,8 @@ if __name__ == "__main__":
     for i in range(bary_MC_size):
         bary_samples = total_posterior_sampler.sample(num_samples)
         bary_samples_collection[i] = bary_samples
-    data_dir = f"./Experiments/Bike_Sharing/bary_samples_collection"
+
+    data_dir = f"../../WB_Data/Bike_Sharing/bary_samples_collection"
     os.makedirs(data_dir, exist_ok=True)
 
     # save as json after changing numpy array to list

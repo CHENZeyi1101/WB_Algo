@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # multiplication_factor = 10
     MC_size = 20
     instance_theta = 2000
-    support_size = 5000
+    support_size = 500
 
     source_csv_file = f"../../WB_data/Synthetic_Generation/dim{dim}_data/source_samples/csv_files/source_measure_samples.csv"
     source_sampler = csv_source_sampler_SyntheticGeneration(source_csv_file, 
@@ -29,6 +29,11 @@ if __name__ == "__main__":
                                                 num_measures, 
                                                 multiplication_factor=1)
     input_sampler.set_streamers()
+
+    input_sampler_for_evaluation = csv_input_sampler_for_evaluation_SyntheticGeneration(input_csv_path, 
+                                                num_measures, 
+                                                multiplication_factor=1)
+    input_sampler_for_evaluation.set_streamers()
 
     bary_sample_path = f"../../WB_Data/Synthetic_Generation/dim{dim}_data/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
     with open(bary_sample_path, 'r') as json_file:
@@ -56,12 +61,14 @@ if __name__ == "__main__":
             verbose=True,
             seed=42,
         )
+
         bary_samples = bary_samples_collection_loaded[str(i)]
+        input_samples_collection_for_evaluation = input_sampler_for_evaluation.sample(num_samples)
 
         # compute V-value
         V_value = 0
         for measure_index in range(num_measures):
-            input_samples = np.array(input_samples_collection[measure_index])
+            input_samples = np.array(input_samples_collection_for_evaluation[measure_index])
             V_value += W2_pot(input_samples, approx_bary)
         V_value /= num_measures
         V_values_list.append(V_value)

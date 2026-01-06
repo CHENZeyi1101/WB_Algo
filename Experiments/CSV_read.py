@@ -3,6 +3,7 @@ import csv
 import numpy as np
 from typing import Iterator, Optional, Sequence, Union, Dict, List
 from tqdm import tqdm
+import random
 
 class StreamingCSVSamples:
     """
@@ -20,7 +21,7 @@ class StreamingCSVSamples:
         skiprows: int = 0,
         usecols: Optional[Union[Sequence[int], range]] = None,
         has_header: bool = True,
-        dtype=float,
+        dtype=float
     ):
         self.csv_filename = csv_filename
         self.skiprows = skiprows
@@ -114,6 +115,7 @@ class StreamingCSVSamples:
             self._reader = None
 
 
+
 class csv_posterior_sampler_BikeSharing:
     def __init__(self, csv_dir, num_measures: int = 1, multiplication_factor=1, type: str = "full", usecols: Optional[Union[Sequence[int], range]] = None, skiprows: int = 0):
         if type not in ("full", "split"):
@@ -190,6 +192,38 @@ class csv_input_sampler_SyntheticGeneration:
         output_streamers: Dict[int, StreamingCSVSamples] = {}
         for measure_idx in range(self.num_measures):
             csv_filename = os.path.join(self.csv_dir, f"input_measure_samples_{measure_idx}.csv")
+            output_streamers[measure_idx] = StreamingCSVSamples(
+                csv_filename,
+                skiprows=skiprows,
+                usecols=usecols,
+                has_header=False,
+                dtype=float,
+            )
+        self.output_streamers = output_streamers
+
+    def sample(self, num_samples: int):
+        batch_sample_collection = {}
+        for k, streamer in self.output_streamers.items():
+            X = streamer.take(num_samples)
+            batch_sample_collection[k] = [self.multiplication_factor * row for row in X]
+        return batch_sample_collection
+    
+class csv_input_sampler_for_evaluation_SyntheticGeneration:
+    def __init__(self, csv_dir, num_measures: int = 1, multiplication_factor=1, usecols: Optional[Union[Sequence[int], range]] = None, skiprows: int = 0):
+        self.num_measures = num_measures
+        self.csv_dir = csv_dir
+        self.multiplication_factor = multiplication_factor
+        self.usecols = usecols # G..P if 0-based depends on your earlier choice; this matches your code for bike sharing
+        self.skiprows = skiprows
+
+    def set_streamers(self):
+        usecols = self.usecols   # G..P if 0-based depends on your earlier choice; this matches your code
+        skiprows = self.skiprows
+
+        # split
+        output_streamers: Dict[int, StreamingCSVSamples] = {}
+        for measure_idx in range(self.num_measures):
+            csv_filename = os.path.join(self.csv_dir, f"input_measure_samples_{measure_idx}_for_evaluation.csv")
             output_streamers[measure_idx] = StreamingCSVSamples(
                 csv_filename,
                 skiprows=skiprows,

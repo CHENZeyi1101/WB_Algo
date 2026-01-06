@@ -4,10 +4,10 @@ import torch
 import numpy as np
 from sklearn.neighbors import KernelDensity
 from torch.utils.data import Dataset
-import jacinle.io as io
-import optimal_transport_modules.pytorch_utils as PTU
-import optimal_transport_modules.generate_data as g_data
-from optimal_transport_modules.record_mean_cov import select_mean_and_cov
+import Algorithms.ICNN_Fan.jacinle.io as io
+import Algorithms.ICNN_Fan.optimal_transport_modules.pytorch_utils as PTU
+import Algorithms.ICNN_Fan.optimal_transport_modules.generate_data as g_data
+from Algorithms.ICNN_Fan.optimal_transport_modules.record_mean_cov import select_mean_and_cov
 
 '''
 PyTorch type
