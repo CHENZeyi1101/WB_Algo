@@ -41,6 +41,7 @@ if __name__ == "__main__":
     assert dim > 1
 
     num_measures = 5
+    num_samples = 10000
     instance_theta = 2000
     MC_size = 20
 
@@ -206,7 +207,7 @@ if __name__ == "__main__":
     input_sampler_for_evaluation.set_streamers()
 
 
-    data_dir = f"../../WB_Data/Synthetic_Generation/dim{dim}_data/Outputs_InstanceTheta{instance_theta}/WIN_Korotin_outputs"
+    data_dir = f"../../WB_Data/Synthetic_Generation/dim{dim}_data/Outputs_InstanceTheta{instance_theta}/NumSamples{num_samples}/WIN_Korotin_outputs"
     os.makedirs(data_dir, exist_ok=True)
     # define the save path
     model_save_dir = f"{data_dir}/trained_models"

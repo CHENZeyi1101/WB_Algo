@@ -270,6 +270,7 @@ if __name__ == '__main__':
     num_measures = 5
     seed = 1009
     instance_theta = 2000
+    num_samples = 10000
 
     cfg = Cfg_class(DIM = dim, NUM_DISTRIBUTION=num_measures, N_TRAIN_SAMPLES=1000000)
 
@@ -292,7 +293,7 @@ if __name__ == '__main__':
     cfg.high_dim_flag = False
     cfg.epochs = 500
     _, _, results, testresults = LLU.init_path(cfg)
-    results_save_path = f'../../WB_Data/Synthetic_Generation/dim{dim}_data/Outputs_InstanceTheta{instance_theta}/ICNN_Fan_outputs/CNX_outputs'
+    results_save_path = f'../../WB_Data/Synthetic_Generation/dim{dim}_data/Outputs_InstanceTheta{instance_theta}/NumSamples{num_samples}/ICNN_Fan_outputs/CNX_outputs'
     os.makedirs(results_save_path, exist_ok=True)
     model_save_path = results_save_path + '/storing_models'
     os.makedirs(model_save_path, exist_ok=True)
