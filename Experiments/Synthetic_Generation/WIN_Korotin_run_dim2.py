@@ -25,6 +25,7 @@ from Algorithms.WIN_Korotin.src.tools import ewma, score_gen, freeze, unfreeze
 from Algorithms.WIN_Korotin.src.fid_score import calculate_frechet_distance
 from Algorithms.WIN_Korotin.src import distributions
 from Algorithms.WIN_Korotin.src import bar_benchmark
+from Experiments.Synthetic_Generation.metrics_to_compare import W2_pot
 import itertools
 
 import gc
@@ -34,72 +35,8 @@ from copy import deepcopy
 
 import ot
 
-def W2_pot(X, Y): 
-    r'''
-    Compute the squared Wasserstein-2 distance between two empirical measures (using the POT library)
-    '''
-    M = ot.dist(X, Y)
-    a, b = np.ones((X.shape[0],)) / X.shape[0], np.ones((Y.shape[0],)) / Y.shape[0]
-    W2_sq = ot.emd2(a, b, M, numItermax=1e6)
-    return W2_sq
-
-def G_sample_save(G_samples_dict, accepted_G_samples, iter, save_pathname = None):
-
-    # Save the generated samples from the G-mapping at each iteration;
-    # "accepted_G_samples" is the accepted samples generated from the G-mapping at the current iteration;
-    # "G_samples" is a dictinoary with keys corresponding to the iteration number and values corresponding to the generated samples at that iteration.
-
-    G_samples_dict[f"iteration_{iter}"] = accepted_G_samples
-    G_samples_json = {str(k): v.tolist() for k, v in G_samples_dict.items()}
-    G_sample_dir = f"{save_pathname}/G_samples"
-    os.makedirs(G_sample_dir, exist_ok=True)
-    save_json(G_samples_json, G_sample_dir, f"G_samples.json")
-
-def V_value_compute(V_values_dict, bary_samples, input_sample_collection, iter = None, save_pathname = None):
-    # Compute the V-value (i.e.,\@ the weighted sum of the Wasserstein distances between the input measures and the generated samples)
-    # Notice that when iter = None, this returns the true V_value given by the ground-truth barycenter;
-    # Otherwise, it is the V_value returned by an approximated barycenter.
-    # The input_sample_collection is a dictionary with k keys, each key corresponds to the samples from the k-th input measure.
-
-    V_value = 0
-    for measure_index in range(num_measures):
-        input_samples = np.array(input_sample_collection[measure_index])
-        V_value += W2_pot(input_samples, bary_samples)
-    
-    # normalize the V_value by the number of input measures
-    V_value /= num_measures
-
-    if iter is None:
-        V_values_dict["true_V_value"] = V_value
-    else:
-        V_values_dict[f"iteration_{iter}"] = V_value
-        
-    if save_pathname != None:
-        V_values_json = V_values_dict
-        V_value_dir = f"{save_pathname}/V_values"
-        os.makedirs(V_value_dir, exist_ok=True)
-        save_json(V_values_json, V_value_dir, f"V_values.json")
-    else:
-        return V_value
-
-
-def W2_to_true_bary_compute(W2_to_true_bary_dict, accepted_G_samples, bary_samples, iter, save_pathname = None):
-
-    # Compute the Wasserstein distance between the generated samples from the G-mapping
-    # and the barycenter samples at each iteration;
-    # "accepted_G_samples" is the accepted samples generated from the G-mapping at the current iteration;
-    # "bary_samples" is the barycenter samples generated from the input measure at the current iteration;
-
-    W2_sq = W2_pot(accepted_G_samples, bary_samples)
-    W2_to_true_bary_dict[f"iteration_{iter}"] = W2_sq
-    W2_to_true_bary_json = W2_to_true_bary_dict
-    W2_to_true_bary_dir = f"{save_pathname}/W2_to_true_bary"
-    os.makedirs(W2_to_true_bary_dir, exist_ok=True)
-    save_json(W2_to_true_bary_json, W2_to_true_bary_dir, f"W2_to_true_bary.json")
-
-
-
 if __name__ == "__main__":
+    
     dim = 2
     assert dim > 1
 
@@ -111,7 +48,7 @@ if __name__ == "__main__":
     print(torch.cuda.is_available())
 
     GPU_DEVICE = 0 # GPU index starting from 0
-    BATCH_SIZE = 1024
+    BATCH_SIZE = 256 #1024
 
     LAMBDA = 10
     G_LR = 1e-4
@@ -137,11 +74,19 @@ if __name__ == "__main__":
 
     OUTPUT_SEED = 0xBADBEEF
 
-    assert torch.cuda.is_available()
-    torch.cuda.set_device(GPU_DEVICE)
+    # assert torch.cuda.is_available()
+    # torch.cuda.set_device(GPU_DEVICE)
 
-    np.random.seed(OUTPUT_SEED)
+    # np.random.seed(OUTPUT_SEED)
+    # torch.manual_seed(OUTPUT_SEED)
+    # ---------------- DEVICE SETUP ----------------
+    DEVICE = torch.device("cpu")
+
+    print("Using device:", DEVICE)
+
     torch.manual_seed(OUTPUT_SEED)
+    np.random.seed(OUTPUT_SEED)
+
 
     '''''
     Discriminator setup
@@ -154,7 +99,7 @@ if __name__ == "__main__":
     nn.Linear(max(100, 2*dim), max(100, 2*dim)),
     nn.ReLU(True),
     nn.Linear(max(100, 2*dim), 1)
-    ).cuda() #.cpu()
+    ).to(DEVICE)
 
     T = nn.Sequential(
         nn.Linear(dim, max(100, 2*dim)),
@@ -164,20 +109,19 @@ if __name__ == "__main__":
         nn.Linear(max(100, 2*dim), max(100, 2*dim)),
         nn.ReLU(True),
         nn.Linear(max(100, 2*dim), dim)
-    ).cuda() #.cpu()
+    ).to(DEVICE)
 
-    Ds = nn.ModuleList([deepcopy(D) for _ in range(num_measures)]).cuda() #.cpu()
-    Ts = nn.ModuleList([deepcopy(T) for _ in range(num_measures)]).cuda() #.cpu()
+    Ds = nn.ModuleList([deepcopy(D) for _ in range(num_measures)]).to(DEVICE) #.cuda()
+    Ts = nn.ModuleList([deepcopy(T) for _ in range(num_measures)]).to(DEVICE) #.cuda()
 
-    Ds_inv = nn.ModuleList([deepcopy(D) for _ in range(num_measures)]).cuda() #.cpu()
-    Ts_inv = nn.ModuleList([deepcopy(T) for _ in range(num_measures)]).cuda() #.cpu()
-
+    Ds_inv = nn.ModuleList([deepcopy(D) for _ in range(num_measures)]).to(DEVICE) #.cuda()
+    Ts_inv = nn.ModuleList([deepcopy(T) for _ in range(num_measures)]).to(DEVICE) #.cuda()
 
     '''
     Generator setup
     '''
-    # Z_sampler = distributions.StandardNormalSampler(dim=dim, device='cpu')
-    Z_sampler = distributions.StandardNormalSampler(dim=dim, device='cuda')
+    Z_sampler = distributions.StandardNormalSampler(dim=dim, device='cpu')
+    # Z_sampler = distributions.StandardNormalSampler(dim=dim, device='cuda')
 
     G = nn.Sequential(
     nn.Linear(dim, max(100, 2*dim)),
@@ -189,7 +133,7 @@ if __name__ == "__main__":
     nn.Linear(max(100, 2*dim), max(100, 2*dim)),
     nn.ReLU(True),
     nn.Linear(max(100, 2*dim), dim)
-    ).cpu() #.cuda()
+    ).to(DEVICE)
 
     G_opt = torch.optim.Adam(G.parameters(), lr=1e-4, weight_decay=1e-8)
     loss = np.inf
@@ -262,7 +206,7 @@ if __name__ == "__main__":
     input_sampler_for_evaluation.set_streamers()
 
 
-    data_dir = f"../../WB_Data/Synthetic_Generation/dim{dim}_data/Outputs_InstanceTheta{instance_theta}/WIN_Korotin_outputs/NumSamples{num_samples}"
+    data_dir = f"../../WB_Data/Synthetic_Generation/dim{dim}_data/Outputs_InstanceTheta{instance_theta}/WIN_Korotin_outputs"
     os.makedirs(data_dir, exist_ok=True)
     # define the save path
     model_save_dir = f"{data_dir}/trained_models"
@@ -298,8 +242,13 @@ if __name__ == "__main__":
                 # D optimization
                 with torch.no_grad():
                     X = G(Z_sampler.sample(BATCH_SIZE))
-                # Y = benchmark.samplers[k].sample(BATCH_SIZE)
-                Y = torch.tensor(input_measure_samples_for_D[k][d_iter * BATCH_SIZE : (d_iter + 1) * BATCH_SIZE]).float()
+                # Y = torch.tensor(input_measure_samples_for_D[k][d_iter * BATCH_SIZE : (d_iter + 1) * BATCH_SIZE]).float()
+                Y = torch.tensor(
+                    input_measure_samples_for_D[k][d_iter * BATCH_SIZE : (d_iter + 1) * BATCH_SIZE],
+                    dtype=torch.float32,
+                    device=DEVICE
+                )
+
                 
                 unfreeze(Ds[k]); freeze(Ts[k])
                 T_X = Ts[k](X).detach()
@@ -308,7 +257,7 @@ if __name__ == "__main__":
                 D_loss.backward(); Ds_opt[k].step()
                 del D_loss, Y, X, T_X
                 gc.collect()
-                torch.cuda.empty_cache()
+                # torch.cuda.empty_cache()
                 
                 # T inv optimization
                 unfreeze(Ts_inv[k]); freeze(Ds_inv[k])
@@ -385,7 +334,13 @@ if __name__ == "__main__":
             for MC_iter in range(MC_size):
                 print(f"Computing metrics for MC sample {MC_iter+1}/{MC_size} at iteration {it}...")
                 # Save the generated samples from the G-mapping at each iteration
-                accepted_G_samples = G(Z_sampler.sample(num_samples)).cuda().detach().numpy() #.cpu()
+                # accepted_G_samples = G(Z_sampler.sample(num_samples)).cuda().detach().numpy() #.cpu()
+                accepted_G_samples = (
+                    G(Z_sampler.sample(num_samples))
+                    .detach()
+                    .cpu()
+                    .numpy()
+                )
 
                 # Save the generated samples from the G-mapping at each iteration;
                 G_samples_dict[f"iteration_{iter}"] = accepted_G_samples

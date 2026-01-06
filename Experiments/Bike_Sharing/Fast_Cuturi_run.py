@@ -13,7 +13,7 @@ if __name__ == "__main__":
     truncated_radius = 1000
     multiplication_factor = 1
     MC_size = 20
-    support_size = 100
+    support_size = 500
     print("Setting up posterior samplers...")
 
     csv_dir = f"../../WB_data/Bike_Sharing"
@@ -26,6 +26,7 @@ if __name__ == "__main__":
                                                     skiprows=52)
     total_posterior_sampler.set_streamers()
     print("Total posterior sampler set up.")
+
     split_posterior_sampler = csv_posterior_sampler_BikeSharing(csv_dir, 
                                                 num_measures, 
                                                 multiplication_factor, 
@@ -34,6 +35,15 @@ if __name__ == "__main__":
                                                 skiprows=52)
     split_posterior_sampler.set_streamers()
     print("Split posterior sampler set up.")
+
+    split_posterior_sampler_for_evaluation = csv_posterior_sampler_BikeSharing(csv_dir, 
+                                                num_measures, 
+                                                multiplication_factor, 
+                                                type="split",
+                                                usecols=range(7, 16),
+                                                skiprows=6000000) # adjust skiprows for the samples used for evaluation
+    split_posterior_sampler_for_evaluation.set_streamers()
+    print("Split posterior sampler for evaluation set up.")
 
     # posterior_csv_dir = f"../WB_data/Bike_Sharing"
     # total_posterior_sampler = csv_posterior_sampler(csv_dir=posterior_csv_dir, num_measures=1, multiplication_factor=multiplication_factor, type="full")
@@ -68,12 +78,14 @@ if __name__ == "__main__":
             verbose=True,
             seed=42,
         )
+
+        input_samples_collection_for_evaluation = split_posterior_sampler_for_evaluation.sample(num_samples)
         bary_samples = bary_samples_collection_loaded[str(i)]
 
         # compute V-value
         V_value = 0
         for measure_index in range(num_measures):
-            input_samples = np.array(input_samples_collection[measure_index])
+            input_samples = np.array(input_samples_collection_for_evaluation[measure_index])
             V_value += W2_pot(input_samples, approx_bary)
         V_value /= num_measures
         V_values_list.append(V_value)

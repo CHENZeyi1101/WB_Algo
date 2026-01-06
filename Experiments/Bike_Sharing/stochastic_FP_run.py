@@ -35,6 +35,16 @@ if __name__ == "__main__":
                                                 skiprows=52)
     split_posterior_sampler.set_streamers()
     print("Split posterior sampler set up.")
+
+    split_posterior_sampler_for_evaluation = csv_posterior_sampler_BikeSharing(csv_dir, 
+                                                num_measures, 
+                                                multiplication_factor, 
+                                                type="split",
+                                                usecols=range(7, 16),
+                                                skiprows=6000000) # adjust skiprows for the samples used for evaluation
+    split_posterior_sampler_for_evaluation.set_streamers()
+    print("Split posterior sampler for evaluation set up.")
+
     
     ##### Set up the entropic iterative computer #####
     entropic_iterative_computer = entropic_iterative_scheme(dim = dim, 
@@ -51,7 +61,7 @@ if __name__ == "__main__":
 
     ##### Run the stochastic FP algorithm with entropic OT map estimation #####
     entropic_iterative_computer.converge(bary_samples_collection_loaded,
-                                        # input_samples_collection,
+                                        split_posterior_sampler_for_evaluation,
                                         max_iter = max_iter,
                                         num_samples = num_samples,
                                         epsilon = epsilon,

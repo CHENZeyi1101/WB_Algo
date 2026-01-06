@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # multiplication_factor = 10
     MC_size = 20
     instance_theta = 2000
-    support_size = 500
+    support_size = 1000
 
     source_csv_file = f"../../WB_data/Synthetic_Generation/dim{dim}_data/source_samples/csv_files/source_measure_samples.csv"
     source_sampler = csv_source_sampler_SyntheticGeneration(source_csv_file, 
