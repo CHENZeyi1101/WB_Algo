@@ -13,7 +13,7 @@ if __name__ == "__main__":
     truncated_radius = 1000
     multiplication_factor = 1
     MC_size = 20
-    support_size = 500
+    support_size = 100
     print("Setting up posterior samplers...")
 
     csv_dir = f"../../WB_data/Bike_Sharing"
