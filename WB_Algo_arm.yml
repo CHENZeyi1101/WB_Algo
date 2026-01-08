@@ -1,7 +1,8 @@
-name: WB_Algo_arm
 channels:
   - conda-forge
   - defaults
+  - gurobi
+  
 dependencies:
   - python=3.11
 

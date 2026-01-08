@@ -6,3 +6,9 @@
 # *.csv
 .vscode/settings.json
 *.pyc
+.DS_Store
+Algorithms/WDHA_Kim/implementation2D/.DS_Store
+Experiments/Bike_Sharing/.DS_Store
+Experiments/Bike_Sharing/bike_sharing_dataset/.DS_Store
+Experiments/Bike_Sharing/build/.DS_Store
+Experiments/Synthetic_Generation/.DS_Store
