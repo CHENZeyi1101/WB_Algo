@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import tensorflow as tf
-from cwb.common.config_parser import construct_single_distribution
+from Algorithms.CWB_Li.cwb.common.config_parser import construct_single_distribution
 
 g_num_gaussians = 5
 
@@ -10,13 +10,15 @@ g_num_components = 3
 
 g_num_cubes = 3
 
-g_data_dir = 'data/'
-g_result_dir = 'result/'
-g_stats_dir = 'stats/'
-g_evolve_dir = 'evolve/'
-g_vis_dir = 'vis/'
-g_cwb_working_dir = 'cwb_tmp/'
-g_claici_working_dir = 'claici_tmp/'
+g_base_dir = 'Algorithms/CWB_Li'
+
+g_data_dir = os.path.join(g_base_dir, 'data/')
+g_result_dir = os.path.join(g_base_dir, 'result/')
+g_stats_dir = os.path.join(g_base_dir, 'stats/')
+g_evolve_dir = os.path.join(g_base_dir, 'evolve/')
+g_vis_dir = os.path.join(g_base_dir, 'vis/')
+g_cwb_working_dir = os.path.join(g_base_dir, 'cwb_tmp/')
+g_claici_working_dir = os.path.join(g_base_dir, 'claici_tmp/')
 
 g_result_filename_dict = {
         'cwb': 'cwb.npz',

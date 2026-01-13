@@ -23,9 +23,16 @@ class MovingAverages:
     def swap_in_averages(self):
         self.backup_list = []
         for i in range(self.n_vars):
-            self.backup_list.append(self.var_list[i].value())
-            self.var_list[i].assign(self.avg_var_list[i].value())
+            v = self.var_list[i]
+            a = self.avg_var_list[i]
+
+            # Snapshot current value as a Tensor (works for tf.Variable and keras Variable)
+            self.backup_list.append(tf.identity(tf.convert_to_tensor(v)))
+
+            # Assign in the averaged value
+            v.assign(tf.convert_to_tensor(a))
 
     def swap_out_averages(self):
         for i in range(self.n_vars):
             self.var_list[i].assign(self.backup_list[i])
+        self.backup_list = []

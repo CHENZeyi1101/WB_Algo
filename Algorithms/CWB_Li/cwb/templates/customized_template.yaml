@@ -7,7 +7,7 @@ nn_dtype: 'float32'
 potential_model_type: 'nn'
 potential_nn_layers: [128, 256]
 transport_map_nn_layers: [128, 256]
-infer_sample_count: 10000
+infer_sample_count: 1000
 
 supp_desc:
     shape: 'bbox_inferred'
@@ -38,6 +38,8 @@ potential_total_epochs: 50000
 map_total_epochs: 0
 preferred_monge_map_kind: 'potential_gradient'
 # preferred_monge_map_kind: 'seguy'
+
+reset_potential_ckpt: true   # or false
 
 potential_ckpt_dir: 'checkpoints/potential'
 map_ckpt_dir: 'checkpoints/map'

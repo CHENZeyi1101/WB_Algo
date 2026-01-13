@@ -61,6 +61,44 @@ class PotentialModel(keras.Model):
             self.final_layer = keras.layers.Dense(
                     1,
                     activation=None)
+            
+        self.model_type = model_type
+        self.point_dim = conf['point_dim']
+            
+    def build(self, input_shape):
+        """
+        Ensures sublayers are built properly when Keras calls model.build().
+        This removes the 'build() was called but not implemented' warning.
+        """
+        # Normalize input_shape to something with a last dimension
+        # Typical: (batch, point_dim)
+        if isinstance(input_shape, (list, tuple)) and len(input_shape) > 0:
+            in_shape = tf.TensorShape(input_shape)
+        else:
+            in_shape = tf.TensorShape([None, self.point_dim])
+
+        # If last dim is unknown, use conf point_dim
+        last_dim = in_shape[-1]
+        if last_dim is None:
+            last_dim = self.point_dim
+
+        # Build the MLP path
+        if self.model_type != "rff":
+            cur_shape = tf.TensorShape([None, last_dim])
+            for layer in self.intermediate_layers:
+                layer.build(cur_shape)
+                cur_shape = layer.compute_output_shape(cur_shape)
+            self.final_layer.build(cur_shape)
+
+        # Build the RFF path (if the custom layer supports build)
+        else:
+            # Many custom layers build on first call; this is safe if build exists
+            try:
+                self.final_layer.build(tf.TensorShape([None, last_dim]))
+            except Exception:
+                pass
+
+        super().build(in_shape)
 
 
     def call(self, inputs):
@@ -77,12 +115,41 @@ class TransportMapModel(keras.Model):
     def __init__(self, conf):
         super(TransportMapModel, self).__init__()
 
+        self.conf = conf
+        self.point_dim = conf["point_dim"]
+
         self.intermediate_layers = []
         for layer in conf['transport_map_nn_layers']:
             self.intermediate_layers.append(keras.layers.Dense(
                 layer,
                 activation='relu'))
         self.final_layer = keras.layers.Dense(conf['point_dim'], activation=None)
+
+    def build(self, input_shape):
+        """
+        Properly build all sublayers so Keras does not mark the model as
+        'built without being built'.
+        """
+        # Expect inputs of shape (batch, point_dim)
+        input_shape = tf.TensorShape(input_shape)
+        last_dim = input_shape[-1]
+
+        # If dynamic / unknown, fall back to config
+        if last_dim is None:
+            last_dim = self.point_dim
+
+        cur_shape = tf.TensorShape([None, last_dim])
+
+        # Build hidden layers
+        for layer in self.intermediate_layers:
+            layer.build(cur_shape)
+            cur_shape = layer.compute_output_shape(cur_shape)
+
+        # Build output layer
+        self.final_layer.build(cur_shape)
+
+        super().build(input_shape)
+
 
     def call(self, inputs):
         x = inputs

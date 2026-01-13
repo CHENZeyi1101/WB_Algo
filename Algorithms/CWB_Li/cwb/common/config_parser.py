@@ -1,4 +1,4 @@
-from cwb.common.distributions import \
+from Algorithms.CWB_Li.cwb.common.distributions import \
         uniform_rectangle_tf, \
         uniform_disk_tf, \
         uniform_annulus_tf, \
@@ -10,14 +10,16 @@ from cwb.common.distributions import \
         empirical_tf, \
         uniform_nd_tf, \
         mixture_tf, \
-        uniform_bbox_tf
-from cwb.common.marching_cubes import march, super_resolution, sample_segs
-from cwb.common.utils import safe_exp_tf
+        uniform_bbox_tf, \
+        empirical_tf_customized
+from Algorithms.CWB_Li.cwb.common.marching_cubes import march, super_resolution, sample_segs
+from Algorithms.CWB_Li.cwb.common.utils import safe_exp_tf
 
 
 import tensorflow as tf
 import numpy as np
 import pickle
+import pandas as pd
 
 def load_empirical_npz(nu_desc):
     npz = np.load(nu_desc['npz_path'], allow_pickle=True)
@@ -25,12 +27,20 @@ def load_empirical_npz(nu_desc):
     return npz[key]
 
 
-def construct_single_distribution(nu_desc, float_dtype):
+def construct_single_distribution(nu_desc, float_dtype, measure_idx = 0, input_sampler = None):
     # unwrap if pkl_path is in nu_desc
     if 'pkl_path' in nu_desc:
         dict_pkl = pickle.load(open(nu_desc['pkl_path'], 'rb'))
+        '''
+        dict_pkl: {
+                'dim': dim,
+                'shape': 'empirical_npy',
+                'npy_path': os.path.abspath(npy_path)}
+        see data_generator.py for info
+        '''
         for k, v in dict_pkl.items():
             nu_desc[k] = v
+        
 
     if nu_desc['shape'] == 'rectangle':
         nu_tf = uniform_rectangle_tf(nu_desc['extent'], float_dtype=float_dtype)
@@ -98,19 +108,37 @@ def construct_single_distribution(nu_desc, float_dtype):
         nu_tf = empirical_tf(nu_desc['points'], nu_desc.get('gaussian_noise', 0.0), float_dtype)
     elif nu_desc['shape'] == 'placeholder':
         return None # None indicates a placeholder
+    # ############################### the following applies to instances in our experiments
+    elif nu_desc['shape'] == 'customized_sampler':
+        point_dim = nu_desc['dim']
+        nu_tf = empirical_tf_customized(input_sampler, point_dim, measure_idx, float_dtype)
+    # ###############################
     else:
         raise Exception('Unrecognized shape: {}'.format(nu_desc['shape']))
 
     # nu_tf is a dict with two functions {'sample': sample_fn, 'pdf': pdf_fn}
-    return nu_tf
+    return nu_tf # this is a DistributionWrapper
 
 
-def construct_distribution_list(list_desc, float_dtype):
+def construct_distribution_list(list_desc, float_dtype, input_sampler): # list_desc: conf['distribution_list']
+    '''
+    Construct a list of distributions from their descriptions.
+    list_desc: a list of distribution descriptions (defined in {}_solver.py)
+    Each description is a dict with keys:
+        - name: the name of the distribution
+        - weight: the weight of the distribution
+        - pkl_path: (optional) path to a pickle file containing the distribution parameters
+    Returns:
+        - vertex_list: a list of DistributionWrapper objects
+        - name_list: a list of names corresponding to the distributions
+        - weight_list: a list of weights corresponding to the distributions
+    '''
     vertex_list = []
     weight_list = []
     name_list = []
-    for vertex_desc in list_desc:
-        vertex_list.append(construct_single_distribution(vertex_desc, float_dtype))
+    for i, vertex_desc in enumerate(list_desc):
+        # vertex_desc is a dict describing a single distribution
+        vertex_list.append(construct_single_distribution(vertex_desc, float_dtype, measure_idx=i, input_sampler = input_sampler))
         weight_list.append(vertex_desc['weight'])
         name_list.append(vertex_desc['name'])
     return vertex_list, name_list, weight_list

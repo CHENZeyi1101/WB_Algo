@@ -1,4 +1,4 @@
-from .barycenter_state import BarycenterState
+from Algorithms.CWB_Li.cwb.barycenter.barycenter_state import BarycenterState
 
 import numpy as np
 import tensorflow as tf

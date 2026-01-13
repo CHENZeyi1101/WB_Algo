@@ -358,6 +358,27 @@ def empirical_tf(ps, gaussian_noise=0.0, float_dtype=tf.float32, max_sub=5000):
 
     return DistributionWrapper(sample_fn=sample, pdf_fn=pdf)
 
+'''
+NEW: empirical_tf_csv loads data from CSV files
+'''
+
+def empirical_tf_customized(input_sampler, point_dim, measure_idx=0, float_dtype=tf.float32):
+    def sample(batch_size):
+        input_samples_collection = input_sampler.sample(batch_size)
+        measure_samples = input_samples_collection[measure_idx]
+        # measure_samples may be list/np/tf tensor
+        if isinstance(measure_samples, (list, tuple)):
+            measure_samples = tf.stack(measure_samples, axis=0)
+
+        measure_samples_tf = tf.convert_to_tensor(measure_samples)      # accept whatever dtype
+        measure_samples_tf = tf.cast(measure_samples_tf, float_dtype)   # enforce float32/float64
+        measure_samples_tf = tf.ensure_shape(measure_samples_tf, [None, point_dim])
+        
+        return measure_samples_tf
+    
+    return DistributionWrapper(sample_fn=sample, pdf_fn=None)
+
+
 def uniform_nd_tf(extent, float_dtype=tf.float32):
     dim = len(extent)
     volume = 1.0

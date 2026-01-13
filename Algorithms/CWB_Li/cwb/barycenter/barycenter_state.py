@@ -1,22 +1,23 @@
-from cwb.common.config_parser import \
+from Experiments.CSV_read import *
+from Algorithms.CWB_Li.cwb.common.config_parser import \
         construct_single_distribution, \
         construct_distribution_list, \
         construct_regularizer, \
         construct_regularizer_derivative, \
         construct_optimizer, \
         load_empirical_npz
-from cwb.common.distributions import \
+from Algorithms.CWB_Li.cwb.common.distributions import \
         uniform_nd_tf, \
         uniform_bbox_tf, \
         BoundedDistributionAdapter, \
         TranslatedDistributionAdapter
-from cwb.common.moving_averages import MovingAverages
-from cwb.common.architecture import RFFLayer, PotentialModel, TransportMapModel
-from cwb.common.utils import compute_plan_pdf, calc_distances, calc_cross_distances
-from cwb.common.utils import \
+from Algorithms.CWB_Li.cwb.common.moving_averages import MovingAverages
+from Algorithms.CWB_Li.cwb.common.architecture import RFFLayer, PotentialModel, TransportMapModel
+from Algorithms.CWB_Li.cwb.common.utils import compute_plan_pdf, calc_distances, calc_cross_distances
+from Algorithms.CWB_Li.cwb.common.utils import \
         tf_ckpt_register, \
         tf_set_float_dtype
-from .validator import Validator
+from Algorithms.CWB_Li.cwb.barycenter.validator import Validator
 
 
 import tensorflow as tf
@@ -32,6 +33,26 @@ class BarycenterState:
         self.conf = conf
         float_dtype = tf_set_float_dtype(conf.get('nn_dtype', 'float32'))
         self.float_dtype = float_dtype
+
+        ##############################
+        if 'num_sources' in conf:
+            self.num_sources = conf['num_sources']
+        if 'input_csv_path' in conf:
+            self.input_csv_path = conf['input_csv_path']
+            if conf['exp'] == 'SyntheticGeneration':
+                self.input_sampler = csv_input_sampler_SyntheticGeneration(self.input_csv_path, 
+                                                    self.num_sources, 
+                                                    multiplication_factor=1)
+                self.input_sampler.set_streamers()
+            elif conf['exp'] == 'BikeSharing':
+                self.input_sampler = csv_posterior_sampler_BikeSharing(self.input_csv_path, 
+                                                self.num_sources, 
+                                                multiplication_factor=1,
+                                                type="split",
+                                                usecols=range(7, 16),
+                                                skiprows=52)
+                self.input_sampler.set_streamers()
+        ##############################
 
         self.build_distribution_list()
         self.use_zero_mean_reduction = conf.get('use_zero_mean_reduction', True)
@@ -75,7 +96,7 @@ class BarycenterState:
     def build_distribution_list(self):
         conf = self.conf
         self.mu_list, self.name_list, self.weight_list = \
-                construct_distribution_list(conf['distribution_list'], self.float_dtype)
+                construct_distribution_list(conf['distribution_list'], self.float_dtype, self.input_sampler) #self.mu_list is a list of DistributionWrapper objects
         self.source_list = self.mu_list.copy() # make a copy of untransformed distributions
         self.num_sources = len(self.source_list)
 
@@ -88,9 +109,14 @@ class BarycenterState:
             ps = np.load(mu_desc['npy_path'])
         elif mu_desc['shape'] == 'empirical':
             ps = np.array(mu_desc['points'])
+        ###############################
+        elif mu_desc['shape'] == 'customized_sampler':
+            sample_count = mu_desc.get('representative_sample_count', 10000)
+            ps = self.source_list[i].sample(sample_count).numpy()
+        ###############################
         else:
             sample_count = self.conf['infer_sample_count']
-            ps = self.source_list[i].sample(sample_count).numpy()
+            ps = self.source_list[i].sample(sample_count).numpy() # we should use this line of code in our experiments.
         return ps
 
 
@@ -201,9 +227,19 @@ class BarycenterState:
         self.potential_optimizer = construct_optimizer(self.conf['potential_optimizer_desc'])
         ckpt_kwargs['potential_optimizer'] = self.potential_optimizer
 
+        import os, shutil
+
+        ckpt_dir = self.conf["potential_ckpt_dir"]
+        reset = self.conf.get("reset_potential_ckpt", False)
+
+        if reset:
+            if os.path.exists(ckpt_dir):
+                shutil.rmtree(ckpt_dir)
+            os.makedirs(ckpt_dir, exist_ok=True)
+
         self.potential_ckpt_manager = tf_ckpt_register(
                 ckpt_kwargs,
-                self.conf['potential_ckpt_dir'],
+                ckpt_dir,
                 max_to_keep=self.conf['ckpt_max_to_keep'])
 
     def setup_map_architecture(self):

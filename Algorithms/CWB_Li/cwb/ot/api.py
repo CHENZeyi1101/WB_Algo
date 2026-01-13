@@ -1,4 +1,4 @@
-import cwb.templates
+import Algorithms.CWB_Li.cwb.templates
 
 import shutil
 import tempfile
@@ -19,7 +19,7 @@ def emd2(dim, source, target):
     original_wd = os.getcwd()
     with tempfile.TemporaryDirectory() as tmpdir:
         os.chdir(tmpdir)
-        conf = yaml.safe_load(pkg_resources.open_text(cwb.templates, 'ot_default_config.yaml').read())
+        conf = yaml.safe_load(pkg_resources.open_text(Algorithms.CWB_Li.cwb.templates, 'ot_default_config.yaml').read())
         conf['point_dim'] = dim
 
         if isinstance(source, np.ndarray):

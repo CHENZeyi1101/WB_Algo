@@ -36,7 +36,7 @@ def gen_data(dim, out_dir, out_prefix):
     for i in range(g_subset_count):
         fp = pkg_resources.open_binary(g_data_package, g_subset_sample_filename_fmt.format(i))
         posterior_samples = np.load(fp)
-        posterior_samples = extract_from_posterior(dim, posterior_samples)
+        posterior_samples = extract_from_posterior(dim, posterior_samples) # add samplers here
         npy_path = '{}_{}.npy'.format(os.path.join(out_dir, out_prefix), i)
         pkl_path = '{}_{}.pkl'.format(os.path.join(out_dir, out_prefix), i)
         np.save(npy_path, posterior_samples)

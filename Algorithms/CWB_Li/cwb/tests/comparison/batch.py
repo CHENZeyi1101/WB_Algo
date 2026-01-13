@@ -1,5 +1,6 @@
-from .common import *
-from . import validate
+from Algorithms.CWB_Li.cwb.tests.comparison.common import *
+from Algorithms.CWB_Li.cwb.tests.comparison import validate
+from Experiments.CSV_read import *
 
 import argparse
 import tensorflow as tf
@@ -9,7 +10,8 @@ import numpy as np
 import time
 import pickle
 
-def batch_run_exp(exp, method, repeat_range):
+def batch_run_exp(exp, method, repeat_range, input_csv_path = None, num_measures = None):
+
     for rep in repeat_range:
         for dim in dim_range:
             data_dir = get_data_nd_dir(dim)
@@ -18,7 +20,7 @@ def batch_run_exp(exp, method, repeat_range):
             start_time = time.time()
             print('Repeat #{}: running experiment {} dimension {} with method {}...'.format(rep, exp, dim, method))
             if method == 'cuturi':
-                from . import cuturi_solver
+                from Algorithms.CWB_Li.cwb.tests.comparison import cuturi_solver
                 cuturi_solver.run(
                         exp,
                         dim,
@@ -29,21 +31,23 @@ def batch_run_exp(exp, method, repeat_range):
                         result_dir=result_dir,
                         result_filename=result_filename)
             elif method == 'cwb':
-                from . import cwb_solver
+                from Algorithms.CWB_Li.cwb.tests.comparison import cwb_solver
                 cwb_solver.run(
                         exp,
                         dim,
-                        sample_count=1000000,
+                        sample_count=10000,
                         working_dir=get_working_nd_dir('cwb', dim, rep),
                         data_dir=get_data_nd_dir(dim),
                         result_dir=result_dir,
-                        result_filename=result_filename)
+                        result_filename=result_filename,
+                        input_csv_path = input_csv_path,
+                        num_measures = num_measures)
             elif method in ['bregman', 'exact_lp', 'conv']:
                 discrete_num = get_discrete_num(dim, method)
                 if not discrete_num:
                     print('Cannot use method {} on dimension {}, skipping...'.format(method, dim))
                     continue
-                from . import grid_solver
+                from Algorithms.CWB_Li.cwb.tests.comparison import grid_solver
                 grid_solver.run(
                         exp,
                         dim,
@@ -53,7 +57,7 @@ def batch_run_exp(exp, method, repeat_range):
                         result_dir=result_dir,
                         result_filename=result_filename)
             elif method == 'claici':
-                from . import claici_solver
+                from Algorithms.CWB_Li.cwb.tests.comparison import claici_solver
                 claici_solver.run(
                         exp,
                         dim,
@@ -66,7 +70,7 @@ def batch_run_exp(exp, method, repeat_range):
             elif method == 'gaussian_iterative':
                 if exp != 'gaussian':
                     continue
-                from .gaussian import iterative_solver
+                from Algorithms.CWB_Li.cwb.tests.comparison.gaussian import iterative_solver
                 iterative_solver.run(
                         dim,
                         data_dir=get_data_nd_dir(dim),
@@ -106,14 +110,14 @@ def batch_evolve_exp(exp, method, repeat_range):
 def batch_gen_data(exp):
     for dim in dim_range:
         if exp == 'gaussian':
-            from .gaussian import data_generator
+            from Algorithms.CWB_Li.cwb.tests.comparison.gaussian import data_generator
             data_generator.gen_data(
                     dim,
                     g_num_gaussians,
                     get_data_nd_dir(dim),
                     exp)
         elif exp == 'mixture':
-            from .mixture import data_generator
+            from Algorithms.CWB_Li.cwb.tests.comparison.mixture import data_generator
             data_generator.gen_data(
                     dim,
                     g_num_mixtures,
@@ -121,14 +125,14 @@ def batch_gen_data(exp):
                     get_data_nd_dir(dim),
                     exp)
         elif exp == 'cube':
-            from .cube import data_generator
+            from Algorithms.CWB_Li.cwb.tests.comparison.cube import data_generator
             data_generator.gen_data(
                     dim,
                     g_num_cubes,
                     get_data_nd_dir(dim),
                     exp)
         elif exp == 'poisson':
-            from .poisson import data_generator
+            from Algorithms.CWB_Li.cwb.tests.comparison.poisson import data_generator
             data_generator.gen_data(
                     dim,
                     get_data_nd_dir(dim),
@@ -139,63 +143,91 @@ def batch_gen_data(exp):
 def batch_adapt_data_to_h5(exp):
     for dim in dim_range:
         if exp == 'gaussian':
-            from .gaussian import data_generator
+            from Algorithms.CWB_Li.cwb.tests.comparison.gaussian import data_generator
             data_generator.adapt_to_h5(get_data_nd_dir(dim))
         elif exp == 'poisson':
-            from .poisson import data_generator
+            from Algorithms.CWB_Li.cwb.tests.comparison.poisson import data_generator
             data_generator.adapt_to_h5(get_data_nd_dir(dim))
 
 
 if __name__ == '__main__':
+    # np.random.seed(44)
+    # tf.random.set_seed(44)
+
+    # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+    # gpu_devices = tf.config.experimental.list_physical_devices('GPU')
+    # if len(gpu_devices) > 0:
+    #     tf.config.experimental.set_memory_growth(gpu_devices[0], True)
+
+    # ---- FORCE CPU ONLY ----
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+    # ---- Reproducibility ----
     np.random.seed(44)
     tf.random.set_seed(44)
 
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-    gpu_devices = tf.config.experimental.list_physical_devices('GPU')
-    if len(gpu_devices) > 0:
-        tf.config.experimental.set_memory_growth(gpu_devices[0], True)
+    # ---- Reduce TF logging ----
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('exp', type=str)
-    parser.add_argument('--dims', nargs='+', type=int, required=True)
-    parser.add_argument('--gen_data', action='store_true')
-    parser.add_argument('--adapt_h5', action='store_true')
-    parser.add_argument('--run', type=str)
-    parser.add_argument('--validate', type=str)
-    parser.add_argument('--evolve', type=str)
-    parser.add_argument('--repeat_start', type=int, default=0)
-    parser.add_argument('--repeat_times', type=int, default=1)
-    parser.add_argument('--reseed', action='store_true')
+    # ---- (Optional) verify ----
+    print("GPUs visible to TF:", tf.config.list_physical_devices("GPU"))
+    print("CPUs visible to TF:", tf.config.list_physical_devices("CPU"))
 
-    args = parser.parse_args()
+    ##############################
+    exp = "SyntheticGeneration"
+    dim = 2
+    dim_range = [dim]
+    num_measures = 5
 
-    if args.reseed:
-        t = int(time.time() * 1000.0) & 0xffffffff
-        np.random.seed(t)
-        tf.random.set_seed(t)
+    input_csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files_InstanceTheta2000"
+    # input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
+    #                                             num_measures, 
+    #                                             multiplication_factor=1)
+    # input_sampler.set_streamers()
 
-    exp = args.exp
-    repeat_start = args.repeat_start
-    repeat_times = args.repeat_times
-    repeat_range = range(repeat_start, repeat_start + repeat_times)
+    batch_run_exp(exp, "cwb", repeat_range=range(1), input_csv_path=input_csv_path, num_measures=num_measures)
 
-    if args.dims:
-        dim_range = args.dims
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('exp', type=str)
+    # parser.add_argument('--dims', nargs='+', type=int, required=True)
+    # parser.add_argument('--gen_data', action='store_true')
+    # parser.add_argument('--adapt_h5', action='store_true')
+    # parser.add_argument('--run', type=str)
+    # parser.add_argument('--validate', type=str)
+    # parser.add_argument('--evolve', type=str)
+    # parser.add_argument('--repeat_start', type=int, default=0)
+    # parser.add_argument('--repeat_times', type=int, default=1)
+    # parser.add_argument('--reseed', action='store_true')
 
-    if args.gen_data:
-        batch_gen_data(exp)
+    # args = parser.parse_args()
 
-    if args.adapt_h5:
-        batch_adapt_data_to_h5(exp)
+    # if args.reseed:
+    #     t = int(time.time() * 1000.0) & 0xffffffff
+    #     np.random.seed(t)
+    #     tf.random.set_seed(t)
 
-    if args.run is not None:
-        method = args.run
-        batch_run_exp(exp, method, repeat_range)
+    # exp = args.exp
+    # repeat_start = args.repeat_start
+    # repeat_times = args.repeat_times
+    # repeat_range = range(repeat_start, repeat_start + repeat_times)
 
-    if args.validate is not None:
-        method = args.validate
-        batch_validate_exp(exp, method, repeat_range)
+    # if args.dims:
+    #     dim_range = args.dims
 
-    if args.evolve is not None:
-        method = args.evolve
-        batch_evolve_exp(exp, method, repeat_range)
+    # if args.gen_data:
+    #     batch_gen_data(exp)
+
+    # if args.adapt_h5:
+    #     batch_adapt_data_to_h5(exp)
+
+    # if args.run is not None:
+    #     method = args.run
+    #     batch_run_exp(exp, method, repeat_range)
+
+    # if args.validate is not None:
+    #     method = args.validate
+    #     batch_validate_exp(exp, method, repeat_range)
+
+    # if args.evolve is not None:
+    #     method = args.evolve
+    #     batch_evolve_exp(exp, method, repeat_range)

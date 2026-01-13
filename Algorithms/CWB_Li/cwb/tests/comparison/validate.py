@@ -1,4 +1,4 @@
-from .common import \
+from Algorithms.CWB_Li.cwb.tests.comparison.common import \
         make_uniform_hist, \
         get_result_nd_dir, \
         get_data_nd_dir, \
@@ -7,8 +7,8 @@ from .common import \
         load_result_by_method, \
         get_result_filename, \
         make_uniform_samples
-from cwb.common.config_parser import construct_single_distribution
-from cwb.ot import emd2 as cwb_emd2
+from Algorithms.CWB_Li.cwb.common.config_parser import construct_single_distribution
+from Algorithms.CWB_Li.cwb.ot import emd2 as cwb_emd2
 
 import tensorflow as tf
 import numpy as np
