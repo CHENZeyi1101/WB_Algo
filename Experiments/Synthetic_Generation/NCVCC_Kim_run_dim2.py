@@ -26,108 +26,120 @@ def infer_global_support(samples_list, pad_frac=0.02):
     hi = hi + pad_frac * span
     return lo, hi  # each shape (2,)
 
+def map_in_points(samples_xy, lo, hi):
+    """true -> unit"""
+    s = np.asarray(samples_xy, float)
+    lo = np.asarray(lo, float); hi = np.asarray(hi, float)
+    scale = hi - lo
+    if np.any(scale <= 0):
+        raise ValueError(f"Invalid bounds: lo={lo}, hi={hi}")
+    return (s - lo) / scale
 
-def kde_to_grid(samples_xy, x_grid, y_grid, bw_method=None, eps=1e-12):
-    """
-    KDE (2D) evaluated on a grid, returned as array shape (n2, n1)
-    where n1=len(x_grid), n2=len(y_grid).
+def map_out_points(unit_xy, lo, hi):
+    """unit -> true"""
+    u = np.asarray(unit_xy, float)
+    lo = np.asarray(lo, float); hi = np.asarray(hi, float)
+    return lo + u * (hi - lo)
 
-    bw_method: passed to gaussian_kde (None, 'scott', 'silverman', or float)
-    """
-    samples_xy = np.asarray(samples_xy)
-    if samples_xy.ndim != 2 or samples_xy.shape[1] != 2:
-        raise ValueError(f"KDE grid expects samples of shape (N, 2); got {samples_xy.shape}")
+def unit_grid_centers(n1, n2):
+    """Matches your frechet_mean's meshgrid centers."""
+    x_u = np.linspace(0.5/n1, 1 - 0.5/n1, n1)
+    y_u = np.linspace(0.5/n2, 1 - 0.5/n2, n2)
+    return x_u, y_u
 
-    # gaussian_kde expects data as (d, N)
-    kde = gaussian_kde(samples_xy.T, bw_method=bw_method)
+def kde_to_unit_grid_mass(samples_unit, n1, n2, bw_method=None, eps=1e-12):
+    samples_unit = np.asarray(samples_unit, float)
+    if samples_unit.ndim != 2 or samples_unit.shape[1] != 2:
+        raise ValueError(f"Expected (N,2), got {samples_unit.shape}")
 
-    # Build evaluation points of shape (2, n1*n2)
-    X, Y = np.meshgrid(x_grid, y_grid, indexing="xy")  # X,Y each (n2, n1)
-    pts = np.vstack([X.ravel(), Y.ravel()])            # (2, n2*n1)
+    kde = gaussian_kde(samples_unit.T, bw_method=bw_method)
 
-    Z = kde(pts).reshape(Y.shape)  # (n2, n1)
-    s = Z.sum()
+    x_u, y_u = unit_grid_centers(n1, n2)
+    X, Y = np.meshgrid(x_u, y_u, indexing="xy")
+    pts = np.vstack([X.ravel(), Y.ravel()])
+
+    pdf = kde(pts).reshape(Y.shape)  # (n2,n1), units 1/area on unit square
+
+    dx = float(x_u[1] - x_u[0]) if n1 > 1 else 1.0
+    dy = float(y_u[1] - y_u[0]) if n2 > 1 else 1.0
+
+    mass = pdf * dx * dy
+    s = mass.sum()
     if not np.isfinite(s) or s < eps:
-        raise ValueError("KDE produced near-zero or invalid total mass; check samples/bandwidth/support.")
-    Z /= s # normalize to sum to 1
-    return Z
+        raise ValueError("KDE mass is invalid; check bw_method/support.")
+    mass /= s
+    return mass
 
 
-def build_density_grids_from_measures(
+def build_unit_mass_grids_from_samples(
     input_samples_collection,
     n1=2048,
     n2=2048,
     pad_frac=0.02,
-    bw_method=None,
-    return_grids=True,
+    bw_method=None
 ):
-    """
-    input_samples_collection: list-like, length=num_measures, each element is samples (N_i, 2)
-    Returns:
-      densities: list of arrays, each (n2, n1), normalized so sum = n1*n2
-      plus optionally the x_grid,y_grid and bounds
-    """
     samples_list = []
     for i in range(num_measures):
         measure_input_samples = input_samples_collection[i]
         samples_list.append(np.asarray(measure_input_samples))
 
-    # Infer global support across ALL measures
+    # Infer true support
     lo, hi = infer_global_support(samples_list, pad_frac=pad_frac)
-    print(f"Inferred global support: lo={lo}, hi={hi}")
+    print(f"[support] lo={lo}, hi={hi}")
 
-    # Build common grids
-    x_grid = np.linspace(lo[0], hi[0], n1)
-    y_grid = np.linspace(lo[1], hi[1], n2)
+    # MAP IN: true -> unit
+    unit_samples_list = [map_in_points(s, lo, hi) for s in samples_list]
 
-    # KDE each measure on the SAME grid
+    # KDE -> unit grid mass
     dists = []
-    for i, sxy in tqdm(enumerate(samples_list), desc="Building density grids from measures", total=len(samples_list)):
-        dens = kde_to_grid(sxy, x_grid, y_grid, bw_method=bw_method)
-        dists.append(dens)
+    for s_u in tqdm(unit_samples_list, desc="KDE to unit-grid mass"):
+        dists.append(kde_to_unit_grid_mass(s_u, n1=n1, n2=n2, bw_method=bw_method))
 
-    if return_grids:
-        return dists, x_grid, y_grid, (lo, hi)
-    return dists
+    return dists, (lo, hi)
 
-def sample_from_density_grid(density_grid, x_grid, y_grid, num_samples, seed=None):
-    n2, n1 = density_grid.shape
-    flat = density_grid.ravel().astype(float)
-    flat /= flat.sum()
+def plot_mass_true_axes(mass_unit, lo, hi, title="NCVCC barycenter", save_path=None):
+    n2, n1 = mass_unit.shape
+    x_u, y_u = unit_grid_centers(n1, n2)
 
-    rng = np.random.default_rng(seed)
-    idx = rng.choice(n1 * n2, size=num_samples, p=flat)
-
-    y_idx, x_idx = np.unravel_index(idx, (n2, n1))
-    samples = np.column_stack([x_grid[x_idx], y_grid[y_idx]])
-    return samples
-
-import matplotlib.pyplot as plt
-import numpy as np
-
-def plot_density(rd, title="Fréchet mean density", cmap="hot", save_path = None):
-    n2, n1 = rd.shape
-
-    x_grid = np.linspace(0.5/n1, 1 - 0.5/n1, n1)
-    y_grid = np.linspace(0.5/n2, 1 - 0.5/n2, n2)
+    # MAP OUT grid centers to true coordinates
+    x_phys = lo[0] + x_u * (hi[0] - lo[0])
+    y_phys = lo[1] + y_u * (hi[1] - lo[1])
 
     plt.figure(figsize=(6, 5))
     plt.imshow(
-        rd,
-        extent=[x_grid[0], x_grid[-1], y_grid[0], y_grid[-1]],
+        mass_unit,
         origin="lower",
-        cmap=cmap,
-        aspect="equal"
+        extent=[x_phys[0], x_phys[-1], y_phys[0], y_phys[-1]],
+        aspect="auto"
     )
-    plt.colorbar(label="Density")
+    plt.colorbar(label="probability mass per cell")
     plt.xlabel("x")
     plt.ylabel("y")
     plt.title(title)
     plt.tight_layout()
-    if save_path:
+    if save_path is not None:
         plt.savefig(save_path)
     else:
         plt.show()
+
+def sample_from_unit_mass_grid(mass_unit, lo, hi, num_samples, seed=None):
+    mass = np.asarray(mass_unit, float)
+    mass = np.clip(mass, 0, None)
+    mass /= mass.sum()
+
+    n2, n1 = mass.shape
+    rng = np.random.default_rng(seed)
+
+    idx = rng.choice(n1 * n2, size=num_samples, p=mass.ravel())
+    y_idx, x_idx = np.unravel_index(idx, (n2, n1))
+
+    x_u, y_u = unit_grid_centers(n1, n2)
+    samples_unit = np.column_stack([x_u[x_idx], y_u[y_idx]])
+
+    # MAP OUT: unit -> true
+    samples = map_out_points(samples_unit, lo, hi)
+    return samples
+
 
 
 if __name__ == "__main__":
@@ -138,7 +150,7 @@ if __name__ == "__main__":
     num_measures = 5
     truncated_radius = 150
     instance_theta = 2000
-    n1, n2 = 512, 512
+    n1, n2 = 1024, 1024
     MC_size = 1
 
     instance_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
@@ -173,22 +185,15 @@ if __name__ == "__main__":
     input_sampler_for_evaluation.set_streamers()
 
     input_samples_collection = input_sampler.sample(num_samples)
-    
-    dists = build_density_grids_from_measures(
-        input_samples_collection,
-        n1,
-        n2,
-        pad_frac=0.02,
-        bw_method=None,
-        return_grids=False
-    )
-    for i, dist in enumerate(dists):
-        print(f"Measure {i} density sum: {dist.sum()}")
 
-    # Run NCVCC Kim
-    mu_WGHA = frechet_mean(dists, 500, 'barycenter', save_option = False, return_option = True)
-    np.save(f"{save_path}/barycenter_density.npy", mu_WGHA)
-    plot_density(mu_WGHA, title="Fréchet mean density via NCVCC", save_path = f"{save_path}/barycenter_density_NCVCC_Kim.png")
+    dists_unit_mass, (lo, hi) = build_unit_mass_grids_from_samples(input_samples_collection,
+                                                                   n1 = n1, n2 = n2,
+                                                                   pad_frac=0.02,
+                                                                   bw_method=None)
+    
+    mu_WGHA_unit = frechet_mean(dists_unit_mass, 500, 'barycenter', save_option = False, return_option = True)
+    np.save(f"{save_path}/barycenter_density.npy", mu_WGHA_unit)
+    plot_mass_true_axes(mu_WGHA_unit, lo, hi, title="NCVCC barycenter", save_path=f"{save_path}/NCVCC_barycenter.png")
 
     # evaluation
     V_values = []
@@ -196,18 +201,14 @@ if __name__ == "__main__":
     V_values_path = os.path.join(save_path, f"V_values_NCVCC_Kim_MCsize{MC_size}.json")
     W2_distances_path = os.path.join(save_path, f"W2_distances_NCVCC_Kim_MCsize{MC_size}.json")
 
-    n2, n1 = mu_WGHA.shape
-    x_grid = np.linspace(0.5/n1, 1 - 0.5/n1, n1)
-    y_grid = np.linspace(0.5/n2, 1 - 0.5/n2, n2)
-
     for mc in range(MC_size):
         print(f"Starting MC run {mc+1}/{MC_size} ...")
         bary_samples = bary_samples_collection_loaded[str(mc)]
         input_samples_collection = input_sampler_for_evaluation.sample(num_samples)
-        samples_WGHA = sample_from_density_grid(mu_WGHA, x_grid, y_grid, num_samples=10000, seed=mc+100)
+        samples = sample_from_unit_mass_grid(mu_WGHA_unit, lo, hi, num_samples=1000, seed=mc + 1000)
         # Evaluate metrics
-        V_value = V_value_compute(samples_WGHA, input_samples_collection)
-        W2_distance = W2_to_bary_compute(bary_samples, samples_WGHA)
+        V_value = V_value_compute(samples, input_samples_collection)
+        W2_distance = W2_to_bary_compute(bary_samples, samples)
 
         V_values.append(V_value)
         W2_distances.append(W2_distance)

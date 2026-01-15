@@ -139,10 +139,11 @@ def compute_ot(phi, psi, bf,mu, nu, sigma, inner ):
     return new_w2
 
 
-def frechet_mean(dists, n_iter,name, plot_option = False,save_option = True, return_option = False,  inner = 1):
+def frechet_mean(dists, n_iter,name, plot_option = False,save_option = True, return_option = False,  inner = 1, x_grid = None, y_grid = None):
   n2, n1 = np.shape(dists[0])
   x, y = np.meshgrid(np.linspace(0.5/n1,1-0.5/n1,n1),
                     np.linspace(0.5/n2,1-0.5/n2,n2))
+  # x, y = np.meshgrid(x_grid, y_grid) 
   n_dist, id, rd = len(dists), 1/2*(x**2 + y**2), dists[0]
   id -= np.mean(id)
   sigma, w2_list = 5e-2 * np.ones(n_dist), np.zeros(n_dist)
