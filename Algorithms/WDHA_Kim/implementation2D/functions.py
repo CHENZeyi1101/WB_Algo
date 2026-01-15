@@ -4,7 +4,7 @@ from time import time
 import numpy as np
 import ot
 from matplotlib.colors import LinearSegmentedColormap
-
+from tqdm import tqdm
 from scipy.fftpack import dctn, idctn
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -139,7 +139,7 @@ def compute_ot(phi, psi, bf,mu, nu, sigma, inner ):
     return new_w2
 
 
-def frechet_mean(dists, n_iter,name, plot_option = True,save_option = True, return_option = False,  inner = 1):
+def frechet_mean(dists, n_iter,name, plot_option = False,save_option = True, return_option = False,  inner = 1):
   n2, n1 = np.shape(dists[0])
   x, y = np.meshgrid(np.linspace(0.5/n1,1-0.5/n1,n1),
                     np.linspace(0.5/n2,1-0.5/n2,n2))
@@ -149,7 +149,7 @@ def frechet_mean(dists, n_iter,name, plot_option = True,save_option = True, retu
   phi, psi = np.array([id] * n_dist), np.array([id] * n_dist)
   tic = time()
   bf = BFM(n1, n2, rd)
-  for i in range(n_iter):
+  for i in tqdm(range(n_iter), desc="Frechet mean iterations"):
     prev_psi = psi
     for j in range(n_dist):
       new_w2 = compute_ot(phi[j], psi[j], bf, rd, dists[j], sigma[j], inner = inner)
@@ -160,7 +160,8 @@ def frechet_mean(dists, n_iter,name, plot_option = True,save_option = True, retu
     lr = np.exp(-(i+1)/n_iter)
     rho = np.ones_like(rd)
     bf.pushforward(rho, id+ lr*(np.mean(prev_psi,axis=0)-id), rd)
-    rd = rho
+    # make sure rd is normalized
+    rd = rho / np.sum(rho)
 
     if (i+1) % 50 == 0:
       print(f"Number of Iterations : {i+1}")

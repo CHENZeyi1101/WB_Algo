@@ -174,34 +174,41 @@ def combine_images_row(image_paths, save_path=None, figsize=(18, 6)):
 
 
 if __name__ == "__main__":
+    from pathlib import Path
+    import json, os
+
     dim = 2
     num_components = 5
     num_samples_to_plot = 2000
     num_measures = 5
     truncated_radius = 150
-    source_seed = 1009
+    instance_theta = 2000
 
-    sampler_load_dir = f"./Experiments/Synthetic_Generation/dim{dim}_data/samplers_info"
-
-    plot_dir = f"./Experiments/Synthetic_Generation/dim{dim}_plots/InstanceTheta2000_visualization"
+    plot_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_plots/Theta{instance_theta}"
     os.makedirs(plot_dir, exist_ok=True)
+    
+    SEEDS_PATH = Path(__file__).parent / "seeds.json"
+    with open(SEEDS_PATH, "r") as f:
+        seeds_dict = json.load(f)
 
-    source_csv_file = f"../../WB_data/Synthetic_Generation/dim{dim}_data/source_samples/csv_files/source_measure_samples.csv"
-    source_csv_sampler = csv_source_sampler_SyntheticGeneration(source_csv_file, 
-                                                   multiplication_factor=1,
-                                                   usecols=None,
-                                                   skiprows=0)
-    source_csv_sampler.set_streamer()
+    source_component_seed = seeds_dict["source_components_seed"]
+    master_source_rng = np.random.SeedSequence(seeds_dict["master_source_sampling_seed"])
+    auxiliary_seeds_list = seeds_dict["auxiliary_seeds_list"]
+    master_auxiliary_rng = np.random.SeedSequence(seeds_dict["master_auxiliary_sampling_seed"])
 
-    # for PDF plot
-    source_sampler = MixtureOfGaussians(dim)
-    source_sampler.random_components(num_components=5, uniform_weights = True, seed = 1009)
-    source_sampler.set_truncation(truncated_radius)
+    source_sampler = characterize_source_sampler(dim = dim, 
+                                                num_components = num_components, 
+                                                master_sampling_rng = master_source_rng,
+                                                component_seed = source_component_seed,
+                                                truncated_radius = truncated_radius,
+                                                save_dir = None)
 
-    # auxiliary_csv_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/auxiliary_samples/csv_files"
-    # auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(csv_dir = auxiliary_csv_dir, auxiliary_seeds_list = [1010, 1018, 1014, 1016, 1003])
+    auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(dim = dim,
+                                                                       num_components = num_components, 
+                                                                       master_sampling_rng = master_auxiliary_rng, 
+                                                                       auxiliary_seeds_list = auxiliary_seeds_list)
 
-    input_csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files_InstanceTheta2000"
+    input_csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}/input_samples/csv_files"
     input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
                                                    num_measures, 
                                                    multiplication_factor=1)
@@ -212,13 +219,12 @@ if __name__ == "__main__":
     plot_2d_gm_pdf(source_sampler, truncated_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/source_measure", plot_name="source_measure_pdf", title=r"PDF of $\bar{\mu}$")
     print("Source measure PDF plotted.")
     # Plot the KDE heatmap of the source measure samples
-    source_samples = source_csv_sampler.sample(num_samples_to_plot)
+    source_samples = source_sampler.sample(num_samples_to_plot)
     plot_2d_measures_kde(source_samples, truncated_radius, scatter=False, plot_dirc=f"{plot_dir}/source_measure", plot_name = "source_measure_kde", title=r"KDE of $\bar{\mu}$ samples")
     print("Source measure samples KDE plotted.")
 
     for idx, auxiliary_seed in enumerate([1010, 1018, 1014, 1016, 1003]):
-        auxiliary_measure_sampler = MixtureOfGaussians(dim)
-        auxiliary_measure_sampler.random_components(num_components = num_components, uniform_weights = True, seed = auxiliary_seed)
+        auxiliary_measure_sampler = auxiliary_measure_sampler_set[idx]
         plot_2d_gm_pdf(auxiliary_measure_sampler, truncated_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/auxiliary_measures", plot_name=f"auxiliary_measure_{idx+1}_pdf", title=fr"PDF of $\varkappa_{{{idx+1}}}$")
         print(f"Auxiliary measure {idx+1} PDF plotted.")
         

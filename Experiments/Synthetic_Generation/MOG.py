@@ -3,6 +3,7 @@ Purpose: Generate samples from a mixture of Gaussian distributions, where each G
 The covariance matrices are constructed to represent ellipsoids with random orientations and semi-axis lengths determined by inverse gamma distributions.
 """
 
+from numpy.random import SeedSequence, default_rng
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal, invgamma
@@ -87,7 +88,7 @@ def construct_high_dim_covariance_ellipsoid(alpha = 3, beta = 4, dim = 10, rng_c
 class MixtureOfGaussians:
 ### For generating samples from a mixture of Gaussian distributions (underlying barycenter measure) ###
 
-    def __init__(self, dim, weights=None):
+    def __init__(self, dim, weights=None, component_seed : int = 42, master_sampling_rng: int | SeedSequence = 42):
         self.truncation = False
         # Default weights if not provided (equally distributed)
         if weights is None:
@@ -95,10 +96,19 @@ class MixtureOfGaussians:
         else:
             self.weights = weights
             self.weights /= np.sum(self.weights)
+
+        if isinstance(master_sampling_rng, int):
+            self.master_rng = SeedSequence(master_sampling_rng)
+        else:
+            self.master_rng = master_sampling_rng
+
+        self.component_seed = component_seed
         
         # Initialize list to record parameters for each Gaussian component
         self.gaussians = []
         self.dim = dim
+
+        self.component_seed = component_seed
 
     def add_gaussian(self, mean, cov):
         self.gaussians.append((mean, cov))
@@ -111,12 +121,16 @@ class MixtureOfGaussians:
         self.truncation = True
         self.radius = radius
 
-    def random_components(self, num_components, uniform_weights = True, seed = 42):
-        
+    def random_components(self, num_components, uniform_weights = True, manual_component_seed = None):
+        '''
+        Reproducibility caveat: rng_comp generates a fixed random sequence based on the initial seed.
+        '''
         self.num_components = num_components
-        self.seed = seed
         dim = self.dim
-        rng_comp = np.random.RandomState(seed)
+        if manual_component_seed is not None:
+            rng_comp = np.random.RandomState(manual_component_seed)
+        else:
+            rng_comp = np.random.RandomState(self.component_seed)
         for _ in range(num_components):
             mean = (rng_comp.randn(dim)) * 30
             if dim == 2:
@@ -162,22 +176,29 @@ class MixtureOfGaussians:
 
         return pdf_values
 
-    def sample(self, n, seed = None, multiplication_factor = 1):
+    def sample(self, n, multiplication_factor = 1):
         dim = self.dim
         count = 0
         samples = np.zeros((n, dim))
-        rng_sample = np.random.RandomState(seed)
-        np.random.seed(seed)
+
+        # Spawn a dedicated RNG for sampling
+        rng_sample = default_rng(self.master_rng.spawn(1)[0])
 
         with tqdm(total=n, desc="MOG sampling") as pbar:
             while count < n:
-                choice = rng_sample.choice(len(self.gaussians), p=self.weights)
+                choice = rng_sample.choice(
+                    len(self.gaussians),
+                    p=self.weights
+                )
                 mean, cov = self.gaussians[choice]
+
                 sample = rng_sample.multivariate_normal(mean, cov)
-                if not self.truncation or np.linalg.norm(sample) <= self.radius:
+
+                if (not self.truncation) or (np.linalg.norm(sample) <= self.radius):
                     samples[count] = sample
                     count += 1
                     pbar.update(1)
+
         samples *= multiplication_factor
         return samples
     

@@ -102,18 +102,6 @@ class entropic_OT_map_estimate:
         self.g_potential = out.g
         self.epsilon = epsilon
 
-        # self.dual_potentials = out.to_dual_potentials() # <class 'ott.problems.linear.potentials.EntropicPotentials'>
-        # # EntropicPotential object
-
-        # g_potential_machine = self.dual_potentials.g # <class 'jax.tree_util.Partial'>
-        # self.g_potential = g_potential_machine(Y)
-        # # potential function g evaluated at Y
-
-        # self.epsilon = self.dual_potentials.f.keywords['epsilon']
-
-        
-        # print(f"epsilon: {self.epsilon}")
-
     def customize_initializers(self):
         f_init = self.dual_potentials[0]
         g_init = self.dual_potentials[1]

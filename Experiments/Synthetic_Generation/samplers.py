@@ -7,7 +7,7 @@ import io
 import math
 from scipy.linalg import sqrtm, norm
 
-from Experiments.Synthetic_Generation.true_WB import *
+from Experiments.Synthetic_Generation.MOG import *
 from Experiments.Synthetic_Generation.input_generate_entropic import entropic_input_sampler, csv_input_sampler 
 from Experiments.Synthetic_Generation.sample_plot import *
 from Experiments.CSV_read import csv_auxiliary_sampler_SyntheticGeneration
@@ -16,12 +16,14 @@ from Experiments.CSV_read import csv_auxiliary_sampler_SyntheticGeneration
 This module characterizes and sets up samplers for synthetic experiments in 2D.
 '''
 
-def characterize_source_sampler(dim, num_components = 5, seed = None, save_dir = None):
+def characterize_source_sampler(dim, num_components = 5, master_sampling_rng = 42, component_seed = 42, truncated_radius = 1000, save_dir = None):
     """
     Characterize the source sampler (mixture of Gaussians) and auxiliary measure samplers for synthetic experiments.
     """
-    source_sampler = MixtureOfGaussians(dim)
-    source_sampler.random_components(num_components = num_components, uniform_weights = True, seed = seed) # seed from the measure selection
+    source_sampler = MixtureOfGaussians(dim, master_sampling_rng=master_sampling_rng, component_seed=component_seed)
+    source_sampler.random_components(num_components = num_components, uniform_weights = True)
+    source_sampler.set_truncation(truncated_radius)
+
     if save_dir is not None:
         os.makedirs(save_dir, exist_ok=True)
         with open(f"{save_dir}/source_sampler_info.pkl", "wb") as f:
@@ -30,19 +32,15 @@ def characterize_source_sampler(dim, num_components = 5, seed = None, save_dir =
 
     return source_sampler
 
-def characterize_auxiliary_sampler_set(csv_dir, auxiliary_seeds_list = [1010, 1018, 1014, 1016, 1003]):
+def characterize_auxiliary_sampler_set(dim, num_components = 5, master_sampling_rng = 42, auxiliary_seeds_list = [1010, 1018, 1014, 1016, 1003]):
     """
     Characterize a set of auxiliary measure samplers (mixture of Gaussians) for synthetic experiments.
     """
     auxiliary_measure_sampler_set = []
-    # csv_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/auxiliary_samples/csv_files"
     for auxiliary_seed in auxiliary_seeds_list:
-        # auxiliary_measure_sampler = MixtureOfGaussians(dim)
-        # auxiliary_measure_sampler.random_components(num_components = num_components, uniform_weights = True, seed = auxiliary_seed)
-        auxiliary_measure_sampler = csv_auxiliary_sampler_SyntheticGeneration(csv_dir = csv_dir, auxiliary_seed = auxiliary_seed)
-        auxiliary_measure_sampler.set_streamer()
+        auxiliary_measure_sampler = MixtureOfGaussians(dim, master_sampling_rng=master_sampling_rng)
+        auxiliary_measure_sampler.random_components(num_components = num_components, uniform_weights = True, manual_component_seed = auxiliary_seed)
         auxiliary_measure_sampler_set.append(auxiliary_measure_sampler)
-
     return auxiliary_measure_sampler_set
 
 def characterize_entropic_sampler(dim, 
@@ -102,8 +100,8 @@ def set_up_entropic_sampler(entropic_sampler, save_dir = None): # epsilon is the
         path = os.path.join(save_dir, "entropic_sampler_info.pkl")
 
         state = dict(entropic_sampler.__dict__)   # shallow copy
-        state.pop("auxiliary_measure_sampler_set", None)
-        state.pop("source_sampler")
+        # state.pop("auxiliary_measure_sampler_set", None)
+        # state.pop("source_sampler")
 
         with open(path, "wb") as f:
             pickle.dump(state, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -184,6 +182,8 @@ def generate_A_matrices(dim, num_measures, seed = 2000):
     3. From Proposition~4.1 we know that $H(\Sigma_0) = Id$ is a necessary and sufficient condition for $\Sigma_0$ to be a barycenter. The idea now is to use the terms without weights as the psd matrices of our interests, namely
     $\Sigma^{-\frac{1}{2}} (\Sigma^{-\frac{1}{2}} \Sigma_j \Sigma^{-\frac{1}{2}})^{\frac{1}{2}} \Sigma^{-\frac{1}{2}}$ for j = 1, \dots, J.
     '''
+    if seed is None:
+        return None
     # the updating function from Thm 4.2 of Alvarez-Esteban et al. (2019)
     def compute_bary_cov(covariance_list, Sigma):
         Sigma_sum = np.zeros((dim, dim))

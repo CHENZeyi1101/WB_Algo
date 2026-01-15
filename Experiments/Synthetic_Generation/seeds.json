@@ -1,0 +1,8 @@
+{
+  "master_source_sampling_seed": 2026,
+  "source_components_seed": 1009,
+  "master_auxiliary_sampling_seed": 3037,
+  "auxiliary_seeds_list": [1010, 1018, 1014, 1016, 1003],
+  "surjective_mapping_seed": 120,
+  "A_matrices_seed": 2000
+}
