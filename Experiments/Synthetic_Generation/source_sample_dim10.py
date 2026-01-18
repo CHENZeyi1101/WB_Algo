@@ -1,4 +1,4 @@
-from Experiments.Synthetic_Generation.true_WB import *
+from Experiments.Synthetic_Generation.MOG import *
 from Experiments.Synthetic_Generation.samplers import *
 import pandas as pd
 

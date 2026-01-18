@@ -17,7 +17,8 @@ if __name__ == "__main__":
     MC_size = 1
 
     instance_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
-    os.makedirs(instance_dir, exist_ok=True)
+    # assert existence
+    assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
     SEEDS_PATH = Path(__file__).parent / "seeds.json"
     with open(SEEDS_PATH, "r") as f:

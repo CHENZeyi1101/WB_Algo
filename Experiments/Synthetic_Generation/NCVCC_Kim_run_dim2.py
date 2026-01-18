@@ -108,6 +108,7 @@ def plot_mass_true_axes(mass_unit, lo, hi, title="NCVCC barycenter", save_path=N
     plt.figure(figsize=(6, 5))
     plt.imshow(
         mass_unit,
+        cmap = "hot",
         origin="lower",
         extent=[x_phys[0], x_phys[-1], y_phys[0], y_phys[-1]],
         aspect="auto"

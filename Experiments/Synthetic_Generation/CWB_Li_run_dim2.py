@@ -13,8 +13,8 @@ import pickle
 
 
 if __name__ == '__main__':
-    # np.random.seed(44)
-    # tf.random.set_seed(44)
+    np.random.seed(44)
+    tf.random.set_seed(44)
 
     # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     # gpu_devices = tf.config.experimental.list_physical_devices('GPU')

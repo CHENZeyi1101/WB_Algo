@@ -38,7 +38,7 @@ if __name__ == "__main__":
     input_sampler = characterize_entropic_sampler(dim = dim, num_measures = num_measures)
     input_sampler = load_sampler(load_dir, input_sampler, sampler_type = "entropic")
 
-    data_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}/samples_for_evaluation"
+    data_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy/samples_for_evaluation"
     os.makedirs(data_dir, exist_ok=True)
 
     bary_samples_collection = {}
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     with open(json_path, 'w') as json_file:
         json.dump(bary_samples_collection_tolist, json_file)
 
-    csv_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}/input_samples/csv_files"
+    csv_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_/input_samples/csv_files"
     for i in tqdm(range(num_measures), desc="Shuffling CSV files"):
         old_csv_path = f"{csv_dir}/input_measure_samples_{i}.csv"
         csv_evaluate_dir = f"{csv_dir}/for_evaluation"
