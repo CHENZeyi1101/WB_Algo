@@ -375,8 +375,10 @@ class BarycenterState:
     @tf.function
     def train_potential_step(self):
         batch_size = self.conf['batch_size']
+        print("sampling from support...")
         supp_samples = self.supp.sample(batch_size)
-
+        
+        print("start training potentials...")
         with tf.GradientTape() as tape:
             obj = 0
             reg_tot = 0
@@ -400,10 +402,16 @@ class BarycenterState:
         grads = tape.gradient(neg_obj, self.potential_vars)
         self.potential_optimizer.apply_gradients(zip(grads, self.potential_vars))
 
+        print("check")
+
         if self.conf['moving_averages']['potential_enabled']:
             self.potential_MA.update_step()
 
+        print("end training potentials...")
+
         self.potential_step.assign_add(1)
+        print("trained potentials for one step.")
+
         return obj, reg_tot
 
     def train_potentials(self):
@@ -469,6 +477,7 @@ class BarycenterState:
         if self.conf['moving_averages']['potential_enabled']:
             self.potential_MA.swap_in_averages()
         conf = self.conf
+        print("Start training transport maps...")
         while int(self.map_step) < conf['map_total_epochs']:
             map_obj = self.train_all_transport_maps_step()
             self.map_step.assign_add(1)

@@ -2,7 +2,7 @@
 *.log
 
 *.json
-!Experiments/Synthetic_Generation/seeds.json
+!Experiments/Synthetic_Generation/cfg.json
 *G_samples.json
 
 *.zip

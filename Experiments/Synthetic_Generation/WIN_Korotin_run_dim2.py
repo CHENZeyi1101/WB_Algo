@@ -36,15 +36,26 @@ from copy import deepcopy
 import ot
 
 if __name__ == "__main__":
+
+    Cfg_PATH = Path(__file__).parent / "cfg.json"
+    with open(Cfg_PATH, "r") as f:
+        cfg_dict = json.load(f)
+
+    params = cfg_dict["params_synthetic_generation_dim2"]
+
+    # take all items in params
+    num_samples = params["num_samples"]
+    dim = params["dim"]
+    num_measures = params["num_measures"]
+    truncated_radius = params["truncated_radius"]
+    instance_theta = params["instance_theta"]
+    num_components = params["num_components"]
+    MC_size = params["MC_size"]
+
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
+    # assert existence
+    assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
     
-    dim = 2
-    assert dim > 1
-
-    num_measures = 5
-    num_samples = 10000
-    instance_theta = 2000
-    MC_size = 20
-
     print(torch.cuda.device_count())
     print(torch.cuda.is_available())
 
@@ -183,34 +194,37 @@ if __name__ == "__main__":
     # csv_path = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/input_samples/csv_files"
     # csv_sampler = csv_input_sampler(dim = dim, num_measures = num_measures, csv_path = csv_path)
 
-    source_csv_file = f"../../WB_data/Synthetic_Generation/dim{dim}_data/source_samples/csv_files/source_measure_samples.csv"
-    source_sampler = csv_source_sampler_SyntheticGeneration(source_csv_file, 
-                                                multiplication_factor=1,
-                                                usecols=None,
-                                                skiprows=0)
-    source_sampler.set_streamer()
+    source_component_seed = cfg_dict["source_components_seed"]
+    master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
+    source_sampler = characterize_source_sampler(dim = dim, 
+                                                num_components = num_components, 
+                                                master_sampling_rng = master_source_rng,
+                                                component_seed = source_component_seed,
+                                                truncated_radius = truncated_radius,
+                                                save_dir = None)
 
-    input_csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files_InstanceTheta2000"
+    input_csv_path = f"{instance_dir}/input_samples/csv_files"
     input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
                                                 num_measures, 
                                                 multiplication_factor=1)
     input_sampler.set_streamers()
 
-    bary_sample_path = f"../../WB_Data/Synthetic_Generation/dim{dim}_data/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
+    bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize{MC_size}_numsamples{num_samples}.json"
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
-
-    input_sampler_for_evaluation = csv_input_sampler_for_evaluation_SyntheticGeneration(input_csv_path, 
+ 
+    eval_dir = f"{instance_dir}/samples_for_evaluation"
+    input_sampler_for_evaluation = csv_input_sampler_for_evaluation_SyntheticGeneration(eval_dir, 
                                                 num_measures, 
                                                 multiplication_factor=1)
     input_sampler_for_evaluation.set_streamers()
 
 
-    data_dir = f"../../WB_Data/Synthetic_Generation/dim{dim}_data/Outputs_InstanceTheta{instance_theta}/NumSamples{num_samples}/WIN_Korotin_outputs"
-    os.makedirs(data_dir, exist_ok=True)
+    outputs_dir = f"{instance_dir}/outputs/WIN_Korotin_outputs"
+    os.makedirs(outputs_dir, exist_ok=True)
     # define the save path
-    model_save_dir = f"{data_dir}/trained_models"
+    model_save_dir = f"{outputs_dir}/trained_models"
     os.makedirs(model_save_dir, exist_ok=True)
 
     G_samples_dict = {}
@@ -346,7 +360,7 @@ if __name__ == "__main__":
                 # Save the generated samples from the G-mapping at each iteration;
                 G_samples_dict[f"iteration_{iter}"] = accepted_G_samples
                 G_samples_json = {str(k): v.tolist() for k, v in G_samples_dict.items()}
-                G_sample_dir = f"{data_dir}/G_samples"
+                G_sample_dir = f"{outputs_dir}/G_samples"
                 os.makedirs(G_sample_dir, exist_ok=True)
                 with open(f"{G_sample_dir}/G_samples.json", 'w') as f:
                     json.dump(G_samples_json, f, indent=4)
@@ -360,7 +374,7 @@ if __name__ == "__main__":
                 # normalize the V_value by the number of input measures
                 V_value /= num_measures
                 V_values_dict[f"iteration_{it}"] = V_value
-                V_value_dir = f"{data_dir}/V_values"
+                V_value_dir = f"{outputs_dir}/V_values"
                 os.makedirs(V_value_dir, exist_ok=True)
                 with open(f"{V_value_dir}/V_values.json", 'w') as f:
                     json.dump(V_values_dict, f, indent=4) 
@@ -369,7 +383,7 @@ if __name__ == "__main__":
                 W2_sq = W2_pot(accepted_G_samples, bary_samples)
                 W2_to_true_bary_dict[f"iteration_{it}"] = W2_sq
                 W2_to_true_bary_json = W2_to_true_bary_dict
-                W2_to_true_bary_dir = f"{data_dir}/W2_to_true_bary"
+                W2_to_true_bary_dir = f"{outputs_dir}/W2_to_true_bary"
                 os.makedirs(W2_to_true_bary_dir, exist_ok=True)
                 with open(f"{W2_to_true_bary_dir}/W2_to_true_bary.json", 'w') as f:
                     json.dump(W2_to_true_bary_json, f, indent=4)

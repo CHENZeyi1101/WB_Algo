@@ -1,4 +1,6 @@
 from __future__ import print_function
+import json
+from pathlib import Path
 import logging
 # import GPUtil
 
@@ -29,6 +31,7 @@ from Algorithms.ICNN_Fan.optimal_transport_modules.record_mean_cov import select
 from Algorithms.ICNN_Fan.CNX.cfg import CNXCfgCustom as Cfg_class
 from Algorithms.ICNN_Fan.CNX import compare_dist_results as CDR
 from Experiments.Synthetic_Generation.samplers import *
+from Experiments.CSV_read import *
 
 ##### For computing the constraint loss of negtive weights ######
 def compute_constraint_loss(list_of_params):
@@ -42,7 +45,7 @@ def compute_constraint_loss(list_of_params):
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 ############## For each function here, it's an epoch ##################
 
-def train(epoch, csv_path):
+def train(epoch, input_sampler):
     convex_f.train()
     convex_g.train()
     generator_h.train()
@@ -61,11 +64,16 @@ def train(epoch, csv_path):
     """""""""""""""""""""""""""""""""""""""""""""""""""
     total_data = torch.empty(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM, cfg.NUM_DISTRIBUTION + 1)
 
+    input_samples_collection = input_sampler.sample(cfg.N_TRAIN_SAMPLES)
     for marg_id in range(cfg.NUM_DISTRIBUTION):
-        df = pd.read_csv(f"{csv_path}/input_measure_samples_{marg_id}.csv", header=None)
-        # take first cfg.N_TRAIN_SAMPLES rows
-        df = df.iloc[:cfg.N_TRAIN_SAMPLES, :]
-        total_data[:, :, marg_id] = torch.from_numpy(df.to_numpy())
+        input_samples_marg = np.asarray(input_samples_collection[marg_id])
+        total_data[:, :, marg_id] = torch.from_numpy(input_samples_marg)
+
+    # for marg_id in range(cfg.NUM_DISTRIBUTION):
+    #     df = pd.read_csv(f"{csv_dir}/input_measure_samples_{marg_id}.csv", header=None)
+    #     # take first cfg.N_TRAIN_SAMPLES rows
+    #     df = df.iloc[:cfg.N_TRAIN_SAMPLES, :]
+    #     total_data[:, :, marg_id] = torch.from_numpy(df.to_numpy())
 
     total_data[:, :, -1] = torch.randn(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM)
 
@@ -266,21 +274,33 @@ def train(epoch, csv_path):
 
 
 if __name__ == '__main__':
-    dim = 2
-    num_measures = 5
-    seed = 1009
-    instance_theta = 2000
-    num_samples = 10000
+    Cfg_PATH = Path(__file__).parent / "cfg.json"
+    with open(Cfg_PATH, "r") as f:
+        cfg_dict = json.load(f)
+
+    params = cfg_dict["params_synthetic_generation_dim2"]
+
+    # take all items in params
+    num_samples = params["num_samples"]
+    dim = params["dim"]
+    num_measures = params["num_measures"]
+    truncated_radius = params["truncated_radius"]
+    instance_theta = params["instance_theta"]
+    num_components = params["num_components"]
+    MC_size = params["MC_size"]
+
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
+    # assert existence
+    assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
+
+    input_csv_path = f"{instance_dir}/input_samples/csv_files"
+    input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
+                                                num_measures, 
+                                                multiplication_factor=1)
+    input_sampler.set_streamers()
 
     cfg = Cfg_class(DIM = dim, NUM_DISTRIBUTION=num_measures, N_TRAIN_SAMPLES=1000000)
-
-    input_csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files_InstanceTheta2000"
-    if os.path.exists(input_csv_path):
-        print(f"The path '{input_csv_path}' exists.")
-    else:
-        print(f"The path '{input_csv_path}' does not exist.")
-
-
+    
     # gpus_choice = GPUtil.getFirstAvailable(
     #     order='random', maxLoad=0.5, maxMemory=0.5, attempts=5, interval=900, verbose=False)
     # PTU.set_gpu_mode(True, gpus_choice[0])
@@ -293,9 +313,9 @@ if __name__ == '__main__':
     cfg.high_dim_flag = False
     cfg.epochs = 500
     _, _, results, testresults = LLU.init_path(cfg)
-    results_save_path = f'../../WB_Data/Synthetic_Generation/dim{dim}_data/Outputs_InstanceTheta{instance_theta}/NumSamples{num_samples}/ICNN_Fan_outputs/CNX_outputs'
-    os.makedirs(results_save_path, exist_ok=True)
-    model_save_path = results_save_path + '/storing_models'
+    outputs_dir = f"{instance_dir}/outputs/ICNN_Fan_outputs"
+    os.makedirs(outputs_dir, exist_ok=True)
+    model_save_path = outputs_dir + '/storing_models'
     os.makedirs(model_save_path, exist_ok=True)
     
     # kwargs = {'num_workers': 4, 'pin_memory': True}
@@ -345,7 +365,7 @@ if __name__ == '__main__':
 
     for epoch in range(1, cfg.epochs + 1):
         # Start training
-        train(epoch, input_csv_path)
+        train(epoch, input_sampler)
         if cfg.schedule_learning_rate:
             if epoch % cfg.lr_schedule_per_epoch == 0:
                 for i in range(cfg.NUM_DISTRIBUTION):

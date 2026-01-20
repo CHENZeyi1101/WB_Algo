@@ -146,15 +146,24 @@ def sample_from_unit_mass_grid(mass_unit, lo, hi, num_samples, seed=None):
 if __name__ == "__main__":
     from pathlib import Path
 
-    num_samples = 1000
-    dim = 2
-    num_measures = 5
-    truncated_radius = 150
-    instance_theta = 2000
-    n1, n2 = 1024, 1024
-    MC_size = 1
+    Cfg_PATH = Path(__file__).parent / "cfg.json"
+    with open(Cfg_PATH, "r") as f:
+        cfg_dict = json.load(f)
 
-    instance_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
+    params = cfg_dict["params_synthetic_generation_dim2"]
+
+    # take all items in params
+    num_samples = params["num_samples"]
+    dim = params["dim"]
+    num_measures = params["num_measures"]
+    truncated_radius = params["truncated_radius"]
+    instance_theta = params["instance_theta"]
+    num_components = params["num_components"]
+    MC_size = params["MC_size"]
+
+    n1, n2 = 1024, 1024
+
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
@@ -162,11 +171,11 @@ if __name__ == "__main__":
     with open(SEEDS_PATH, "r") as f:
         seeds_dict = json.load(f)
 
-    source_component_seed = seeds_dict["source_components_seed"]
-    master_source_rng = np.random.SeedSequence(seeds_dict["master_source_sampling_seed"])
+    source_component_seed = cfg_dict["source_components_seed"]
+    master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
 
-    save_path = f"{instance_dir}/outputs/NCVCC_Kim_outputs"
-    os.makedirs(save_path, exist_ok=True)
+    outputs_dir = f"{instance_dir}/outputs/NCVCC_Kim_outputs"
+    os.makedirs(outputs_dir, exist_ok=True)
     
     input_csv_path = f"{instance_dir}/input_samples/csv_files"
     input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
@@ -193,14 +202,14 @@ if __name__ == "__main__":
                                                                    bw_method=None)
     
     mu_WGHA_unit = frechet_mean(dists_unit_mass, 500, 'barycenter', save_option = False, return_option = True)
-    np.save(f"{save_path}/barycenter_density.npy", mu_WGHA_unit)
-    plot_mass_true_axes(mu_WGHA_unit, lo, hi, title="NCVCC barycenter", save_path=f"{save_path}/NCVCC_barycenter.png")
+    np.save(f"{outputs_dir}/barycenter_density.npy", mu_WGHA_unit)
+    plot_mass_true_axes(mu_WGHA_unit, lo, hi, title="NCVCC barycenter", save_path=f"{outputs_dir}/NCVCC_barycenter.png")
 
     # evaluation
     V_values = []
     W2_distances = []
-    V_values_path = os.path.join(save_path, f"V_values_NCVCC_Kim_MCsize{MC_size}.json")
-    W2_distances_path = os.path.join(save_path, f"W2_distances_NCVCC_Kim_MCsize{MC_size}.json")
+    V_values_path = os.path.join(outputs_dir, f"V_values_NCVCC_Kim_MCsize{MC_size}.json")
+    W2_distances_path = os.path.join(outputs_dir, f"W2_distances_NCVCC_Kim_MCsize{MC_size}.json")
 
     for mc in range(MC_size):
         print(f"Starting MC run {mc+1}/{MC_size} ...")

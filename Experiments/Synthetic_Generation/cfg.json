@@ -1,0 +1,20 @@
+{
+  "data_dir": "../../WB_data",
+
+  "params_synthetic_generation_dim2": {
+    "dim": 2,
+    "num_components": 5,
+    "num_samples": 1000,
+    "num_measures": 5,
+    "truncated_radius": 150,
+    "instance_theta": 2000,
+    "MC_size": 50
+  },
+
+  "master_source_sampling_seed": 2026,
+  "source_components_seed": 1009,
+  "master_auxiliary_sampling_seed": 3037,
+  "auxiliary_seeds_list": [1010, 1018, 1014, 1016, 1003],
+  "surjective_mapping_seed": 120,
+  "A_matrices_seed": 2000
+}

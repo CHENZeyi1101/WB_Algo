@@ -10,12 +10,11 @@ import numpy as np
 import time
 import pickle
 
-def batch_run_exp(exp, method, repeat_range, input_csv_path = None, num_measures = None):
-
+def batch_run_exp(exp, method, repeat_range, input_csv_path = None, num_measures = None, g_base_dir = None, dim_range = [], sample_count = 10000):
     for rep in repeat_range:
         for dim in dim_range:
-            data_dir = get_data_nd_dir(dim)
-            result_dir = get_result_nd_dir(dim)
+            data_dir = get_data_nd_dir(dim, g_base_dir)
+            result_dir = get_result_nd_dir(dim, g_base_dir)
             result_filename = get_result_filename(method, rep)
             start_time = time.time()
             print('Repeat #{}: running experiment {} dimension {} with method {}...'.format(rep, exp, dim, method))
@@ -27,7 +26,7 @@ def batch_run_exp(exp, method, repeat_range, input_csv_path = None, num_measures
                         sample_count=5000,
                         support_size=5000,
                         use_sinkhorn=True,
-                        data_dir=get_data_nd_dir(dim),
+                        data_dir=get_data_nd_dir(dim, g_base_dir),
                         result_dir=result_dir,
                         result_filename=result_filename)
             elif method == 'cwb':
@@ -35,9 +34,9 @@ def batch_run_exp(exp, method, repeat_range, input_csv_path = None, num_measures
                 cwb_solver.run(
                         exp,
                         dim,
-                        sample_count=10000,
-                        working_dir=get_working_nd_dir('cwb', dim, rep),
-                        data_dir=get_data_nd_dir(dim),
+                        sample_count=sample_count,
+                        working_dir=get_working_nd_dir('cwb', dim, rep, g_base_dir),
+                        data_dir=get_data_nd_dir(dim, g_base_dir),
                         result_dir=result_dir,
                         result_filename=result_filename,
                         input_csv_path = input_csv_path,

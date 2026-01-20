@@ -2,6 +2,8 @@ from Algorithms.CWB_Li.cwb.tests.comparison.common import *
 from Algorithms.CWB_Li.cwb.tests.comparison.batch import batch_run_exp
 from Algorithms.CWB_Li.cwb.tests.comparison import validate
 from Experiments.CSV_read import *
+import json
+from pathlib import Path
 
 import argparse
 import tensorflow as tf
@@ -36,56 +38,30 @@ if __name__ == '__main__':
     print("CPUs visible to TF:", tf.config.list_physical_devices("CPU"))
 
     ##############################
-    exp = "SyntheticGeneration"
-    dim = 2
+
+    Cfg_PATH = Path(__file__).parent / "cfg.json"
+    with open(Cfg_PATH, "r") as f:
+        cfg_dict = json.load(f)
+    params = cfg_dict["params_synthetic_generation_dim2"]
+
+    dim = params["dim"]
     dim_range = [dim]
-    num_measures = 5
+    num_measures = params["num_measures"]
+    sample_count = params["num_samples"]
+    instance_theta = params["instance_theta"]
 
-    input_csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files_InstanceTheta2000"
+    repeat_range = range(1)
 
-    batch_run_exp(exp, "cwb", repeat_range=range(1), input_csv_path=input_csv_path, num_measures=num_measures)
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
+    # assert existence
+    assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('exp', type=str)
-    # parser.add_argument('--dims', nargs='+', type=int, required=True)
-    # parser.add_argument('--gen_data', action='store_true')
-    # parser.add_argument('--adapt_h5', action='store_true')
-    # parser.add_argument('--run', type=str)
-    # parser.add_argument('--validate', type=str)
-    # parser.add_argument('--evolve', type=str)
-    # parser.add_argument('--repeat_start', type=int, default=0)
-    # parser.add_argument('--repeat_times', type=int, default=1)
-    # parser.add_argument('--reseed', action='store_true')
+    exp = "SyntheticGeneration"
 
-    # args = parser.parse_args()
+    input_csv_path = f"{instance_dir}/input_samples/csv_files"
 
-    # if args.reseed:
-    #     t = int(time.time() * 1000.0) & 0xffffffff
-    #     np.random.seed(t)
-    #     tf.random.set_seed(t)
+    g_base_dir = f"{instance_dir}/outputs/CWB_Li_outputs"
 
-    # exp = args.exp
-    # repeat_start = args.repeat_start
-    # repeat_times = args.repeat_times
-    # repeat_range = range(repeat_start, repeat_start + repeat_times)
+    batch_run_exp(exp, "cwb", repeat_range=repeat_range, input_csv_path=input_csv_path, num_measures=num_measures, g_base_dir=g_base_dir, dim_range=dim_range, sample_count=10)
 
-    # if args.dims:
-    #     dim_range = args.dims
-
-    # if args.gen_data:
-    #     batch_gen_data(exp)
-
-    # if args.adapt_h5:
-    #     batch_adapt_data_to_h5(exp)
-
-    # if args.run is not None:
-    #     method = args.run
-    #     batch_run_exp(exp, method, repeat_range)
-
-    # if args.validate is not None:
-    #     method = args.validate
-    #     batch_validate_exp(exp, method, repeat_range)
-
-    # if args.evolve is not None:
-    #     method = args.evolve
-    #     batch_evolve_exp(exp, method, repeat_range)
+    

@@ -47,36 +47,36 @@ def get_stats_filename(method, rep):
 def get_evolve_filename(method, rep):
     return '{:02}-{}'.format(rep, method + '.pkl')
 
-def get_data_nd_dir(dim):
-    return os.path.join(g_data_dir, '{}d'.format(dim))
+def get_data_nd_dir(dim, g_base_dir):
+    return os.path.join(g_base_dir, 'data/', '{}d'.format(dim))
 
-def get_result_nd_dir(dim):
-    return os.path.join(g_result_dir, '{}d'.format(dim))
+def get_result_nd_dir(dim, g_base_dir):
+    return os.path.join(g_base_dir, 'result/', '{}d'.format(dim))
 
-def get_stats_nd_dir(dim):
-    return os.path.join(g_stats_dir, '{}d'.format(dim))
+def get_stats_nd_dir(dim, g_base_dir):
+    return os.path.join(g_base_dir, 'stats/', '{}d'.format(dim))
+def get_evolve_nd_dir(dim, g_base_dir):
+    return os.path.join(g_base_dir, 'evolve/', '{}d'.format(dim))
 
-def get_evolve_nd_dir(dim):
-    return os.path.join(g_evolve_dir, '{}d'.format(dim))
-
-def get_working_nd_dir(kind, dim, repeat):
+def get_working_nd_dir(kind, dim, repeat, g_base_dir):
     if kind == 'cwb':
+        g_cwb_working_dir = os.path.join(g_base_dir, 'cwb_tmp/')
         return os.path.join(g_cwb_working_dir, '{}d-{:04}'.format(dim, repeat))
     elif kind == 'claici':
+        g_claici_working_dir = os.path.join(g_base_dir, 'claici_tmp/')
         return os.path.join(g_claici_working_dir, '{}d-{:04}'.format(dim, repeat))
     return None
 
-def get_vis_nd_dir(dim):
-    return os.path.join(g_vis_dir, '{}d'.format(dim))
+def get_vis_nd_dir(dim, g_base_dir):
+    return os.path.join(g_base_dir, 'vis/', '{}d'.format(dim))
 
-def get_result_file_path(dim, method, rep):
-    return os.path.join(get_result_nd_dir(dim), get_result_filename(method, rep))
+def get_result_file_path(dim, method, rep, g_base_dir):
+    return os.path.join(get_result_nd_dir(dim, g_base_dir), get_result_filename(method, rep))
+def get_stats_file_path(dim, method, rep, g_base_dir):
+    return os.path.join(get_stats_nd_dir(dim, g_base_dir), get_stats_filename(method, rep))
 
-def get_stats_file_path(dim, method, rep):
-    return os.path.join(get_stats_nd_dir(dim), get_stats_filename(method, rep))
-
-def get_vis_file_path(dim, method):
-    return os.path.join(get_vis_nd_dir(dim), method + '.png')
+def get_vis_file_path(dim, method, g_base_dir):
+    return os.path.join(get_vis_nd_dir(dim, g_base_dir), method + '.png')
 
 def make_uniform_hist(n):
     return np.ones([n]) / n
