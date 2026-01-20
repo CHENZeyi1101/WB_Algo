@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 import pickle
 from pathlib import Path
-import optimal_transport_modules.cfg
+import Algorithms.ICNN_Fan.optimal_transport_modules as optimal_transport_modules
 
 
 @dataclass

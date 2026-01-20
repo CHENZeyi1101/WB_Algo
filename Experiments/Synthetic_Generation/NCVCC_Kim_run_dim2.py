@@ -141,41 +141,43 @@ def sample_from_unit_mass_grid(mass_unit, lo, hi, num_samples, seed=None):
     samples = map_out_points(samples_unit, lo, hi)
     return samples
 
+from pathlib import Path
+
+Cfg_PATH = Path(__file__).parent / "cfg.json"
+with open(Cfg_PATH, "r") as f:
+    cfg_dict = json.load(f)
+
+params = cfg_dict["params_synthetic_generation_dim2"]
+
+# take all items in params
+num_samples = params["num_samples"]
+dim = params["dim"]
+num_measures = params["num_measures"]
+truncated_radius = params["truncated_radius"]
+instance_theta = params["instance_theta"]
+num_components = params["num_components"]
+MC_size = params["MC_size"]
+
+n1, n2 = 1024, 1024
+
+instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
+# assert existence
+assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
+
+SEEDS_PATH = Path(__file__).parent / "seeds.json"
+with open(SEEDS_PATH, "r") as f:
+    seeds_dict = json.load(f)
+
+source_component_seed = cfg_dict["source_components_seed"]
+master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
+
+outputs_dir = f"{instance_dir}/outputs/NCVCC_Kim_outputs"
+os.makedirs(outputs_dir, exist_ok=True)
+
 
 
 if __name__ == "__main__":
-    from pathlib import Path
-
-    Cfg_PATH = Path(__file__).parent / "cfg.json"
-    with open(Cfg_PATH, "r") as f:
-        cfg_dict = json.load(f)
-
-    params = cfg_dict["params_synthetic_generation_dim2"]
-
-    # take all items in params
-    num_samples = params["num_samples"]
-    dim = params["dim"]
-    num_measures = params["num_measures"]
-    truncated_radius = params["truncated_radius"]
-    instance_theta = params["instance_theta"]
-    num_components = params["num_components"]
-    MC_size = params["MC_size"]
-
-    n1, n2 = 1024, 1024
-
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
-    # assert existence
-    assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
-
-    SEEDS_PATH = Path(__file__).parent / "seeds.json"
-    with open(SEEDS_PATH, "r") as f:
-        seeds_dict = json.load(f)
-
-    source_component_seed = cfg_dict["source_components_seed"]
-    master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
-
-    outputs_dir = f"{instance_dir}/outputs/NCVCC_Kim_outputs"
-    os.makedirs(outputs_dir, exist_ok=True)
+    
     
     input_csv_path = f"{instance_dir}/input_samples/csv_files"
     input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
