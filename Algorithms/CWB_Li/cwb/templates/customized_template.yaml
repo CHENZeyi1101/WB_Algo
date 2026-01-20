@@ -1,6 +1,6 @@
 estimate_map: true
 
-batch_size: 8192
+batch_size: 128
 use_zero_mean_reduction: false
 
 nn_dtype: 'float32'
@@ -33,7 +33,7 @@ moving_averages:
     potential_enabled: true
     decay: 0.999
 
-potential_total_epochs: 50000
+potential_total_epochs: 2000 #50000
 # potential_total_epochs: 100
 map_total_epochs: 0
 preferred_monge_map_kind: 'potential_gradient'

@@ -8,24 +8,30 @@ import json
 from pathlib import Path
 
 if __name__ == "__main__":
-    dim = 10
-    num_measures = 10
-    bary_MC_size = 50
-    num_samples = 10000
-    truncated_radius = 5000
-    instance_theta = 2000
-    num_components = 5
+    Cfg_PATH = Path(__file__).parent / "cfg.json"
+    with open(Cfg_PATH, "r") as f:
+        cfg_dict = json.load(f)
+
+    params = cfg_dict["params_synthetic_generation_dim10"]
+
+    # take all items in params
+    num_samples = params["num_samples"]
+    dim = params["dim"]
+    num_measures = params["num_measures"]
+    truncated_radius = params["truncated_radius"]
+    instance_theta = params["instance_theta"]
+    num_components = params["num_components"]
+    bary_MC_size = params["MC_size"]
+
 
     if dim == 2:
         bound_type = "eigen_bound"
     else:
         bound_type = "norm_bound"
 
-    SEEDS_PATH = Path(__file__).parent / "seeds.json"
-    with open(SEEDS_PATH, "r") as f:
-        seeds_dict = json.load(f)
+    source_component_seed = cfg_dict["source_components_seed"]
 
-    source_component_seed = seeds_dict["source_components_seed"]
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
 
     source_sampler = characterize_source_sampler(dim = dim, 
                                                 num_components = num_components, 
@@ -34,11 +40,11 @@ if __name__ == "__main__":
                                                 truncated_radius = truncated_radius,
                                                 save_dir = None)
     
-    load_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}/samplers_info"
+    load_dir = f"{instance_dir}/samplers_info"
     input_sampler = characterize_entropic_sampler(dim = dim, num_measures = num_measures)
     input_sampler = load_sampler(load_dir, input_sampler, sampler_type = "entropic")
 
-    data_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy/samples_for_evaluation"
+    data_dir = f"{instance_dir}/samples_for_evaluation"
     os.makedirs(data_dir, exist_ok=True)
 
     bary_samples_collection = {}
@@ -52,13 +58,12 @@ if __name__ == "__main__":
     with open(json_path, 'w') as json_file:
         json.dump(bary_samples_collection_tolist, json_file)
 
-    csv_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_/input_samples/csv_files"
     for i in tqdm(range(num_measures), desc="Shuffling CSV files"):
-        old_csv_path = f"{csv_dir}/input_measure_samples_{i}.csv"
-        csv_evaluate_dir = f"{csv_dir}/for_evaluation"
+        old_csv_path = f"{instance_dir}/input_samples/csv_files/input_measure_samples_{i}.csv"
+        csv_evaluate_dir = f"{instance_dir}/samples_for_evaluation"
         os.makedirs(csv_evaluate_dir, exist_ok=True)
         new_csv_path = f"{csv_evaluate_dir}/input_measure_samples_{i}_for_evaluation.csv"
-        csv_shuffle(old_csv_path, new_csv_path, seed = 1000)
+        csv_shuffle(old_csv_path, new_csv_path, seed = 200)
     
 
     

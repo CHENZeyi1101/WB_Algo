@@ -11,6 +11,16 @@
     "MC_size": 50
   },
 
+  "params_synthetic_generation_dim10": {
+    "dim": 10,
+    "num_components": 5,
+    "num_samples": 1000,
+    "num_measures": 10,
+    "truncated_radius": 5000,
+    "instance_theta": 2000,
+    "MC_size": 50
+  },
+
   "master_source_sampling_seed": 2026,
   "source_components_seed": 1009,
   "master_auxiliary_sampling_seed": 3037,

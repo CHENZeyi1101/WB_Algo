@@ -9,30 +9,40 @@ from pathlib import Path
 import json, os
 
 if __name__ == "__main__":
-    dim = 10
-    num_components = 5
-    num_measures = 10
-    truncated_radius = 5000
-    instance_theta = 2000
+
+    Cfg_PATH = Path(__file__).parent / "cfg.json"
+    with open(Cfg_PATH, "r") as f:
+        cfg_dict = json.load(f)
+
+    params = cfg_dict["params_synthetic_generation_dim10"]
+
+    # take all items in params
+    num_samples = params["num_samples"]
+    dim = params["dim"]
+    num_measures = params["num_measures"]
+    truncated_radius = params["truncated_radius"]
+    instance_theta = params["instance_theta"]
+    num_components = params["num_components"]
+    MC_size = params["MC_size"]
+
+    setup = True # whether to set up the sampler or load existing one
 
     if dim == 2:
         bound_type = "eigen_bound"
     else:
         bound_type = "norm_bound"
 
-    num_samples_in_preparation = int(1e7)
+    num_samples_in_preparation = 10000
 
-    samplers_info_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}/samplers_info"
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
+
+    samplers_info_dir = f"{instance_dir}/samplers_info"
     os.makedirs(samplers_info_dir, exist_ok=True)
 
-    SEEDS_PATH = Path(__file__).parent / "seeds.json"
-    with open(SEEDS_PATH, "r") as f:
-        seeds_dict = json.load(f)
-
-    source_component_seed = seeds_dict["source_components_seed"]
-    master_source_rng = np.random.SeedSequence(seeds_dict["master_source_sampling_seed"])
-    auxiliary_seeds_list = seeds_dict["auxiliary_seeds_list"]
-    master_auxiliary_rng = np.random.SeedSequence(seeds_dict["master_auxiliary_sampling_seed"])
+    source_component_seed = cfg_dict["source_components_seed"]
+    master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
+    auxiliary_seeds_list = cfg_dict["auxiliary_seeds_list"]
+    master_auxiliary_rng = np.random.SeedSequence(cfg_dict["master_auxiliary_sampling_seed"])
 
     source_sampler = characterize_source_sampler(dim = dim, 
                                                 num_components = num_components, 
@@ -48,8 +58,8 @@ if __name__ == "__main__":
     
     tilde_K = len(auxiliary_measure_sampler_set)
 
-    surjective_mapping_seed = seeds_dict["surjective_mapping_seed"]
-    A_matrices_seed = seeds_dict["A_matrices_seed"]
+    surjective_mapping_seed = cfg_dict["surjective_mapping_seed"]
+    A_matrices_seed = cfg_dict["A_matrices_seed"]
     surjective_mapping = construct_surjective_mapping(tilde_K = tilde_K, num_measures = num_measures, seed = surjective_mapping_seed)
     A_matrices_dict = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
 
@@ -59,16 +69,18 @@ if __name__ == "__main__":
                                                      source_sampler = source_sampler,
                                                      truncated_radius = truncated_radius,
                                                      manual = False,
-                                                     bound_type= bound_type,
+                                                     bound_type = bound_type,
                                                      theta = instance_theta,
                                                      surjective_mapping = surjective_mapping,
                                                      A_matrices_dict = A_matrices_dict)
     
-    entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir = samplers_info_dir)
-    print("Entropic sampler configured.")
+    if setup:
+        entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir = samplers_info_dir)
+    else:
+        entropic_sampler = load_sampler(samplers_info_dir, entropic_sampler, sampler_type = "entropic")
 
     # Generate input samples
-    csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}/input_samples/csv_files"
+    csv_path = f"{instance_dir}/input_samples/csv_files"
     os.makedirs(csv_path, exist_ok=True)
     
     input_measure_samples = entropic_sampler.sample(num_samples_in_preparation)

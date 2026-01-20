@@ -382,7 +382,7 @@ class BarycenterState:
         with tf.GradientTape() as tape:
             obj = 0
             reg_tot = 0
-            for i in range(self.num_sources):
+            for i in tqdm(range(self.num_sources), desc="Training potentials"):
                 w = self.weight_list[i]
                 f = self.potential_f_list[i]
                 g = self.potential_g_list[i]
