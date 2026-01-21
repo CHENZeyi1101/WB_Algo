@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     num_samples_in_preparation = 10000
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}"
 
     samplers_info_dir = f"{instance_dir}/samplers_info"
     os.makedirs(samplers_info_dir, exist_ok=True)

@@ -25,9 +25,9 @@ if __name__ == "__main__":
     MC_size = params["MC_size"]
 
     # for alternating supports
-    support_size = 5000
+    support_size = 500
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}"
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
  
-    outputs_dir = f"{instance_dir}/outputs/Fast_Cuturi_outputs"
+    outputs_dir = f"{instance_dir}/outputs/Fast_Cuturi_outputs_support{support_size}"
     os.makedirs(outputs_dir, exist_ok=True)
 
     V_values_dir = os.path.join(outputs_dir, "V_values")

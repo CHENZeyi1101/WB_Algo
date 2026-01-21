@@ -4,11 +4,11 @@
   "params_synthetic_generation_dim2": {
     "dim": 2,
     "num_components": 5,
-    "num_samples": 1000,
+    "num_samples": 10000,
     "num_measures": 5,
     "truncated_radius": 150,
     "instance_theta": 2000,
-    "MC_size": 50
+    "MC_size": 20
   },
 
   "params_synthetic_generation_dim10": {
@@ -18,7 +18,7 @@
     "num_measures": 10,
     "truncated_radius": 5000,
     "instance_theta": 2000,
-    "MC_size": 50
+    "MC_size": 20
   },
 
   "master_source_sampling_seed": 2026,

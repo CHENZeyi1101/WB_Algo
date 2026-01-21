@@ -393,12 +393,15 @@ class entropic_input_sampler:
         candidate_sample_collection = {k: [] for k in range(2 * self.tilde_K)}
 
         for k in range(self.num_measures):
-            source_samples = self.source_sampler.sample(sample_size)
-            for i in tqdm(range(sample_size), desc= f"Generating {sample_size} input measure samples"):
-                x = source_samples[i]
+            # source_samples = self.source_sampler.sample(sample_size)
+            num_samples_collected = 0
+            while num_samples_collected < sample_size:
+            # for i in tqdm(range(sample_size), desc= f"Generating {sample_size} input measure samples"):
+                x = self.source_sampler.sample(1)
                 measure_samples_dict, candidate_map_dict = self.generate_input_measure_sample(x) # a dictionary with k keys
-                if np.linalg.norm(measure_samples_dict[k]) <= 100000:
+                if np.linalg.norm(measure_samples_dict[k]) <= 100000: # rejection sampling with large radius
                     batch_sample_collection[k].append(measure_samples_dict[k])
+                    num_samples_collected += 1
         if show_candidate:
             for k in range(2 * self.tilde_K):
                 candidate_sample_collection[k].append(candidate_map_dict[k])

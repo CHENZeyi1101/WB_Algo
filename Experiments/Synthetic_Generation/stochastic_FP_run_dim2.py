@@ -24,7 +24,7 @@ if __name__ == "__main__":
     num_components = params["num_components"]
     MC_size = params["MC_size"]
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}"
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
@@ -51,14 +51,16 @@ if __name__ == "__main__":
                                                             truncate_radius = truncated_radius)
 
 
-    bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize50_numsamples{num_samples}.json"
+    bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize{MC_size}_numsamples{num_samples}.json"
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
  
     # print(bary_samples_collection_loaded["0"])
 
-    outputs_dir = f"{instance_dir}/outputs/stochastic_FP_outputs"
+    epsilon = 1
+
+    outputs_dir = f"{instance_dir}/outputs/stochastic_FP_outputs_epsilon{epsilon}"
     os.makedirs(outputs_dir, exist_ok=True)
 
     eval_dir = f"{instance_dir}/samples_for_evaluation"
@@ -71,7 +73,7 @@ if __name__ == "__main__":
                                         input_sampler_for_evaluation,
                                         max_iter = 5,
                                         num_samples = num_samples,
-                                        epsilon = 10,
+                                        epsilon = epsilon,
                                         MC_size = MC_size,
                                         logger = {'sample_logger': None, 'map_logger': None},
                                         data_dir = outputs_dir,

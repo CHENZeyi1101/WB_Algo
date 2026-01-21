@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     source_component_seed = cfg_dict["source_components_seed"]
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}"
 
     source_sampler = characterize_source_sampler(dim = dim, 
                                                 num_components = num_components, 
