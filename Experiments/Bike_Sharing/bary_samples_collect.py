@@ -4,7 +4,7 @@ from Experiments.CSV_read import *
 # from .posterior_sampler import *
 if __name__ == "__main__":
     dim = 9
-    bary_MC_size = 50
+    bary_MC_size = 20
     num_samples = 10000
     num_measures = 5
     multiplication_factor = 1

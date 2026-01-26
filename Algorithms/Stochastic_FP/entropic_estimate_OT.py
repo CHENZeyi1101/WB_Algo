@@ -92,7 +92,7 @@ class entropic_OT_map_estimate:
         solver = sinkhorn.Sinkhorn()
         out = solver(prob) # <class 'ott.solvers.linear.sinkhorn.SinkhornOutput'>
         # Make sure to wait for completion if using JAX with device async
-        out = jax.block_until_ready(out)  # if available
+        # out = jax.block_until_ready(out)  # if available
         t1 = time.perf_counter()
 
         elapsed = t1 - t0

@@ -25,7 +25,7 @@ if __name__ == "__main__":
     MC_size = params["MC_size"]
 
     # for alternating supports
-    support_size = 500
+    support_size = 5000
 
     instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}"
     # assert existence
@@ -52,7 +52,7 @@ if __name__ == "__main__":
                                                 multiplication_factor=1)
     input_sampler_for_evaluation.set_streamers()
 
-    bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize50_numsamples{num_samples}.json"
+    bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize{MC_size}_numsamples{num_samples}.json"
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
@@ -75,7 +75,7 @@ if __name__ == "__main__":
             samples_list,
             k=support_size,
             init="random",
-            numItermax=200,
+            numItermax=30,
             verbose=True,
             seed=42,
         )

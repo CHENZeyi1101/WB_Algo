@@ -13,7 +13,7 @@ if __name__ == "__main__":
     num_samples = 1000
     truncated_radius = 150
     instance_theta = 2000
-    plot_measure_selection = False
+    plot_measure_selection = True
     plot_source = True
 
     SEEDS_PATH = Path(__file__).parent / "seeds.json"

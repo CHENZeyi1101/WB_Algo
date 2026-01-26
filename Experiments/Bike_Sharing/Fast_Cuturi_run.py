@@ -13,7 +13,7 @@ if __name__ == "__main__":
     truncated_radius = 1000
     multiplication_factor = 1
     MC_size = 20
-    support_size = 100
+    support_size = 10000
     print("Setting up posterior samplers...")
 
     csv_dir = f"../../WB_data/Bike_Sharing"
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     # total_posterior_sampler = csv_posterior_sampler(csv_dir=posterior_csv_dir, num_measures=1, multiplication_factor=multiplication_factor, type="full")
     # split_posterior_sampler = csv_posterior_sampler(csv_dir=posterior_csv_dir, num_measures=num_measures, multiplication_factor=multiplication_factor, type="split")
 
-    bary_sample_path = f"../../WB_Data/Bike_Sharing/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
+    bary_sample_path = f"../../WB_Data/Bike_Sharing/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize{MC_size}_numsamples10000.json"
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}

@@ -207,7 +207,7 @@ class entropic_iterative_scheme:
 
         # Start the iterations
         iter = 0
-        while iter < max_iter:
+        while True:
             V_values_list = []
             W2_to_bary_list = []
             accepted_samples_list = []
@@ -220,13 +220,18 @@ class entropic_iterative_scheme:
                 accepted_samples_list.append(accepted_samples.tolist())
                 V_values_list.append(V_value)
                 W2_to_bary_list.append(W2_to_bary)
-            self.map_construct(iter, accepted_samples, input_samples_collection, epsilon, map_logger, warm_start = warm_start)
+            
             self.V_values_dict[f"iteration_{iter}"] = V_values_list
             self.W2_to_bary_dict[f"iteration_{iter}"] = W2_to_bary_list
             self.G_samples_dict[f"iteration_{iter}"] = accepted_samples_list
             save_json(self.V_values_dict, V_values_dir, f"V_values_iter{iter}.json")
             save_json(self.W2_to_bary_dict, W2_to_bary_dir, f"W2_to_bary_iter{iter}.json")
             save_json(self.G_samples_dict, G_samples_dir, f"G_samples_iter{iter}.json")
+            
+            if iter >= max_iter:
+                break
+
+            self.map_construct(iter, accepted_samples, input_samples_collection, epsilon, map_logger, warm_start = warm_start)
             iter += 1
 
 
