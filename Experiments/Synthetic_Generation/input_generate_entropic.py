@@ -322,31 +322,27 @@ class entropic_input_sampler:
 
         return measure_samples_dict, candidate_map_dict
     
-    def sample(self, sample_size = 1000, show_candidate = False):
+    def sample(self, sample_size = 1000):
         r'''
         Generate the input measure samples for a given sample size
         Modified on 20260114: We use different source samples for different input measures
         '''
 
-        batch_sample_collection = {k: [] for k in range(self.num_measures)}
-        candidate_sample_collection = {k: [] for k in range(2 * self.tilde_K)}
+        batch_sample_collection = {k: np.zeros((sample_size, self.dim)) for k in range(self.num_measures)}
 
         for k in range(self.num_measures):
             # source_samples = self.source_sampler.sample(sample_size)
             num_samples_collected = 0
-            while num_samples_collected < sample_size:
-            # for i in tqdm(range(sample_size), desc= f"Generating {sample_size} input measure samples"):
-                x = self.source_sampler.sample(1)
-                measure_samples_dict, candidate_map_dict = self.generate_input_measure_sample(x) # a dictionary with k keys
-                if np.linalg.norm(measure_samples_dict[k]) <= self.truncated_radius: # rejection sampling with the specified radius
-                    batch_sample_collection[k].append(measure_samples_dict[k])
-                    num_samples_collected += 1
-        if show_candidate:
-            for k in range(2 * self.tilde_K):
-                candidate_sample_collection[k].append(candidate_map_dict[k])
-            return batch_sample_collection, candidate_sample_collection
-        else:
-            return batch_sample_collection
+            with tqdm(total=sample_size, desc=f"Sampling input measure {k}") as pbar:
+                while num_samples_collected < sample_size:
+                # for i in tqdm(range(sample_size), desc= f"Generating {sample_size} input measure samples"):
+                    x = self.source_sampler.sample(1)
+                    measure_samples_dict, _ = self.generate_input_measure_sample(x) # a dictionary with k keys
+                    if np.linalg.norm(measure_samples_dict[k]) <= self.truncated_radius: # rejection sampling with the specified radius
+                        batch_sample_collection[k][num_samples_collected] = measure_samples_dict[k]
+                        num_samples_collected += 1
+                        pbar.update(1)
+        return batch_sample_collection
         
 
 def reservoir_sample_csv(

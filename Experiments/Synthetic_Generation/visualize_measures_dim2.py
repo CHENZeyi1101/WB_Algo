@@ -187,14 +187,16 @@ if __name__ == "__main__":
     plot_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_plots/Theta{instance_theta}"
     os.makedirs(plot_dir, exist_ok=True)
     
-    SEEDS_PATH = Path(__file__).parent / "seeds.json"
-    with open(SEEDS_PATH, "r") as f:
-        seeds_dict = json.load(f)
+    Cfg_PATH = Path(__file__).parent / "cfg.json"
+    with open(Cfg_PATH, "r") as f:
+        cfg_dict = json.load(f)
 
-    source_component_seed = seeds_dict["source_components_seed"]
-    master_source_rng = np.random.SeedSequence(seeds_dict["master_source_sampling_seed"])
-    auxiliary_seeds_list = seeds_dict["auxiliary_seeds_list"]
-    master_auxiliary_rng = np.random.SeedSequence(seeds_dict["master_auxiliary_sampling_seed"])
+    params = cfg_dict["params_synthetic_generation_dim2"]
+
+    source_component_seed = cfg_dict["source_components_seed"]
+    master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
+    auxiliary_seeds_list = cfg_dict["auxiliary_seeds_list"]
+    master_auxiliary_rng = np.random.SeedSequence(cfg_dict["master_auxiliary_sampling_seed"])
 
     source_sampler = characterize_source_sampler(dim = dim, 
                                                 num_components = num_components, 

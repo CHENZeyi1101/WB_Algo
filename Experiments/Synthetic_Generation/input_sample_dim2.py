@@ -19,7 +19,7 @@ if __name__ == "__main__":
     instance_theta = params["instance_theta"]
     num_components = params["num_components"]
 
-    setup = False # whether to set up the sampler or load existing one
+    setup = True # whether to set up the sampler or load existing one
 
     if dim == 2:
         bound_type = "eigen_bound"

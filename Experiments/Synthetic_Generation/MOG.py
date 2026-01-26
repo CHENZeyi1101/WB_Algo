@@ -184,7 +184,7 @@ class MixtureOfGaussians:
         # Spawn a dedicated RNG for sampling
         rng_sample = default_rng(self.master_rng.spawn(1)[0])
 
-        with tqdm(total=n, desc="MOG sampling") as pbar:
+        with tqdm(total=n, desc="MOG sampling", disable=(n == 1)) as pbar:
             while count < n:
                 choice = rng_sample.choice(
                     len(self.gaussians),
