@@ -291,7 +291,7 @@ class entropic_input_sampler:
             if A_matrices_dict is None:
                 measure_samples_dict = {b: alpha * np.sum(candidate_allocation[b], axis = 0) for b in range(num_measures)}
             else:
-                measure_samples_dict = {b: alpha * np.sum(candidate_allocation[b], axis = 0) + gamma * beta * A_matrices_dict[b] @ x for b in range(num_measures)}
+                measure_samples_dict = {b: alpha * np.sum(candidate_allocation[b], axis = 0) + gamma * beta * A_matrices_dict[b] @ np.squeeze(x) for b in range(num_measures)}
 
         else: # we design the combination of candidates and A-matrices manually in a tailored way for nontrivial measures.
 

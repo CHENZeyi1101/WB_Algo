@@ -20,8 +20,6 @@ if __name__ == "__main__":
     instance_theta = params["instance_theta"]
     num_components = params["num_components"]
 
-    setup = True # whether to set up the sampler or load existing one
-
     if dim == 2:
         bound_type = "eigen_bound"
     else:
@@ -69,14 +67,11 @@ if __name__ == "__main__":
                                                      surjective_mapping = surjective_mapping,
                                                      A_matrices_dict = A_matrices_dict)
     
-    if setup:
-        entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir = samplers_info_dir)
-    else:
-        entropic_sampler = load_sampler(samplers_info_dir, entropic_sampler, sampler_type = "entropic")
+    entropic_sampler = load_sampler(samplers_info_dir, entropic_sampler, sampler_type = "entropic")
 
     # Generate grid
-    grid_size_x = 200
-    grid_size_y = 200
+    grid_size_x = 400
+    grid_size_y = 400
     xx = np.linspace(-truncated_radius, truncated_radius, grid_size_x)
     yy = np.linspace(-truncated_radius, truncated_radius, grid_size_y)
     grid_x, grid_y = np.meshgrid(xx, yy)
