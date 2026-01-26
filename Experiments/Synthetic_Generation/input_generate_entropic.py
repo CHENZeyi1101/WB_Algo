@@ -343,7 +343,28 @@ class entropic_input_sampler:
                         num_samples_collected += 1
                         pbar.update(1)
         return batch_sample_collection
+    
+    def compute_true_V_value(self, MC_sample_size = 1e7):
+        r'''
+        Approximately compute the true V-value (i.e., the minimal value of the barycenter functional) via Monte Carlo integration
+        The effects of the truncation of the input measures are ignored
+        '''
+        # ignore the random seed
+        source_samples = self.source_sampler.sample(MC_sample_size)
+
+        distsq_mat = np.zeros((MC_sample_size, self.num_measures))
         
+        for i in tqdm(range(MC_sample_size), desc= f"Evaluating samples"):
+            measure_samples_dict, _ = self.generate_input_measure_sample(source_samples[i])
+
+            for k in range(self.num_measures):
+                distsq_mat[i, k] = np.sum(np.square(source_samples[i] - measure_samples_dict[k]))
+
+        V_vec = np.mean(distsq_mat, axis=1)
+        V_mean = np.mean(V_vec)
+        V_std = np.std(V_vec)
+
+        return V_mean, V_std, V_vec, distsq_mat
 
 def reservoir_sample_csv(
     csv_filename,

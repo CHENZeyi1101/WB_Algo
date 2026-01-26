@@ -3,6 +3,7 @@ import pandas as pd
 from Experiments.CSV_read import *
 from pathlib import Path
 import json, os
+from tqdm import tqdm
 
 if __name__ == "__main__":
 
@@ -17,10 +18,7 @@ if __name__ == "__main__":
     num_measures = params["num_measures"]
     truncated_radius = params["truncated_radius"]
     instance_theta = params["instance_theta"]
-    instance_gamma = params["instance_gamma"]
     num_components = params["num_components"]
-
-    setup = True # whether to set up the sampler or load existing one
 
     if dim == 2:
         bound_type = "eigen_bound"
@@ -35,13 +33,13 @@ if __name__ == "__main__":
     os.makedirs(samplers_info_dir, exist_ok=True)
 
     source_component_seed = cfg_dict["source_components_seed"]
-    master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
+    true_V_val_source_rng = np.random.SeedSequence(cfg_dict["true_V_val_source_sampling_seed"])
     auxiliary_seeds_list = cfg_dict["auxiliary_seeds_list"]
     master_auxiliary_rng = np.random.SeedSequence(cfg_dict["master_auxiliary_sampling_seed"])
 
     source_sampler = characterize_source_sampler(dim = dim, 
                                                 num_components = num_components, 
-                                                master_sampling_rng = master_source_rng,
+                                                master_sampling_rng = true_V_val_source_rng,
                                                 component_seed = source_component_seed,
                                                 truncated_radius = truncated_radius,
                                                 save_dir = samplers_info_dir)
@@ -65,27 +63,10 @@ if __name__ == "__main__":
                                                      truncated_radius = truncated_radius,
                                                      manual = False,
                                                      bound_type = bound_type,
-                                                     gamma = instance_gamma,
                                                      theta = instance_theta,
                                                      surjective_mapping = surjective_mapping,
                                                      A_matrices_dict = A_matrices_dict)
     
-    if setup:
-        entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir = samplers_info_dir)
-    else:
-        entropic_sampler = load_sampler(samplers_info_dir, entropic_sampler, sampler_type = "entropic")
+    entropic_sampler = load_sampler(samplers_info_dir, entropic_sampler, sampler_type = "entropic")
 
-    # Generate input samples
-    csv_path = f"{instance_dir}/input_samples/csv_files"
-    os.makedirs(csv_path, exist_ok=True)
-    
-    input_measure_samples = entropic_sampler.sample(num_samples_in_preparation)
-
-    for measure_index in range(num_measures):
-        measure_samples = np.asarray(input_measure_samples[measure_index])
-        csv_filename = os.path.join(csv_path, f"input_measure_samples_{measure_index}.csv")
-        pd.DataFrame(measure_samples).to_csv(csv_filename, index=False, header=False)
-    print("Input samples saved to CSV files.")
-
-    
     

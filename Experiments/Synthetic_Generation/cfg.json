@@ -8,6 +8,7 @@
     "num_measures": 5,
     "truncated_radius": 150,
     "instance_theta": 2000,
+    "instance_gamma": 0.05,
     "MC_size": 20
   },
 
@@ -22,6 +23,7 @@
   },
 
   "master_source_sampling_seed": 2026,
+  "true_V_val_source_sampling_seed": 6202,
   "source_components_seed": 1009,
   "master_auxiliary_sampling_seed": 3037,
   "auxiliary_seeds_list": [1010, 1018, 1014, 1016, 1003],
