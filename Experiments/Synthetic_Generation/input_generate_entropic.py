@@ -39,7 +39,7 @@ class entropic_input_sampler:
         self.manual = manual
         self.truncated_radius = truncated_radius
         self.bound_type = bound_type
-        self.grid_size = 200
+        self.grid_size = 500
         self.theta = theta
         if surjective_mapping is not None:
             self.surjective_mapping = surjective_mapping
@@ -86,7 +86,10 @@ class entropic_input_sampler:
             entropic_OT_map_generator = entropic_OT_map_estimate(X, Y, log = False)
             epsilon = epsilon
             entropic_OT_map_generator.get_dual_potential(epsilon = epsilon)
-            g_vector_dict[i] = entropic_OT_map_generator.g_potential
+
+            # here we divide the potential by 2 because the potential returned by entropic_OT_map_estimate is optimal with respect to the cost function norm(x - y) ** 2 without the coefficient 1/2; dividing the potential by 2 makes the interpretation of the parameter theta consistent with Algorithm 3 in the paper
+            g_vector_dict[i] = entropic_OT_map_generator.g_potential / 2
+
             print(f"Finished generating g vector for auxiliary measure {i}")
         self.g_vector_dict = g_vector_dict
 
@@ -98,7 +101,9 @@ class entropic_input_sampler:
         '''
         n_k = self.n_k
         x_tile = np.tile(x, (n_k, 1))
-        exponent_vec = (g_vector - norm(x_tile - Y_matrix, axis = 1)**2) / self.theta
+
+        # note that here the cost function has the coefficient 1/2
+        exponent_vec = (g_vector - norm(x_tile - Y_matrix, axis = 1)**2 / 2) / self.theta
         exponent_vec_max = np.max(exponent_vec)
         exponent_vec -= exponent_vec_max
 
@@ -162,14 +167,14 @@ class entropic_input_sampler:
             for tilde_k in range(tilde_K):
                 max_eigenvalue, _ = self.solve_maxeigen_problem(tilde_k)
                 smoothness_param = max_eigenvalue / theta + 2 * strong_convexity_param_dict[tilde_k]
-                smoothness_param_dict[tilde_k] = 1.2 * smoothness_param # buffering for the maximization problem
+                smoothness_param_dict[tilde_k] = 1.05 * smoothness_param # buffering for the maximization problem
         if self.bound_type == "norm_bound":
             for tilde_k in range(tilde_K):
                 # find the max norm in row vectors of Y_matrix
                 Y_matrix = self.Y_matrix_dict[tilde_k]
                 max_norm = np.max(np.linalg.norm(Y_matrix, axis = 1))
                 smoothness_param = max_norm / theta + 2 * strong_convexity_param_dict[tilde_k]
-                smoothness_param_dict[tilde_k] = 1.2 * smoothness_param
+                smoothness_param_dict[tilde_k] = 1.05 * smoothness_param
         self.smoothness_param_dict = smoothness_param_dict
 
     def deterministic_mapping(self, x):
@@ -222,75 +227,6 @@ class entropic_input_sampler:
 
         return measure_samples
     
-    # def generate_A_matrices(self, seed = 2000):
-    #     r'''
-    #     We generate a bunch of psd matrices whose weighted sum is K * identity matrix. (the sum is to be further weighted by gamma)
-    #     The main idea is that, in case the generated maps seem too similar to the ground-truth measure, this part at least imposes some location-scatter transformation (e.g., rotation) to make the generated measures differ in shape.
-    #     In other words, we look for some middle ground between purely nonlinear transformation (but seemingly affine) and location-scatter transformation.
-    #     It is general challenging to generate such a group of psd matrices, but we can ues the following strategy from Proposition~4.1 and Theorem~4.2 of Alvarez-Esteban et al. (2019):
-    #     1. Generate $\Sigma_j$ for j = 1, \dots, J which are a collection of covariance matrices. (One can consider the problem of solving the W_2 barycenter of J Gaussian measures.)
-    #     2. Apply the deterministic iterative scheme in Theorem~4.2 of Alvarez-Esteban et al. (2019) to approximate $\Sigma_0$, the covariance matrix of the Gaussian barycenter.
-    #     3. From Proposition~4.1 we know that $H(\Sigma_0) = Id$ is a necessary and sufficient condition for $\Sigma_0$ to be a barycenter. The idea now is to use the terms without weights as the psd matrices of our interests, namely
-    #     $\Sigma^{-\frac{1}{2}} (\Sigma^{-\frac{1}{2}} \Sigma_j \Sigma^{-\frac{1}{2}})^{\frac{1}{2}} \Sigma^{-\frac{1}{2}}$ for j = 1, \dots, J.
-    #     '''
-    #     dim = self.dim
-    #     num_measures = self.num_measures
-    #     # the updating function from Thm 4.2 of Alvarez-Esteban et al. (2019)
-    #     def compute_bary_cov(covariance_list, Sigma):
-    #         Sigma_sum = np.zeros((dim, dim))
-    #         for i in range(len(covariance_list)):
-    #             sub_Sigma_square = sqrtm(Sigma) @ covariance_list[i] @ sqrtm(Sigma)
-    #             sub_Sigma = sqrtm(sub_Sigma_square)
-    #             Sigma_sum += sub_Sigma
-    #         Sigma_sum = Sigma_sum / len(covariance_list)
-    #         Sigma_update = np.linalg.solve(sqrtm(Sigma), np.eye(dim)) @ Sigma_sum @ Sigma_sum @ np.linalg.solve(sqrtm(Sigma), np.eye(dim))
-    #         return Sigma_update
-        
-    #     # compute V_value of a covariance matrix (Eq. (15) of Alvarez-Esteban et al. (2019))
-    #     def compute_V(covariance_list, Sigma):
-    #         trace1_list = [] # the first trace term in the equation
-    #         trace2_list = [] # the second trace term in the equation
-    #         for i in range(len(covariance_list)):
-    #             trace1_list.append(np.trace(covariance_list[i]))
-    #         for i in range(len(covariance_list)):
-    #             sub_Sigma_square = sqrtm(Sigma) @ covariance_list[i] @ sqrtm(Sigma)
-    #             trace2_list.append(np.trace(sqrtm(sub_Sigma_square)))
-    #         V = np.trace(Sigma) + np.mean(trace1_list) - 2 * np.mean(trace2_list)
-    #         return V
-
-    #     # construct covariance matrices.
-    #     rng_comp = np.random.RandomState(seed)
-    #     num_matrices = num_measures
-    #     covariance_list = []
-    #     for _ in range(num_matrices):
-    #         if dim == 2:
-    #             cov = construct_2d_covariance_ellipsoid(3, 4, rng_comp)
-    #         else:
-    #             cov = construct_high_dim_covariance_ellipsoid(3, 4, dim, rng_comp)
-    #         covariance_list.append(cov)
-
-    #     # initialize Sigma
-    #     Sigma = np.eye(dim)
-    #     V_Sigma = compute_V(covariance_list, Sigma)
-    #     V_list = [V_Sigma]
-    #     difference = math.inf
-    #     while difference > 1e-5:
-    #         Sigma = compute_bary_cov(covariance_list, Sigma)
-    #         V_Sigma = compute_V(covariance_list, Sigma)
-    #         difference = abs(V_Sigma - V_list[-1])
-    #         V_list.append(V_Sigma)
-
-    #     print(f"The V_value record is {V_list}.")
-
-    #     # refer to H() below Eq. (17) of Alvarez-Esteban et al. (2019)
-    #     A_matrices_dict = {}
-    #     for i in range(num_matrices):
-    #         sub_Sigma_square = sqrtm(Sigma) @ covariance_list[i] @ sqrtm(Sigma)
-    #         A_matrix = np.linalg.solve(sqrtm(Sigma), np.eye(dim)) @ sqrtm(sub_Sigma_square) @ np.linalg.solve(sqrtm(Sigma), np.eye(dim))
-    #         A_matrices_dict[i] = A_matrix
-
-    #     self.A_matrices_dict = A_matrices_dict
-    #     # beta_k = 1 for all k 
 
     def collect_candidate_maps(self, x):
         # x is the input vector to be evaluated at by the mappings
@@ -309,11 +245,14 @@ class entropic_input_sampler:
         for i in range(tilde_K):
             g_vector = g_vector_dict[i]
             Y_matrix = Y_matrix_dict[i]
-            exponent_vec = (g_vector - norm(x_tile - Y_matrix, axis = 1)**2) / theta
+
+            # note that here the cost function has the coefficient 1/2
+            exponent_vec = (g_vector - norm(x_tile - Y_matrix, axis = 1)**2 / 2) / theta
             exponent_vec_max = np.max(exponent_vec)
             exponent_vec -= exponent_vec_max # divide by the maximum value to avoid numerical instability
-            numerator = Y_matrix.T @ np.exp(exponent_vec)
-            denominator = np.sum(np.exp(exponent_vec))
+            expval_vec = np.exp(exponent_vec)
+            numerator = Y_matrix.T @ expval_vec
+            denominator = np.sum(expval_vec)
 
             candidate_map_plus = numerator / denominator + strong_convexity_param_dict[i] * x
             candidate_map_minus = x * smoothness_param_dict[i] - candidate_map_plus
@@ -399,7 +338,7 @@ class entropic_input_sampler:
             # for i in tqdm(range(sample_size), desc= f"Generating {sample_size} input measure samples"):
                 x = self.source_sampler.sample(1)
                 measure_samples_dict, candidate_map_dict = self.generate_input_measure_sample(x) # a dictionary with k keys
-                if np.linalg.norm(measure_samples_dict[k]) <= 100000: # rejection sampling with large radius
+                if np.linalg.norm(measure_samples_dict[k]) <= self.truncated_radius: # rejection sampling with the specified radius
                     batch_sample_collection[k].append(measure_samples_dict[k])
                     num_samples_collected += 1
         if show_candidate:

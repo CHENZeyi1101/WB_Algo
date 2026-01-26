@@ -3,6 +3,7 @@ import pandas as pd
 from Experiments.CSV_read import *
 from pathlib import Path
 import json, os
+from tqdm import tqdm
 
 if __name__ == "__main__":
 
@@ -73,17 +74,83 @@ if __name__ == "__main__":
     else:
         entropic_sampler = load_sampler(samplers_info_dir, entropic_sampler, sampler_type = "entropic")
 
-    # Generate input samples
-    csv_path = f"{instance_dir}/input_samples/csv_files"
-    os.makedirs(csv_path, exist_ok=True)
-    
-    input_measure_samples = entropic_sampler.sample(num_samples_in_preparation)
+    # Generate grid
+    grid_size_x = 200
+    grid_size_y = 200
+    xx = np.linspace(-truncated_radius, truncated_radius, grid_size_x)
+    yy = np.linspace(-truncated_radius, truncated_radius, grid_size_y)
+    grid_x, grid_y = np.meshgrid(xx, yy)
+    input_mat = np.array([grid_x.flatten('F'), grid_y.flatten('F')]).T
+    Brenier_grad_mat_list = [np.zeros_like(input_mat) for _ in range(num_measures)]
+    component_grad_mat_list = [np.zeros_like(input_mat) for _ in range(num_measures * 2)]
 
-    for measure_index in range(num_measures):
-        measure_samples = np.asarray(input_measure_samples[measure_index])
-        csv_filename = os.path.join(csv_path, f"input_measure_samples_{measure_index}.csv")
-        pd.DataFrame(measure_samples).to_csv(csv_filename, index=False, header=False)
-    print("Input samples saved to CSV files.")
+    Brenier_sc_list = np.zeros(num_measures)
+    Brenier_sm_list = np.zeros(num_measures)
+    component_sc_list = np.zeros(num_measures * 2)
+    component_sm_list = np.zeros(num_measures * 2)
 
+    for i in tqdm(range(input_mat.shape[0]), f"Computing OT map:"):
+        Brenier_grad, component_grad = entropic_sampler.generate_input_measure_sample(input_mat[i, :])
+        
+        for k in range(num_measures):
+            Brenier_grad_mat_list[k][i, :] = Brenier_grad[k]
+        
+        for tilde_k in range(num_measures * 2):
+            component_grad_mat_list[tilde_k][i, :] = component_grad[tilde_k]
+
+
+    for k in range(num_measures): 
+        strong_convexity_LB = np.inf
+        smoothness_UB = -np.inf
+
+        for i in tqdm(range(input_mat.shape[0]), f"Checking OT map {k}:"):
+            norm_sq = np.sum((input_mat - input_mat[i, :]) ** 2, axis=1)
+            norm_sq[i] = 1
+            innerprod_vec = np.sum((input_mat - input_mat[i, :]) * (Brenier_grad_mat_list[k] - Brenier_grad_mat_list[k][i, :]), axis=1) / norm_sq
+            innerprod_vec[i] = np.inf
+            strong_convexity_LB = np.minimum(strong_convexity_LB, np.min(innerprod_vec))
+            innerprod_vec[i] = -np.inf
+            smoothness_UB = np.maximum(smoothness_UB, np.max(innerprod_vec))
+        
+        Brenier_sc_list[k] = strong_convexity_LB
+        Brenier_sm_list[k] = smoothness_UB
+        print(f"Strong convexity of OT map {k}: {strong_convexity_LB}")
+        print(f"Smoothness of OT map {k}: {smoothness_UB}")
     
+    for tilde_k in range(num_measures * 2): 
+        strong_convexity_LB = np.inf
+        smoothness_UB = -np.inf
+
+        for i in tqdm(range(input_mat.shape[0]), f"Checking component map {tilde_k}:"):
+            norm_sq = np.sum((input_mat - input_mat[i, :]) ** 2, axis=1)
+            norm_sq[i] = 1
+            innerprod_vec = np.sum((input_mat - input_mat[i, :]) * (component_grad_mat_list[tilde_k] - component_grad_mat_list[tilde_k][i, :]), axis=1) / norm_sq
+            innerprod_vec[i] = np.inf
+            strong_convexity_LB = np.minimum(strong_convexity_LB, np.min(innerprod_vec))
+            innerprod_vec[i] = -np.inf
+            smoothness_UB = np.maximum(smoothness_UB, np.max(innerprod_vec))
+        
+        component_sc_list[tilde_k] = strong_convexity_LB
+        component_sm_list[tilde_k] = smoothness_UB
+        print(f"Strong convexity of component map {tilde_k}: {strong_convexity_LB}")
+        print(f"Smoothness of component map {tilde_k}: {smoothness_UB}")
     
+    print('\n')
+    print('Estimated strong convexity parameters of the Brenier potentials:')
+    print(Brenier_sc_list)
+
+    print('Estimated smoothness parameters of the Brenier potentials:')
+    print(Brenier_sm_list)
+    print('\n')
+
+    print('Estimated strong convexity parameters of the component potentials:')
+    print(component_sc_list)
+
+    print('Estimated smoothness parameters of the component potentials:')
+    print(component_sm_list)
+    print('\n')
+
+    if np.all(Brenier_sc_list >= 0):
+        print('Convexity conditions are satisfied, the synthetically generated instance is valid')
+    else:
+        print('Convexity conditions are not satisfied, the synthetically generated instance is invalid')
