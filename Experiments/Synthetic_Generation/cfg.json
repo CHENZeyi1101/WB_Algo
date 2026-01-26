@@ -7,8 +7,10 @@
     "num_samples": 10000,
     "num_measures": 5,
     "truncated_radius": 150,
-    "instance_theta": 2000,
-    "instance_gamma": 0.05,
+    "instance_identifier": "TRIAL1",
+    "alpha_list": [0.58, 0.51, 0.69, 0.56, 0.69],
+    "theta_list": [2000, 1800, 900, 600, 900],
+    "gamma": 0.05,
     "MC_size": 20
   },
 

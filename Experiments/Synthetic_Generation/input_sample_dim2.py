@@ -16,8 +16,10 @@ if __name__ == "__main__":
     dim = params["dim"]
     num_measures = params["num_measures"]
     truncated_radius = params["truncated_radius"]
-    instance_theta = params["instance_theta"]
-    instance_gamma = params["instance_gamma"]
+    instance_identifier = params["instance_identifier"]
+    alpha_list = params["alpha_list"]
+    theta_list = params["theta_list"]
+    gamma = params["gamma"]
     num_components = params["num_components"]
 
     setup = True # whether to set up the sampler or load existing one
@@ -27,9 +29,9 @@ if __name__ == "__main__":
     else:
         bound_type = "norm_bound"
 
-    num_samples_in_preparation = 10000
+    num_samples_in_preparation = 2000
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}"
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
 
     samplers_info_dir = f"{instance_dir}/samplers_info"
     os.makedirs(samplers_info_dir, exist_ok=True)
@@ -58,17 +60,18 @@ if __name__ == "__main__":
     surjective_mapping = construct_surjective_mapping(tilde_K = tilde_K, num_measures = num_measures, seed = surjective_mapping_seed)
     A_matrices_dict = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
 
-    entropic_sampler = characterize_entropic_sampler(dim = dim, 
-                                                     num_measures = num_measures, 
-                                                     auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, 
-                                                     source_sampler = source_sampler,
-                                                     truncated_radius = truncated_radius,
-                                                     manual = False,
-                                                     bound_type = bound_type,
-                                                     gamma = instance_gamma,
-                                                     theta = instance_theta,
-                                                     surjective_mapping = surjective_mapping,
-                                                     A_matrices_dict = A_matrices_dict)
+    entropic_sampler = entropic_input_sampler(dim = dim, 
+                                              num_measures = num_measures, 
+                                              auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, 
+                                              source_sampler = source_sampler, 
+                                              n_k = 1000, 
+                                              alpha_list = alpha_list,
+                                              theta_list = theta_list,
+                                              gamma = gamma, 
+                                              truncated_radius = truncated_radius,
+                                              bound_type = "eigen_bound",
+                                              surjective_mapping = surjective_mapping,
+                                              A_matrices_dict = A_matrices_dict)
     
     if setup:
         entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir = samplers_info_dir)

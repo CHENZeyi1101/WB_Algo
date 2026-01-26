@@ -8,7 +8,7 @@ import math
 from scipy.linalg import sqrtm, norm
 
 from Experiments.Synthetic_Generation.MOG import *
-from Experiments.Synthetic_Generation.input_generate_entropic import entropic_input_sampler, csv_input_sampler 
+from Experiments.Synthetic_Generation.input_generate_entropic import entropic_input_sampler 
 from Experiments.Synthetic_Generation.sample_plot import *
 from Experiments.CSV_read import csv_auxiliary_sampler_SyntheticGeneration
 
@@ -45,13 +45,14 @@ def characterize_auxiliary_sampler_set(dim, num_components = 5, master_sampling_
 
 def characterize_entropic_sampler(dim, 
                                  num_measures, 
+                                 alpha_list,
+                                 theta_list,
+                                 gamma,
                                  auxiliary_measure_sampler_set = [], 
                                  source_sampler = None,
                                  truncated_radius = None,
                                  manual = False,
                                  bound_type = "eigen_bound",
-                                 gamma = 0.3,
-                                 theta = 10,
                                  surjective_mapping = None,
                                  A_matrices_dict = None):
     """
@@ -63,11 +64,12 @@ def characterize_entropic_sampler(dim,
                                           source_sampler = source_sampler, 
                                           n_k = 1000, 
                                           seed = 120, 
+                                          alpha_list = alpha_list,
+                                          theta_list = theta_list,
                                           gamma = gamma, 
                                           manual = manual,
                                           truncated_radius = truncated_radius,
                                           bound_type = bound_type,
-                                          theta = theta,
                                           surjective_mapping = surjective_mapping,
                                           A_matrices_dict = A_matrices_dict)
     

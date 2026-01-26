@@ -176,22 +176,24 @@ def combine_images_row(image_paths, save_path=None, figsize=(18, 6)):
 if __name__ == "__main__":
     from pathlib import Path
     import json, os
-
-    dim = 2
-    num_components = 5
-    num_samples_to_plot = 2000
-    num_measures = 5
-    truncated_radius = 150
-    instance_theta = 2000
-
-    plot_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_plots/Theta{instance_theta}"
-    os.makedirs(plot_dir, exist_ok=True)
     
     Cfg_PATH = Path(__file__).parent / "cfg.json"
     with open(Cfg_PATH, "r") as f:
         cfg_dict = json.load(f)
 
     params = cfg_dict["params_synthetic_generation_dim2"]
+
+    # take all items in params
+    dim = params["dim"]
+    num_measures = params["num_measures"]
+    truncated_radius = params["truncated_radius"]
+    instance_identifier = params["instance_identifier"]
+    alpha_list = params["alpha_list"]
+    theta_list = params["theta_list"]
+    gamma = params["gamma"]
+    num_components = params["num_components"]
+
+    num_samples_to_plot = 2000
 
     source_component_seed = cfg_dict["source_components_seed"]
     master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
@@ -210,7 +212,11 @@ if __name__ == "__main__":
                                                                        master_sampling_rng = master_auxiliary_rng, 
                                                                        auxiliary_seeds_list = auxiliary_seeds_list)
 
-    input_csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}/input_samples/csv_files"
+
+    plot_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_plots/Instance{instance_identifier}"
+    os.makedirs(plot_dir, exist_ok=True)
+
+    input_csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}/input_samples/csv_files"
     input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
                                                    num_measures, 
                                                    multiplication_factor=1)
