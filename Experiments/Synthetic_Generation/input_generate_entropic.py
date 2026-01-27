@@ -226,7 +226,7 @@ class entropic_input_sampler:
             with tqdm(total=sample_size, desc=f"Sampling input measure {k}") as pbar:
                 while num_samples_collected < sample_size:
                 # for i in tqdm(range(sample_size), desc= f"Generating {sample_size} input measure samples"):
-                    x = self.source_sampler.sample(1)
+                    x = self.source_sampler.sample(1, use_truncation = False)
                     measure_samples_dict, _ = self.generate_input_measure_sample(x) # a dictionary with k keys
                     if np.linalg.norm(measure_samples_dict[k]) <= self.truncated_radius: # rejection sampling with the specified radius
                         batch_sample_collection[k][num_samples_collected] = measure_samples_dict[k]

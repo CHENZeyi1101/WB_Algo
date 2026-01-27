@@ -176,7 +176,7 @@ class MixtureOfGaussians:
 
         return pdf_values
 
-    def sample(self, n, multiplication_factor = 1):
+    def sample(self, n, multiplication_factor = 1, use_truncation = True):
         dim = self.dim
         count = 0
         samples = np.zeros((n, dim))
@@ -194,7 +194,7 @@ class MixtureOfGaussians:
 
                 sample = rng_sample.multivariate_normal(mean, cov)
 
-                if (not self.truncation) or (np.linalg.norm(sample) <= self.radius):
+                if (not use_truncation) or (not self.truncation) or (np.linalg.norm(sample) <= self.radius):
                     samples[count] = sample
                     count += 1
                     pbar.update(1)

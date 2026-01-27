@@ -15,34 +15,43 @@ if __name__ == "__main__":
     params = cfg_dict["params_synthetic_generation_dim2"]
 
     # take all items in params
-    num_samples = params["num_samples"]
     dim = params["dim"]
     num_measures = params["num_measures"]
     truncated_radius = params["truncated_radius"]
-    instance_theta = params["instance_theta"]
+    instance_identifier = params["instance_identifier"]
+    alpha_list = params["alpha_list"]
+    theta_list = params["theta_list"]
+    gamma = params["gamma"]
     num_components = params["num_components"]
     bary_MC_size = params["MC_size"]
-
 
     if dim == 2:
         bound_type = "eigen_bound"
     else:
         bound_type = "norm_bound"
 
-    source_component_seed = cfg_dict["source_components_seed"]
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}"
+    samplers_info_dir = f"{instance_dir}/samplers_info"
+    os.makedirs(samplers_info_dir, exist_ok=True)
+
+    source_component_seed = cfg_dict["source_components_seed"]
+    master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
+    auxiliary_seeds_list = cfg_dict["auxiliary_seeds_list"]
+    master_auxiliary_rng = np.random.SeedSequence(cfg_dict["master_auxiliary_sampling_seed"])
 
     source_sampler = characterize_source_sampler(dim = dim, 
                                                 num_components = num_components, 
-                                                master_sampling_rng = 42,
+                                                master_sampling_rng = master_source_rng,
                                                 component_seed = source_component_seed,
                                                 truncated_radius = truncated_radius,
-                                                save_dir = None)
-    
-    load_dir = f"{instance_dir}/samplers_info"
-    input_sampler = characterize_entropic_sampler(dim = dim, num_measures = num_measures)
-    input_sampler = load_sampler(load_dir, input_sampler, sampler_type = "entropic")
+                                                save_dir = samplers_info_dir)
+
+    auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(dim = dim,
+                                                                       num_components = num_components, 
+                                                                       master_sampling_rng = master_auxiliary_rng, 
+                                                                       auxiliary_seeds_list = auxiliary_seeds_list)
+
 
     data_dir = f"{instance_dir}/samples_for_evaluation"
     os.makedirs(data_dir, exist_ok=True)

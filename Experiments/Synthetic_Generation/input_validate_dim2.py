@@ -22,15 +22,12 @@ if __name__ == "__main__":
     theta_list = params["theta_list"]
     gamma = params["gamma"]
     num_components = params["num_components"]
-
-    setup = True # whether to set up the sampler or load existing one
+    surjective_mapping = {int(key) : params["surjective_mapping"][key] for key in params["surjective_mapping"]}
 
     if dim == 2:
         bound_type = "eigen_bound"
     else:
         bound_type = "norm_bound"
-
-    num_samples_in_preparation = 2000
 
     instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
 
@@ -58,8 +55,6 @@ if __name__ == "__main__":
 
     surjective_mapping_seed = cfg_dict["surjective_mapping_seed"]
     A_matrices_seed = cfg_dict["A_matrices_seed"]
-    surjective_mapping = construct_surjective_mapping(tilde_K = tilde_K, num_measures = num_measures, seed = surjective_mapping_seed)
-    print(surjective_mapping)
     A_matrices_dict = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
 
     entropic_sampler = entropic_input_sampler(dim = dim, 
@@ -93,22 +88,28 @@ if __name__ == "__main__":
     Brenier_sm_list = np.zeros(num_measures)
     component_sc_list = np.zeros(num_measures * 2)
     component_sm_list = np.zeros(num_measures * 2)
+    OT_diff_mat = np.zeros((input_mat.shape[0], dim))
 
-    for i in tqdm(range(input_mat.shape[0]), f"Computing OT map:"):
+    for i in tqdm(range(input_mat.shape[0]), f"Computing OT map"):
         Brenier_grad, component_grad = entropic_sampler.generate_input_measure_sample(input_mat[i, :])
+
+        OT_diff = -input_mat[i, :]
         
         for k in range(num_measures):
             Brenier_grad_mat_list[k][i, :] = Brenier_grad[k]
+            OT_diff += Brenier_grad[k] / num_measures
         
         for tilde_k in range(num_measures * 2):
             component_grad_mat_list[tilde_k][i, :] = component_grad[tilde_k]
+        
+        OT_diff_mat[i, :] = OT_diff
 
 
     for k in range(num_measures): 
         strong_convexity_LB = np.inf
         smoothness_UB = -np.inf
 
-        for i in tqdm(range(input_mat.shape[0]), f"Checking OT map {k}:"):
+        for i in tqdm(range(input_mat.shape[0]), f"Checking OT map {k}"):
             norm_sq = np.sum((input_mat - input_mat[i, :]) ** 2, axis=1)
             norm_sq[i] = 1
             innerprod_vec = np.sum((input_mat - input_mat[i, :]) * (Brenier_grad_mat_list[k] - Brenier_grad_mat_list[k][i, :]), axis=1) / norm_sq
@@ -126,7 +127,7 @@ if __name__ == "__main__":
         strong_convexity_LB = np.inf
         smoothness_UB = -np.inf
 
-        for i in tqdm(range(input_mat.shape[0]), f"Checking component map {tilde_k}:"):
+        for i in tqdm(range(input_mat.shape[0]), f"Checking component map {tilde_k}"):
             norm_sq = np.sum((input_mat - input_mat[i, :]) ** 2, axis=1)
             norm_sq[i] = 1
             innerprod_vec = np.sum((input_mat - input_mat[i, :]) * (component_grad_mat_list[tilde_k] - component_grad_mat_list[tilde_k][i, :]), axis=1) / norm_sq
@@ -155,7 +156,14 @@ if __name__ == "__main__":
     print(component_sm_list)
     print('\n')
 
+    OT_diff_norm_mean = np.mean(np.linalg.norm(OT_diff_mat, axis=1))
+
+    print(f"Average norm of difference between the weighted sum of OT maps and the identity: {OT_diff_norm_mean}")
+
     if np.all(Brenier_sc_list >= 0):
-        print('Convexity conditions are satisfied, the synthetically generated instance is valid')
+        if OT_diff_norm_mean <= 1e-6:
+            print('Convexity conditions and the optimality condition are satisfied, hence the synthetically generated instance is VALID')
+        else:
+            print('Convexity conditions are satisfied, but the optimality condition is not satisfied, hence the synthetically generated instance is INVALID')
     else:
-        print('Convexity conditions are not satisfied, the synthetically generated instance is invalid')
+        print('Convexity conditions are not satisfied, hence the synthetically generated instance is INVALID')
