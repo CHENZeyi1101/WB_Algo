@@ -21,6 +21,7 @@ if __name__ == "__main__":
     theta_list = params["theta_list"]
     gamma = params["gamma"]
     num_components = params["num_components"]
+    surjective_mapping = {int(key) : params["surjective_mapping"][key] for key in params["surjective_mapping"]}
 
     setup = True # whether to set up the sampler or load existing one
 
@@ -57,7 +58,6 @@ if __name__ == "__main__":
 
     surjective_mapping_seed = cfg_dict["surjective_mapping_seed"]
     A_matrices_seed = cfg_dict["A_matrices_seed"]
-    surjective_mapping = construct_surjective_mapping(tilde_K = tilde_K, num_measures = num_measures, seed = surjective_mapping_seed)
     A_matrices_dict = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
 
     entropic_sampler = entropic_input_sampler(dim = dim, 
@@ -71,7 +71,8 @@ if __name__ == "__main__":
                                               truncated_radius = truncated_radius,
                                               bound_type = "eigen_bound",
                                               surjective_mapping = surjective_mapping,
-                                              A_matrices_dict = A_matrices_dict)
+                                              A_matrices_dict = A_matrices_dict,
+                                              maxeig_grid_size = 500)
     
     if setup:
         entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir = samplers_info_dir)

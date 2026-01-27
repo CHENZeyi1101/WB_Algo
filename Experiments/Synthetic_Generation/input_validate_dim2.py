@@ -59,6 +59,7 @@ if __name__ == "__main__":
     surjective_mapping_seed = cfg_dict["surjective_mapping_seed"]
     A_matrices_seed = cfg_dict["A_matrices_seed"]
     surjective_mapping = construct_surjective_mapping(tilde_K = tilde_K, num_measures = num_measures, seed = surjective_mapping_seed)
+    print(surjective_mapping)
     A_matrices_dict = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
 
     entropic_sampler = entropic_input_sampler(dim = dim, 

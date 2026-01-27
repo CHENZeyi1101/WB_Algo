@@ -8,9 +8,20 @@
     "num_measures": 5,
     "truncated_radius": 150,
     "instance_identifier": "TRIAL1",
-    "alpha_list": [0.58, 0.51, 0.69, 0.56, 0.69],
-    "theta_list": [2000, 1800, 900, 600, 900],
+    "alpha_list": [1, 1, 1, 1, 1],
+    "theta_list": [2000, 1800, 900, 600, 2000],
     "gamma": 0.05,
+    "surjective_mapping": {
+        "0": 0,
+        "2": 1,
+        "4": 2,
+        "6": 1,
+        "8": 2,
+        "1": 4,
+        "3": 3,
+        "5": 4,
+        "7": 3,
+        "9": 0},
     "MC_size": 20
   },
 
@@ -28,7 +39,7 @@
   "true_V_val_source_sampling_seed": 6202,
   "source_components_seed": 1009,
   "master_auxiliary_sampling_seed": 3037,
-  "auxiliary_seeds_list": [1010, 1018, 1014, 1016, 1003],
+  "auxiliary_seeds_list": [1010, 1018, 1014, 1016, 1038],
   "surjective_mapping_seed": 120,
   "A_matrices_seed": 2000
 }

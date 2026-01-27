@@ -7,25 +7,32 @@ import json, os
 from tqdm import tqdm
 
 if __name__ == "__main__":
-    dim = 2
-    num_measures = 5
-    num_components = 5
-    num_samples = 1000
-    truncated_radius = 150
-    instance_theta = 2000
+    Cfg_PATH = Path(__file__).parent / "cfg.json"
+    with open(Cfg_PATH, "r") as f:
+        cfg_dict = json.load(f)
+
+    
+    params = cfg_dict["params_synthetic_generation_dim2"]
+
+    # take all items in params
+    dim = params["dim"]
+    num_measures = params["num_measures"]
+    truncated_radius = params["truncated_radius"]
+    instance_identifier = params["instance_identifier"]
+    alpha_list = params["alpha_list"]
+    theta_list = params["theta_list"]
+    gamma = params["gamma"]
+    num_components = params["num_components"]
+
     plot_measure_selection = True
     plot_source = True
 
-    SEEDS_PATH = Path(__file__).parent / "seeds.json"
-    with open(SEEDS_PATH, "r") as f:
-        seeds_dict = json.load(f)
-
-    plot_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_plots/Theta{instance_theta}"
+    plot_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_plots/Instance{instance_identifier}"
     os.makedirs(plot_dir, exist_ok=True)
     
     if plot_measure_selection:  # decision: component_seed = 1009
         # select measures over several random seeds
-        for seed in tqdm(range(1000, 1020), desc="Plotting measures for different seeds"):
+        for seed in tqdm(range(1000, 1050), desc="Plotting measures for different seeds"):
             source_sampler = characterize_source_sampler(dim = dim, 
                                                 num_components = num_components, 
                                                 master_sampling_rng = 42,
