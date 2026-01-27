@@ -1,3 +1,4 @@
+from typing import Optional
 import jax
 jax.config.update("jax_enable_x64", True)
 
@@ -10,41 +11,54 @@ from ott.solvers.linear import sinkhorn
 import time
 
 import numpy as np
-from scipy.linalg import sqrtm, norm
 
 from ott.initializers.linear.initializers import SinkhornInitializer  # adjust import path if your version differs
-from ott.problems.linear.linear_problem import LinearProblem
 
-class WarmStartInitializer(SinkhornInitializer):
-    def __init__(self, f_prev: jnp.ndarray, g_prev: jnp.ndarray):
+class SoftmaxInitializer(SinkhornInitializer):
+    def __init__(self, 
+                 X_prev: jnp.ndarray, Y_prev: jnp.ndarray,
+                 f_prev: jnp.ndarray, g_prev: jnp.ndarray):
         super().__init__()
+        self.X_prev = X_prev
+        self.Y_prev = Y_prev
         self.f_prev = f_prev
         self.g_prev = g_prev
 
-    def init_dual_a(
+    def init_fu(
         self,
-        ot_prob: LinearProblem,
+        ot_prob: linear_problem.LinearProblem,
         lse_mode: bool,
-        rng: jax.Array = None,
+        rng: Optional[jax.Array] = None,
     ) -> jnp.ndarray:
-        # Return the previously stored f_prev as initial dual potentials for source
-        # Optionally you may check shapes:
-        assert self.f_prev.shape == ot_prob.a.shape, \
-            f"Warm start f_prev shape {self.f_prev.shape} does not match ot_prob.a shape {ot_prob.a.shape}"
-        return self.f_prev
+        """Initialize Sinkhorn potential/scaling f_u.
 
-    def init_dual_b(
+        Args:
+        ot_prob: Linear OT problem.
+        lse_mode: Return potential if ``True``, scaling if ``False``.
+        rng: Random number generator for stochastic initializers.
+
+        Returns:
+        potential/scaling, array of size ``[n,]``.
+        """
+
+    def init_gv(
         self,
-        ot_prob: LinearProblem,
+        ot_prob: linear_problem.LinearProblem,
         lse_mode: bool,
-        rng: jax.Array = None,
+        rng: Optional[jax.Array] = None,
     ) -> jnp.ndarray:
-        # Return the previously stored g_prev as initial dual potentials for target
-        assert self.g_prev.shape == ot_prob.b.shape, \
-            f"Warm start g_prev shape {self.g_prev.shape} does not match ot_prob.b shape {ot_prob.b.shape}"
-        return self.g_prev
+        """Initialize Sinkhorn potential/scaling g_v.
 
-class entropic_OT_map_estimate:
+        Args:
+        ot_prob: Linear OT problem.
+        lse_mode: Return potential if ``True``, scaling if ``False``.
+        rng: Random number generator for stochastic initializers.
+
+        Returns:
+        potential/scaling, array of size ``[m,]``.
+        """
+
+class modified_entropic_OT_map_estimate_ott:
 
     r'''
     Python class for constructing the regularized entropic OT map estimator
@@ -116,7 +130,7 @@ class entropic_OT_map_estimate:
 
         x_tile = np.tile(x, (n, 1))
         # print(max(norm(x_tile - Y, axis = 1)))
-        exponent_vec = (g_potential - norm(x_tile - Y, axis = 1)**2) / epsilon
+        exponent_vec = (g_potential - np.linalg.norm(x_tile - Y, axis = 1)**2) / epsilon
         exponent_vec_max = np.max(exponent_vec)
         exponent_vec -= exponent_vec_max
         # normalize the exponent_vec for numerical stability in np.exp()

@@ -36,7 +36,7 @@ if __name__ == "__main__":
     os.makedirs(samplers_info_dir, exist_ok=True)
 
     source_component_seed = cfg_dict["source_components_seed"]
-    master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
+    master_source_rng = np.random.SeedSequence(cfg_dict["evaluation_source_sampling_seed"])
     auxiliary_seeds_list = cfg_dict["auxiliary_seeds_list"]
     master_auxiliary_rng = np.random.SeedSequence(cfg_dict["master_auxiliary_sampling_seed"])
 
@@ -52,15 +52,16 @@ if __name__ == "__main__":
                                                                        master_sampling_rng = master_auxiliary_rng, 
                                                                        auxiliary_seeds_list = auxiliary_seeds_list)
 
-
     data_dir = f"{instance_dir}/samples_for_evaluation"
     os.makedirs(data_dir, exist_ok=True)
 
+    # sample from the true barycenter
     bary_samples_collection = {}
     for i in range(bary_MC_size):
         print(f"Generating bary sample of MC step {i+1}/{bary_MC_size} ...")
         bary_samples = source_sampler.sample(num_samples)
         bary_samples_collection[i] = bary_samples
+    
     # save as json after changing numpy array to list
     bary_samples_collection_tolist = {k: v.tolist() for k, v in bary_samples_collection.items()}
     json_path = os.path.join(data_dir, f"bary_samples_collection_dim{dim}_MCsize{bary_MC_size}_numsamples{num_samples}.json")

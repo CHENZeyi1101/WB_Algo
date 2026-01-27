@@ -8,7 +8,7 @@ def W2_pot(X, Y):
     '''
     M = ot.dist(X, Y)
     a, b = np.ones((X.shape[0],)) / X.shape[0], np.ones((Y.shape[0],)) / Y.shape[0]
-    W2_sq = ot.emd2(a, b, M, numItermax=1e6)
+    W2_sq = ot.emd2(a, b, M, numItermax=1e7)
     return W2_sq
 
 def V_value_compute(bary_samples, input_samples_collection: dict):
