@@ -42,7 +42,7 @@ def get_kde_data(samples, bins=1000, xlim=None, ylim=None):
 def plot_2d_measures_kde(
     samples,
     bins = 1000,
-    truncated_radius=None,         # NEW: to match PDF box
+    plot_radius=None,         # NEW: to match PDF box
     scatter=False,
     plot_dirc=None,
     plot_name=None,
@@ -58,9 +58,9 @@ def plot_2d_measures_kde(
     ax.set_facecolor("white")
 
     # --- set limits to match PDF plot if radius is given ---
-    if truncated_radius is not None:
-        xlim = (-truncated_radius, truncated_radius)
-        ylim = (-truncated_radius, truncated_radius)
+    if plot_radius is not None:
+        xlim = (-plot_radius, plot_radius)
+        ylim = (-plot_radius, plot_radius)
     else:
         xlim = ylim = None
 
@@ -83,9 +83,9 @@ def plot_2d_measures_kde(
     cbar.ax.set_yticks([])
     cbar.ax.set_yticklabels([])
 
-    if truncated_radius is not None:
-        ax.set_xlim(-truncated_radius, truncated_radius)
-        ax.set_ylim(-truncated_radius, truncated_radius)
+    if plot_radius is not None:
+        ax.set_xlim(-plot_radius, plot_radius)
+        ax.set_ylim(-plot_radius, plot_radius)
 
     if plot_dirc:
         os.makedirs(plot_dirc, exist_ok=True)
@@ -96,15 +96,15 @@ def plot_2d_measures_kde(
 
 
 
-def plot_2d_gm_pdf(gm_sampler, truncated_radius, grid_size=1000, plot_contour=False, plot_dirc=None, plot_name=None, title = None):
+def plot_2d_gm_pdf(gm_sampler, plot_radius, grid_size=1000, plot_contour=False, plot_dirc=None, plot_name=None, title = None):
     """
     Plots the PDF of a Gaussian Mixture Model (GMM) over a 2D grid.
     
     """
     os.makedirs(plot_dirc, exist_ok=True)
     # Create a grid of points over the specified range
-    xlim=(-truncated_radius, truncated_radius)
-    ylim=(-truncated_radius, truncated_radius)
+    xlim=(-plot_radius, plot_radius)
+    ylim=(-plot_radius, plot_radius)
     x = np.linspace(xlim[0], xlim[1], grid_size)
     y = np.linspace(ylim[0], ylim[1], grid_size)
     x_mesh, y_mesh = np.meshgrid(x, y)
@@ -226,6 +226,7 @@ if __name__ == "__main__":
     surjective_mapping = {int(key) : params["surjective_mapping"][key] for key in params["surjective_mapping"]}
 
     num_samples_to_plot = 100000
+    plot_radius = 150
 
     instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
     samplers_info_dir = f"{instance_dir}/samplers_info"
@@ -272,16 +273,16 @@ if __name__ == "__main__":
 
     ### Generate and visualize samples from the source measure
     # Plot the PDF of the source measure since it is a GM
-    plot_2d_gm_pdf(source_sampler, truncated_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/source_measure", plot_name="source_measure_pdf", title=r"PDF of $\bar{\mu}$")
+    plot_2d_gm_pdf(source_sampler, plot_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/source_measure", plot_name="source_measure_pdf", title=r"PDF of $\bar{\mu}$")
     print("Source measure PDF plotted.")
     # Plot the KDE heatmap of the source measure samples
     source_samples = source_sampler.sample(num_samples_to_plot)
-    plot_2d_measures_kde(source_samples, truncated_radius, scatter=False, plot_dirc=f"{plot_dir}/source_measure", plot_name = "source_measure_kde", title=r"KDE of $\bar{\mu}$ samples")
+    plot_2d_measures_kde(source_samples, plot_radius, scatter=False, plot_dirc=f"{plot_dir}/source_measure", plot_name = "source_measure_kde", title=r"KDE of $\bar{\mu}$ samples")
     print("Source measure samples KDE plotted.")
 
     for idx, auxiliary_seed in enumerate([1010, 1018, 1014, 1016, 1003]):
         auxiliary_measure_sampler = auxiliary_measure_sampler_set[idx]
-        plot_2d_gm_pdf(auxiliary_measure_sampler, truncated_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/auxiliary_measures", plot_name=f"auxiliary_measure_{idx+1}_pdf", title=fr"PDF of $\varkappa_{{{idx+1}}}$")
+        plot_2d_gm_pdf(auxiliary_measure_sampler, plot_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/auxiliary_measures", plot_name=f"auxiliary_measure_{idx+1}_pdf", title=fr"PDF of $\varkappa_{{{idx+1}}}$")
         print(f"Auxiliary measure {idx+1} PDF plotted.")
         
     ### Generate and visualize samples from the input measures
@@ -302,14 +303,14 @@ if __name__ == "__main__":
     for measure_index in range(num_measures):
         measure_samples = input_measure_samples[measure_index]
         # Plot the KDE for each input measure
-        plot_2d_measures_kde(measure_samples, bins = 400, truncated_radius = truncated_radius, scatter=False, plot_dirc=f"{plot_dir}/input_measures", plot_name=f"input_measure_{measure_index}_kde", title=fr"KDE of $\nu_{{{measure_index + 1}}}$ samples")
+        plot_2d_measures_kde(measure_samples, bins = 400, plot_radius = plot_radius, scatter=False, plot_dirc=f"{plot_dir}/input_measures", plot_name=f"input_measure_{measure_index}_kde", title=fr"KDE of $\nu_{{{measure_index + 1}}}$ samples")
         print(f"Input measure {measure_index} KDE plotted.")
     
     for tilde_k in range(num_measures * 2):
         pushforward_samples = component_map_pushforwards[tilde_k]
 
         plot_name_suffix = "plus" if (tilde_k % 2 == 0) else "minus"
-        plot_2d_measures_kde(pushforward_samples, bins = 400, truncated_radius = truncated_radius, scatter=False, plot_dirc=f"{plot_dir}/component_pushforwards", plot_name=f"component_{tilde_k // 2}_{plot_name_suffix}_kde", title=fr"KDE of pushforward {tilde_k}")
+        plot_2d_measures_kde(pushforward_samples, bins = 400, plot_radius = plot_radius, scatter=False, plot_dirc=f"{plot_dir}/component_pushforwards", plot_name=f"component_{tilde_k // 2}_{plot_name_suffix}_kde", title=fr"KDE of pushforward {tilde_k}")
         print(f"Pushforward {tilde_k} KDE plotted.")
 
 

@@ -4,13 +4,13 @@ from tqdm import tqdm
 def csv_shuffle(csv_path, output_path, seed = 42):
 
     # read csv
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(csv_path, header=None)
 
     # reshuffle rows
     df_shuffled = df.sample(frac=1, random_state=seed).reset_index(drop=True)
 
     # save to new csv
-    df_shuffled.to_csv(output_path, index=False)
+    df_shuffled.to_csv(output_path, index=False, header=False)
 
 
 

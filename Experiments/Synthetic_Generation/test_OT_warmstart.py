@@ -51,7 +51,6 @@ class CustomInitializer(SinkhornInitializer):
             exponents_max = jnp.max(exponents)
             g_interp[i] = -epsilon * (jnp.log(jnp.mean(jnp.exp(exponents - exponents_max))) + exponents_max)
         
-        # print(jnp.linalg.norm(jnp.array(g_interp.tolist()) - self.g_prev))
         return jnp.array(g_interp.tolist())
     
 
@@ -83,7 +82,6 @@ class CustomInitializer(SinkhornInitializer):
             exponents_max = jnp.max(exponents)
             f_interp[i] = -epsilon * (jnp.log(jnp.mean(jnp.exp(exponents - exponents_max))) + exponents_max)
 
-        # print(jnp.linalg.norm(jnp.array(f_interp.tolist()) - self.f_prev))
         return jnp.array(f_interp.tolist())
 
 class KNNInitializer(SinkhornInitializer):
@@ -145,12 +143,12 @@ class KNNInitializer(SinkhornInitializer):
 
 def main():
     num_of_rep = 5
-    N = 3000
+    N = 10000
     reg = 1
 
 
     # Sinkhorn OT via OTT with log-sum-exp and warm-start
-    print("With warm-start")
+    print("With warm-start (first-order condition):")
     rs = np.random.RandomState(seed = 2500)
     time_list = np.zeros(num_of_rep)
     initializer = None
@@ -163,7 +161,28 @@ def main():
 
         solver = sinkhorn.Sinkhorn(lse_mode = True, max_iterations=10**6, initializer=initializer)
         out = solver(ott_problem)
-        initializer = KNNInitializer(2, X, Y, out.f, out.g)
+        initializer = CustomInitializer(X, Y, out.f, out.g)
+        t1 = time.perf_counter()
+        print(f"Iteration {iter}: {t1 - t0} seconds")
+        time_list[iter] = t1 - t0
+
+    print("\n")
+
+    # Sinkhorn OT via OTT with log-sum-exp and warm-start
+    print("With warm-start (1-NN):")
+    rs = np.random.RandomState(seed = 2500)
+    time_list = np.zeros(num_of_rep)
+    initializer = None
+    for iter in range(num_of_rep):
+        X = rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[2, 1], [1, 2]]) * 100, size = N)
+        Y = rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[1, 0], [0, 1]]) * 100, size = N)
+        t0 = time.perf_counter()
+        geom = pointcloud.PointCloud(X, Y, epsilon = reg) # set the epsilon parameter for the entropic regularization
+        ott_problem = linear_problem.LinearProblem(geom) # uniform weights
+
+        solver = sinkhorn.Sinkhorn(lse_mode = True, max_iterations=10**6, initializer=initializer)
+        out = solver(ott_problem)
+        initializer = KNNInitializer(1, X, Y, out.f, out.g)
         t1 = time.perf_counter()
         print(f"Iteration {iter}: {t1 - t0} seconds")
         time_list[iter] = t1 - t0

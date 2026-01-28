@@ -3,6 +3,7 @@ import math
 from scipy.linalg import sqrtm, norm
 from tqdm import tqdm
 from Experiments.Synthetic_Generation.MOG import *
+from Experiments.Synthetic_Generation.metrics_to_compare import *
 from Algorithms.Stochastic_FP.entropic_estimate_OT import *
 import pandas as pd
 import os
@@ -212,7 +213,7 @@ class entropic_input_sampler:
         
         return measure_samples_dict, candidate_map_dict
     
-    def sample(self, sample_size):
+    def sample(self, sample_size, print_rejection = False):
         r'''
         Generate the input measure samples for a given sample size
         Modified on 20260114: We use different source samples for different input measures
@@ -223,6 +224,7 @@ class entropic_input_sampler:
         for k in range(self.num_measures):
             # source_samples = self.source_sampler.sample(sample_size)
             num_samples_collected = 0
+            num_samples_rejected = 0
             with tqdm(total=sample_size, desc=f"Sampling input measure {k}") as pbar:
                 while num_samples_collected < sample_size:
                 # for i in tqdm(range(sample_size), desc= f"Generating {sample_size} input measure samples"):
@@ -232,6 +234,11 @@ class entropic_input_sampler:
                         batch_sample_collection[k][num_samples_collected] = measure_samples_dict[k]
                         num_samples_collected += 1
                         pbar.update(1)
+                    else:
+                        num_samples_rejected += 1
+            
+            if print_rejection:
+                print(f"Sampling from input measure {k} complete, {num_samples_rejected} samples rejected")
         return batch_sample_collection
     
     def compute_true_V_value(self, MC_sample_size):
@@ -255,3 +262,25 @@ class entropic_input_sampler:
         V_std = np.std(V_vec)
 
         return V_mean, V_std, V_vec, distsq_mat
+    
+    def compute_true_V_value_via_OT(self, sample_size, num_rep):
+        r'''
+        Approximately compute the true V-value (i.e., the minimal value of the barycenter functional) via Monte Carlo integration
+        The effects of the truncation of the input measures are ignored
+        '''
+        # ignore the random seed
+        V_vec = np.zeros(num_rep)
+        
+        for rep in range(num_rep):
+            source_samples = self.source_sampler.sample(sample_size)
+            input_samples = self.sample(sample_size)
+
+            for k in range(self.num_measures):
+                V_vec[rep] += W2_pot(source_samples, input_samples[k]) / self.num_measures
+            
+            print(f"V-valued computed = {V_vec[rep]}")
+
+        V_mean = np.mean(V_vec)
+        V_std = np.std(V_vec)
+
+        return V_mean, V_std, V_vec

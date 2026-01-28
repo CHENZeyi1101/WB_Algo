@@ -156,12 +156,12 @@ if __name__ == "__main__":
     print(component_sm_list)
     print('\n')
 
-    OT_diff_norm_mean = np.mean(np.linalg.norm(OT_diff_mat, axis=1))
+    OT_diff_norm_max = np.max(np.linalg.norm(OT_diff_mat, axis=1))
 
-    print(f"Average norm of difference between the weighted sum of OT maps and the identity: {OT_diff_norm_mean}")
+    print(f"Maximum norm of difference between the weighted sum of OT maps and the identity: {OT_diff_norm_max}")
 
     if np.all(Brenier_sc_list >= 0):
-        if OT_diff_norm_mean <= 1e-6:
+        if OT_diff_norm_max <= 1e-5:
             print('Convexity conditions and the optimality condition are satisfied, hence the synthetically generated instance is VALID')
         else:
             print('Convexity conditions are satisfied, but the optimality condition is not satisfied, hence the synthetically generated instance is INVALID')

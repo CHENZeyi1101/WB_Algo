@@ -72,8 +72,12 @@ if __name__ == "__main__":
     
     entropic_sampler = load_sampler(samplers_info_dir, entropic_sampler, sampler_type = "entropic")
 
-    MC_sample_size = 10**7
+    MC_sample_size = 10**6
     [V_mean, V_std, V_vec, distsq_mat] = entropic_sampler.compute_true_V_value(MC_sample_size)
+
+    # sample_size = 10**4
+    # MC_num_rep = 20
+    # [V_mean, V_std, V_vec] = entropic_sampler.compute_true_V_value_via_OT(sample_size = sample_size, num_rep = MC_num_rep)
 
     max_num_saved_samples = 10**4
     output_dict = {
@@ -83,6 +87,13 @@ if __name__ == "__main__":
         "V_values": V_vec[:max_num_saved_samples].tolist(),
         "dist_values": distsq_mat[:max_num_saved_samples, :].tolist()
     }
+
+    # output_dict = {
+    #     "mean": V_mean,
+    #     "std": V_std,
+    #     "sample_size": sample_size,
+    #     "V_values": V_vec.tolist(),
+    # }
 
     outputs_dir = f"{instance_dir}/outputs/true_V_value"
     os.makedirs(outputs_dir, exist_ok=True)

@@ -23,6 +23,7 @@ if __name__ == "__main__":
     theta_list = params["theta_list"]
     gamma = params["gamma"]
     num_components = params["num_components"]
+    num_samples = params["num_samples"]
     bary_MC_size = params["MC_size"]
 
     if dim == 2:
@@ -73,7 +74,7 @@ if __name__ == "__main__":
         csv_evaluate_dir = f"{instance_dir}/samples_for_evaluation"
         os.makedirs(csv_evaluate_dir, exist_ok=True)
         new_csv_path = f"{csv_evaluate_dir}/input_measure_samples_{i}_for_evaluation.csv"
-        csv_shuffle(old_csv_path, new_csv_path, seed = 200)
+        csv_shuffle(old_csv_path, new_csv_path, seed = 200 + i)
     
 
     

@@ -176,10 +176,11 @@ class MixtureOfGaussians:
 
         return pdf_values
 
-    def sample(self, n, multiplication_factor = 1, use_truncation = True):
+    def sample(self, n, multiplication_factor = 1, use_truncation = True, print_rejection = False):
         dim = self.dim
         count = 0
         samples = np.zeros((n, dim))
+        rejected_count = 0
 
         # Spawn a dedicated RNG for sampling
         rng_sample = default_rng(self.master_rng.spawn(1)[0])
@@ -198,8 +199,13 @@ class MixtureOfGaussians:
                     samples[count] = sample
                     count += 1
                     pbar.update(1)
+                else:
+                    rejected_count += 1
 
         samples *= multiplication_factor
+
+        if print_rejection and n >= 100:
+            print(f"Sampling complete, {rejected_count} samples rejected")
         return samples
     
     def visualize(self, samples, name = None):
