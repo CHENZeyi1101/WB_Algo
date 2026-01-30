@@ -95,7 +95,7 @@ if __name__ == "__main__":
             "std": np.std(np.array(V_values_list)),
             "values": V_values_list}
         with open(V_values_path, 'w') as json_file:
-            json.dump(V_values_dict, json_file) 
+            json.dump(V_values_dict, json_file, indent = 4) 
 
         W2_to_bary_path = os.path.join(W2_to_bary_dir, f"W2_to_bary.json")
         W2_to_bary_dict = {
@@ -103,7 +103,7 @@ if __name__ == "__main__":
             "std": np.std(np.array(W2_to_bary_list)),
             "values": W2_to_bary_list}
         with open(W2_to_bary_path, 'w') as json_file:
-            json.dump(W2_to_bary_dict, json_file)
+            json.dump(W2_to_bary_dict, json_file, indent = 4)
 
     
 

@@ -22,7 +22,8 @@
         "5": 3,
         "7": 4,
         "9": 0},
-    "MC_size": 20
+    "MC_size": 20,
+    "eval_num_samples": 10000
   },
 
   "params_synthetic_generation_dim10": {
