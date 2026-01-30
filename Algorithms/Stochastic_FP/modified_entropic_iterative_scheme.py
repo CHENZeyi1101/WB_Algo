@@ -235,7 +235,7 @@ class modified_entropic_iterative_scheme:
 
             # collect samples and compute the OT maps
             accepted_samples = self.iterative_sampling(iter, self.sample_size_scheme[iter], sample_logger)
-            input_samples_collection: dict = self.input_sampler_for_evaluation.sample(self.sample_size_scheme[iter])
+            input_samples_collection: dict = self.input_sampler.sample(self.sample_size_scheme[iter])
             self.map_construct(iter, accepted_samples, input_samples_collection, self.reg_param_scheme[iter], map_logger)
 
             iter += 1
