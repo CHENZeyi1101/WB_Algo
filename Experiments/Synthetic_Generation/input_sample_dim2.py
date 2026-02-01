@@ -23,14 +23,14 @@ if __name__ == "__main__":
     num_components = params["num_components"]
     surjective_mapping = {int(key) : params["surjective_mapping"][key] for key in params["surjective_mapping"]}
 
-    setup = True # whether to set up the sampler or load existing one
+    setup = True # whether to set up the sampler or load an existing one
 
     if dim == 2:
         bound_type = "eigen_bound"
     else:
         bound_type = "norm_bound"
 
-    num_samples_in_preparation = 10**5
+    num_samples_in_preparation = 10**7
 
     instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
 

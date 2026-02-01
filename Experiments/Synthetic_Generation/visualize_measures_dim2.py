@@ -280,7 +280,7 @@ if __name__ == "__main__":
     plot_2d_measures_kde(source_samples, plot_radius, scatter=False, plot_dirc=f"{plot_dir}/source_measure", plot_name = "source_measure_kde", title=r"KDE of $\bar{\mu}$ samples")
     print("Source measure samples KDE plotted.")
 
-    for idx, auxiliary_seed in enumerate([1010, 1018, 1014, 1016, 1003]):
+    for idx, auxiliary_seed in enumerate(auxiliary_seeds_list):
         auxiliary_measure_sampler = auxiliary_measure_sampler_set[idx]
         plot_2d_gm_pdf(auxiliary_measure_sampler, plot_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/auxiliary_measures", plot_name=f"auxiliary_measure_{idx+1}_pdf", title=fr"PDF of $\varkappa_{{{idx+1}}}$")
         print(f"Auxiliary measure {idx+1} PDF plotted.")

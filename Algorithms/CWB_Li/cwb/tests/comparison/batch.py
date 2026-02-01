@@ -10,7 +10,7 @@ import numpy as np
 import time
 import pickle
 
-def batch_run_exp(exp, method, repeat_range, input_csv_path = None, num_measures = None, g_base_dir = None, dim_range = [], sample_count = 10000):
+def batch_run_exp(exp, method, repeat_range, input_csv_path = None, num_measures = None, g_base_dir = None, dim_range = [], sample_count = 10000, MC_size = 20):
     for rep in repeat_range:
         for dim in dim_range:
             data_dir = get_data_nd_dir(dim, g_base_dir)
@@ -40,7 +40,8 @@ def batch_run_exp(exp, method, repeat_range, input_csv_path = None, num_measures
                         result_dir=result_dir,
                         result_filename=result_filename,
                         input_csv_path = input_csv_path,
-                        num_measures = num_measures)
+                        num_measures = num_measures,
+                        MC_size = MC_size)
             elif method in ['bregman', 'exact_lp', 'conv']:
                 discrete_num = get_discrete_num(dim, method)
                 if not discrete_num:
