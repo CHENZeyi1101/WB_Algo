@@ -41,7 +41,8 @@ def get_kde_data(samples, bins=1000, xlim=None, ylim=None):
 
 def plot_2d_measures_kde(
     samples,
-    truncated_radius=None,         # NEW: to match PDF box
+    bins = 1000,
+    plot_radius=None,         # NEW: to match PDF box
     scatter=False,
     plot_dirc=None,
     plot_name=None,
@@ -57,14 +58,14 @@ def plot_2d_measures_kde(
     ax.set_facecolor("white")
 
     # --- set limits to match PDF plot if radius is given ---
-    if truncated_radius is not None:
-        xlim = (-truncated_radius, truncated_radius)
-        ylim = (-truncated_radius, truncated_radius)
+    if plot_radius is not None:
+        xlim = (-plot_radius, plot_radius)
+        ylim = (-plot_radius, plot_radius)
     else:
         xlim = ylim = None
 
     # Get KDE grid using those exact limits
-    x_mesh, y_mesh, kde_values = get_kde_data(samples, bins=1000, xlim=xlim, ylim=ylim)
+    x_mesh, y_mesh, kde_values = get_kde_data(samples, bins=bins, xlim=xlim, ylim=ylim)
 
     h = ax.contourf(x_mesh, y_mesh, kde_values, levels=200, cmap="hot")
 
@@ -82,9 +83,9 @@ def plot_2d_measures_kde(
     cbar.ax.set_yticks([])
     cbar.ax.set_yticklabels([])
 
-    if truncated_radius is not None:
-        ax.set_xlim(-truncated_radius, truncated_radius)
-        ax.set_ylim(-truncated_radius, truncated_radius)
+    if plot_radius is not None:
+        ax.set_xlim(-plot_radius, plot_radius)
+        ax.set_ylim(-plot_radius, plot_radius)
 
     if plot_dirc:
         os.makedirs(plot_dirc, exist_ok=True)
@@ -95,15 +96,15 @@ def plot_2d_measures_kde(
 
 
 
-def plot_2d_gm_pdf(gm_sampler, truncated_radius, grid_size=1000, plot_contour=False, plot_dirc=None, plot_name=None, title = None):
+def plot_2d_gm_pdf(gm_sampler, plot_radius, grid_size=1000, plot_contour=False, plot_dirc=None, plot_name=None, title = None):
     """
     Plots the PDF of a Gaussian Mixture Model (GMM) over a 2D grid.
     
     """
     os.makedirs(plot_dirc, exist_ok=True)
     # Create a grid of points over the specified range
-    xlim=(-truncated_radius, truncated_radius)
-    ylim=(-truncated_radius, truncated_radius)
+    xlim=(-plot_radius, plot_radius)
+    ylim=(-plot_radius, plot_radius)
     x = np.linspace(xlim[0], xlim[1], grid_size)
     y = np.linspace(ylim[0], ylim[1], grid_size)
     x_mesh, y_mesh = np.meshgrid(x, y)
@@ -171,71 +172,146 @@ def combine_images_row(image_paths, save_path=None, figsize=(18, 6)):
     else:
         plt.show()
 
+def combine_images_2rows(image_paths, save_path=None, figsize=(18, 12)):
+    """
+    Combines multiple images into two rows.
+
+    Parameters:
+        image_paths: list of file paths to images
+        save_path: optional path to save combined image
+        figsize: size of the output figure
+    """
+    n = len(image_paths)
+    cols = math.ceil(n / 2)
+    fig, axes = plt.subplots(2, cols, figsize=figsize)
+
+    # If only one image, axes is not a list
+    if n == 1:
+        axes = [axes]
+
+    for ax, img_path in zip(np.reshape(axes, (cols * 2,))[:n], image_paths):
+        img = mpimg.imread(img_path)
+        ax.imshow(img)
+        ax.axis("off")  # remove axes for clean look
+
+    plt.tight_layout()
+
+    if save_path:
+        plt.savefig(save_path, dpi=200, bbox_inches="tight")
+        plt.close()
+    else:
+        plt.show()
+
 
 
 if __name__ == "__main__":
     from pathlib import Path
     import json, os
-
-    dim = 2
-    num_components = 5
-    num_samples_to_plot = 2000
-    num_measures = 5
-    truncated_radius = 150
-    instance_theta = 2000
-
-    plot_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_plots/Theta{instance_theta}"
-    os.makedirs(plot_dir, exist_ok=True)
     
-    SEEDS_PATH = Path(__file__).parent / "seeds.json"
-    with open(SEEDS_PATH, "r") as f:
-        seeds_dict = json.load(f)
+    Cfg_PATH = Path(__file__).parent / "cfg.json"
+    with open(Cfg_PATH, "r") as f:
+        cfg_dict = json.load(f)
 
-    source_component_seed = seeds_dict["source_components_seed"]
-    master_source_rng = np.random.SeedSequence(seeds_dict["master_source_sampling_seed"])
-    auxiliary_seeds_list = seeds_dict["auxiliary_seeds_list"]
-    master_auxiliary_rng = np.random.SeedSequence(seeds_dict["master_auxiliary_sampling_seed"])
+    params = cfg_dict["params_synthetic_generation_dim2"]
+
+    # take all items in params
+    dim = params["dim"]
+    num_measures = params["num_measures"]
+    truncated_radius = params["truncated_radius"]
+    instance_identifier = params["instance_identifier"]
+    alpha_list = params["alpha_list"]
+    theta_list = params["theta_list"]
+    gamma = params["gamma"]
+    num_components = params["num_components"]
+    surjective_mapping = {int(key) : params["surjective_mapping"][key] for key in params["surjective_mapping"]}
+
+    num_samples_to_plot = 100000
+    plot_radius = 150
+
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
+    samplers_info_dir = f"{instance_dir}/samplers_info"
+    os.makedirs(samplers_info_dir, exist_ok=True)
+
+    source_component_seed = cfg_dict["source_components_seed"]
+    auxiliary_seeds_list = cfg_dict["auxiliary_seeds_list"]
 
     source_sampler = characterize_source_sampler(dim = dim, 
                                                 num_components = num_components, 
-                                                master_sampling_rng = master_source_rng,
+                                                master_sampling_rng = 99999,
                                                 component_seed = source_component_seed,
                                                 truncated_radius = truncated_radius,
                                                 save_dir = None)
 
     auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(dim = dim,
                                                                        num_components = num_components, 
-                                                                       master_sampling_rng = master_auxiliary_rng, 
+                                                                       master_sampling_rng = 99998, 
                                                                        auxiliary_seeds_list = auxiliary_seeds_list)
 
-    input_csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}/input_samples/csv_files"
-    input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
-                                                   num_measures, 
-                                                   multiplication_factor=1)
-    input_sampler.set_streamers()
+    tilde_K = len(auxiliary_measure_sampler_set)
+
+    surjective_mapping_seed = cfg_dict["surjective_mapping_seed"]
+    A_matrices_seed = cfg_dict["A_matrices_seed"]
+    A_matrices_dict = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
+
+    entropic_sampler = entropic_input_sampler(dim = dim, 
+                                              num_measures = num_measures, 
+                                              auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, 
+                                              source_sampler = source_sampler, 
+                                              n_k = 1000, 
+                                              alpha_list = alpha_list,
+                                              theta_list = theta_list,
+                                              gamma = gamma, 
+                                              truncated_radius = truncated_radius,
+                                              bound_type = "eigen_bound",
+                                              surjective_mapping = surjective_mapping,
+                                              A_matrices_dict = A_matrices_dict)
+    
+    entropic_sampler = load_sampler(samplers_info_dir, entropic_sampler, sampler_type = "entropic")
+
+    plot_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_plots/Instance{instance_identifier}"
+    os.makedirs(plot_dir, exist_ok=True)
 
     ### Generate and visualize samples from the source measure
     # Plot the PDF of the source measure since it is a GM
-    plot_2d_gm_pdf(source_sampler, truncated_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/source_measure", plot_name="source_measure_pdf", title=r"PDF of $\bar{\mu}$")
+    plot_2d_gm_pdf(source_sampler, plot_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/source_measure", plot_name="source_measure_pdf", title=r"PDF of $\bar{\mu}$")
     print("Source measure PDF plotted.")
     # Plot the KDE heatmap of the source measure samples
     source_samples = source_sampler.sample(num_samples_to_plot)
-    plot_2d_measures_kde(source_samples, truncated_radius, scatter=False, plot_dirc=f"{plot_dir}/source_measure", plot_name = "source_measure_kde", title=r"KDE of $\bar{\mu}$ samples")
+    plot_2d_measures_kde(source_samples, plot_radius, scatter=False, plot_dirc=f"{plot_dir}/source_measure", plot_name = "source_measure_kde", title=r"KDE of $\bar{\mu}$ samples")
     print("Source measure samples KDE plotted.")
 
     for idx, auxiliary_seed in enumerate([1010, 1018, 1014, 1016, 1003]):
         auxiliary_measure_sampler = auxiliary_measure_sampler_set[idx]
-        plot_2d_gm_pdf(auxiliary_measure_sampler, truncated_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/auxiliary_measures", plot_name=f"auxiliary_measure_{idx+1}_pdf", title=fr"PDF of $\varkappa_{{{idx+1}}}$")
+        plot_2d_gm_pdf(auxiliary_measure_sampler, plot_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/auxiliary_measures", plot_name=f"auxiliary_measure_{idx+1}_pdf", title=fr"PDF of $\varkappa_{{{idx+1}}}$")
         print(f"Auxiliary measure {idx+1} PDF plotted.")
         
     ### Generate and visualize samples from the input measures
     # Sample input measures
-    input_measure_samples = input_sampler.sample(num_samples_to_plot)
-    for measure_index in range(len(input_measure_samples)):
-        measure_samples = np.array(input_measure_samples[measure_index])
+    
+    input_measure_samples = [np.zeros((num_samples_to_plot, dim)) for _ in range(num_measures)]
+    component_map_pushforwards = [np.zeros((num_samples_to_plot, dim)) for _ in range(num_measures * 2)]
+
+    for i in tqdm(range(num_samples_to_plot), desc="Computing pushforwards"):
+        OT_map_pushforward, component_map_pushforward = entropic_sampler.generate_input_measure_sample(source_samples[i])
+
+        for k in range(num_measures):
+            input_measure_samples[k][i,:] = OT_map_pushforward[k]
+
+        for tilde_k in range(num_measures * 2):
+            component_map_pushforwards[tilde_k][i,:] = component_map_pushforward[tilde_k]
+
+    for measure_index in range(num_measures):
+        measure_samples = input_measure_samples[measure_index]
         # Plot the KDE for each input measure
-        plot_2d_measures_kde(measure_samples, truncated_radius = None, scatter=False, plot_dirc=f"{plot_dir}/input_measures", plot_name=f"input_measure_{measure_index}_kde", title=fr"KDE of $\nu_{{{measure_index + 1}}}$ samples")
+        plot_2d_measures_kde(measure_samples, bins = 400, plot_radius = plot_radius, scatter=False, plot_dirc=f"{plot_dir}/input_measures", plot_name=f"input_measure_{measure_index}_kde", title=fr"KDE of $\nu_{{{measure_index + 1}}}$ samples")
         print(f"Input measure {measure_index} KDE plotted.")
+    
+    for tilde_k in range(num_measures * 2):
+        pushforward_samples = component_map_pushforwards[tilde_k]
+
+        plot_name_suffix = "plus" if (tilde_k % 2 == 0) else "minus"
+        plot_2d_measures_kde(pushforward_samples, bins = 400, plot_radius = plot_radius, scatter=False, plot_dirc=f"{plot_dir}/component_pushforwards", plot_name=f"component_{tilde_k // 2}_{plot_name_suffix}_kde", title=fr"KDE of pushforward {tilde_k}")
+        print(f"Pushforward {tilde_k} KDE plotted.")
 
 
     ### Put together all plots into a single row
@@ -257,7 +333,24 @@ if __name__ == "__main__":
         f"{plot_dir}/input_measures/input_measure_4_kde.png"
     ]
 
+
+    image_paths_3 = [
+        f"{plot_dir}/component_pushforwards/component_0_plus_kde.png",
+        f"{plot_dir}/component_pushforwards/component_1_plus_kde.png",
+        f"{plot_dir}/component_pushforwards/component_2_plus_kde.png",
+        f"{plot_dir}/component_pushforwards/component_3_plus_kde.png",
+        f"{plot_dir}/component_pushforwards/component_4_plus_kde.png",
+        f"{plot_dir}/component_pushforwards/component_0_minus_kde.png",
+        f"{plot_dir}/component_pushforwards/component_1_minus_kde.png",
+        f"{plot_dir}/component_pushforwards/component_2_minus_kde.png",
+        f"{plot_dir}/component_pushforwards/component_3_minus_kde.png",
+        f"{plot_dir}/component_pushforwards/component_4_minus_kde.png"
+    ]
+
     combine_images_row(image_paths_1, save_path=f"{plot_dir}/source_auxiliary_pdf_combined.png", figsize=(24, 6))
     print("Combined source and auxiliary measure PDFs.")
     combine_images_row(image_paths_2, save_path=f"{plot_dir}/source_input_kde_combined.png", figsize=(24, 6))
     print("Combined source and input measure KDEs.")
+
+    combine_images_2rows(image_paths_3, save_path=f"{plot_dir}/component_pushforwards_kde_combined.png", figsize=(24, 12))
+    print("Combined component pushforwards KDEs.")

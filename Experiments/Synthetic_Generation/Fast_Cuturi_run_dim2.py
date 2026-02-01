@@ -16,29 +16,18 @@ if __name__ == "__main__":
     params = cfg_dict["params_synthetic_generation_dim2"]
 
     # take all items in params
-    num_samples = params["num_samples"]
     dim = params["dim"]
     num_measures = params["num_measures"]
-    truncated_radius = params["truncated_radius"]
-    instance_theta = params["instance_theta"]
-    num_components = params["num_components"]
+    instance_identifier = params["instance_identifier"]
     MC_size = params["MC_size"]
+    num_samples = params["num_samples"]
 
-    # for alternating supports
-    support_size = 500
+    # number of atoms in the discrete supports
+    support_size = 10000
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}"
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
-
-    source_component_seed = cfg_dict["source_components_seed"]
-    master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
-    source_sampler = characterize_source_sampler(dim = dim, 
-                                                num_components = num_components, 
-                                                master_sampling_rng = master_source_rng,
-                                                component_seed = source_component_seed,
-                                                truncated_radius = truncated_radius,
-                                                save_dir = None)
 
     input_csv_path = f"{instance_dir}/input_samples/csv_files"
     input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
@@ -52,12 +41,12 @@ if __name__ == "__main__":
                                                 multiplication_factor=1)
     input_sampler_for_evaluation.set_streamers()
 
-    bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize50_numsamples{num_samples}.json"
+    bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize{MC_size}_numsamples{num_samples}.json"
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
  
-    outputs_dir = f"{instance_dir}/outputs/Fast_Cuturi_outputs_support{support_size}"
+    outputs_dir = f"{instance_dir}/outputs/Fast_Cuturi_outputs_numsamples{num_samples}_support{support_size}"
     os.makedirs(outputs_dir, exist_ok=True)
 
     V_values_dir = os.path.join(outputs_dir, "V_values")
@@ -67,18 +56,20 @@ if __name__ == "__main__":
 
     V_values_list = []
     W2_to_bary_list = []
+
+    input_samples_collection = input_sampler.sample(num_samples)
+    samples_list = [np.array(input_samples_collection[key]) for key in sorted(input_samples_collection.keys())]
+    approx_bary = w2_barycenter_free_support_from_samples(
+        samples_list,
+        k=support_size,
+        init="random",
+        numItermax=200,
+        verbose=True,
+        seed=42,
+    )
+
     for i in range(MC_size):
         print(f"Computing barycenter sample {i+1}/{MC_size}...")
-        input_samples_collection = input_sampler.sample(num_samples)
-        samples_list = [np.array(input_samples_collection[key]) for key in sorted(input_samples_collection.keys())]
-        approx_bary = w2_barycenter_free_support_from_samples(
-            samples_list,
-            k=support_size,
-            init="random",
-            numItermax=200,
-            verbose=True,
-            seed=42,
-        )
 
         bary_samples = bary_samples_collection_loaded[str(i)]
         input_samples_collection_for_evaluation = input_sampler_for_evaluation.sample(num_samples)
@@ -99,12 +90,20 @@ if __name__ == "__main__":
 
         # save V-values and W2_to_bary values
         V_values_path = os.path.join(V_values_dir, f"V_values.json")
+        V_values_dict = {
+            "mean": np.mean(np.array(V_values_list)),
+            "std": np.std(np.array(V_values_list)),
+            "values": V_values_list}
         with open(V_values_path, 'w') as json_file:
-            json.dump(V_values_list, json_file) 
+            json.dump(V_values_dict, json_file, indent = 4) 
 
         W2_to_bary_path = os.path.join(W2_to_bary_dir, f"W2_to_bary.json")
+        W2_to_bary_dict = {
+            "mean": np.mean(np.array(W2_to_bary_list)),
+            "std": np.std(np.array(W2_to_bary_list)),
+            "values": W2_to_bary_list}
         with open(W2_to_bary_path, 'w') as json_file:
-            json.dump(W2_to_bary_list, json_file)
+            json.dump(W2_to_bary_dict, json_file, indent = 4)
 
     
 

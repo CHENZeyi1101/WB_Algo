@@ -193,21 +193,23 @@ class entropic_iterative_scheme:
         os.makedirs(W2_to_bary_dir, exist_ok=True)
         os.makedirs(G_samples_dir, exist_ok=True)
 
-        # Compute the true V-value
-        true_V_value_list = []
-        for i in range(MC_size):
-            bary_samples = bary_sample_collection[str(i)]
-            input_samples_collection: dict = self.input_sampler.sample(num_samples)
-            true_V_value = self.V_value_compute(bary_samples, input_samples_collection)
-            true_V_value_list.append(true_V_value)
-            self.V_values_dict["true_V_value"] = true_V_value_list
-            save_json(self.V_values_dict, V_values_dir, "true_V_values.json")
-        mean_true_V_value = np.mean(true_V_value_list)
-        print(f"True V-value computed: {mean_true_V_value}")
+        # We will not compute the true V-value here, as the true V-value is computed in true_V_value_dim2.py
+        # Old code:
+        # # Compute the true V-value
+        # true_V_value_list = []
+        # for i in range(MC_size):
+        #     bary_samples = bary_sample_collection[str(i)]
+        #     input_samples_collection: dict = self.input_sampler.sample(num_samples)
+        #     true_V_value = self.V_value_compute(bary_samples, input_samples_collection)
+        #     true_V_value_list.append(true_V_value)
+        #     self.V_values_dict["true_V_value"] = true_V_value_list
+        #     save_json(self.V_values_dict, V_values_dir, "true_V_values.json")
+        # mean_true_V_value = np.mean(true_V_value_list)
+        # print(f"True V-value computed: {mean_true_V_value}")
 
         # Start the iterations
         iter = 0
-        while iter < max_iter:
+        while True:
             V_values_list = []
             W2_to_bary_list = []
             accepted_samples_list = []
@@ -220,13 +222,18 @@ class entropic_iterative_scheme:
                 accepted_samples_list.append(accepted_samples.tolist())
                 V_values_list.append(V_value)
                 W2_to_bary_list.append(W2_to_bary)
-            self.map_construct(iter, accepted_samples, input_samples_collection, epsilon, map_logger, warm_start = warm_start)
+            
             self.V_values_dict[f"iteration_{iter}"] = V_values_list
             self.W2_to_bary_dict[f"iteration_{iter}"] = W2_to_bary_list
             self.G_samples_dict[f"iteration_{iter}"] = accepted_samples_list
             save_json(self.V_values_dict, V_values_dir, f"V_values_iter{iter}.json")
             save_json(self.W2_to_bary_dict, W2_to_bary_dir, f"W2_to_bary_iter{iter}.json")
             save_json(self.G_samples_dict, G_samples_dir, f"G_samples_iter{iter}.json")
+            
+            if iter >= max_iter:
+                break
+
+            self.map_construct(iter, accepted_samples, input_samples_collection, epsilon, map_logger, warm_start = warm_start)
             iter += 1
 
 

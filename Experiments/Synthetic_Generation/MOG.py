@@ -176,15 +176,16 @@ class MixtureOfGaussians:
 
         return pdf_values
 
-    def sample(self, n, multiplication_factor = 1):
+    def sample(self, n, multiplication_factor = 1, use_truncation = True, print_rejection = False):
         dim = self.dim
         count = 0
         samples = np.zeros((n, dim))
+        rejected_count = 0
 
         # Spawn a dedicated RNG for sampling
         rng_sample = default_rng(self.master_rng.spawn(1)[0])
 
-        with tqdm(total=n, desc="MOG sampling") as pbar:
+        with tqdm(total=n, desc="MOG sampling", disable=(n == 1)) as pbar:
             while count < n:
                 choice = rng_sample.choice(
                     len(self.gaussians),
@@ -194,12 +195,17 @@ class MixtureOfGaussians:
 
                 sample = rng_sample.multivariate_normal(mean, cov)
 
-                if (not self.truncation) or (np.linalg.norm(sample) <= self.radius):
+                if (not use_truncation) or (not self.truncation) or (np.linalg.norm(sample) <= self.radius):
                     samples[count] = sample
                     count += 1
                     pbar.update(1)
+                else:
+                    rejected_count += 1
 
         samples *= multiplication_factor
+
+        if print_rejection and n >= 100:
+            print(f"Sampling complete, {rejected_count} samples rejected")
         return samples
     
     def visualize(self, samples, name = None):

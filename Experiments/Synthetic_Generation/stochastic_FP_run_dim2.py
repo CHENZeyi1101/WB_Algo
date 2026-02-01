@@ -20,11 +20,11 @@ if __name__ == "__main__":
     dim = params["dim"]
     num_measures = params["num_measures"]
     truncated_radius = params["truncated_radius"]
-    instance_theta = params["instance_theta"]
+    instance_identifier = params["instance_identifier"]
     num_components = params["num_components"]
     MC_size = params["MC_size"]
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}"
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_identifier}"
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
