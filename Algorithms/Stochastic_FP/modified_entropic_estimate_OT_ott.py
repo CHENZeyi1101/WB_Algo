@@ -14,6 +14,7 @@ import numpy as np
 from sklearn.neighbors import KNeighborsRegressor
 
 from ott.initializers.linear.initializers import SinkhornInitializer  # adjust import path if your version differs
+from ott.utils import default_progress_fn
 
 class FirstOrderConditionInitializer(SinkhornInitializer):
     """
@@ -231,7 +232,13 @@ class modified_entropic_OT_map_estimate_ott:
         prob = linear_problem.LinearProblem(geom) # uniform weights
 
         # t0 = time.perf_counter()
-        solver = sinkhorn.Sinkhorn(initializer = self.initializer)
+        progress_fn = default_progress_fn()
+        solver = sinkhorn.Sinkhorn(
+            initializer = self.initializer, 
+            progress_fn = progress_fn, 
+            inner_iterations = 100, 
+            max_iterations = 100000)
+        
         out = solver(prob) # <class 'ott.solvers.linear.sinkhorn.SinkhornOutput'>
         # Make sure to wait for completion if using JAX with device async
         out = jax.block_until_ready(out)  # if available

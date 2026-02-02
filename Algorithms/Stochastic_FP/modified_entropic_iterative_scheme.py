@@ -149,7 +149,7 @@ class modified_entropic_iterative_scheme:
         based on the generated samples after iterations;
         Will be envoked each time after iterative_sampling() is called when a new (empirical) G(\mu) measure is obtained.
         '''
-        for measure_index in tqdm(range(self.num_measures), desc = "OT map construction"):
+        for measure_index in tqdm(range(self.num_measures), desc = "OT map construction", disable = True):
             input_measure_samples = np.array(input_samples_collection[measure_index])
             log_info(map_logger, f"\n"
                                 f"################################################################\n"
@@ -157,8 +157,6 @@ class modified_entropic_iterative_scheme:
                                 f"OT map estimation for Measure_{measure_index}\n"
                                 f"################################################################\n"
                                 )
-                
-            # Store the V-value (i.e.,\@ the weighted sum of the Wasserstein distances between the input measures and the generated samples)
 
             OT_map_estimator = modified_entropic_OT_map_estimate_ott(accepted_samples, input_measure_samples, initializer = self.initializers[measure_index])
             OT_map_estimator.get_dual_potential(epsilon = epsilon)
@@ -216,11 +214,13 @@ class modified_entropic_iterative_scheme:
             self.V_values_dict[f"iteration_{iter}"] = {
                 "mean": np.mean(V_values_list), 
                 "std": np.std(V_values_list),
+                "sample_size": self.eval_num_samples,
                 "values": V_values_list.tolist()
             }
             self.W2_to_bary_dict[f"iteration_{iter}"] = {
                 "mean": np.mean(W2_to_bary_list),
                 "std": np.std(W2_to_bary_list),
+                "sample_size": self.eval_num_samples,
                 "values": W2_to_bary_list.tolist()
             }
 
