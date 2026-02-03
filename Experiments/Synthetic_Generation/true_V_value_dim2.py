@@ -79,6 +79,7 @@ if __name__ == "__main__":
     [V_mean, V_std, V_vec, distsq_mat] = entropic_sampler.compute_true_V_value(MC_sample_size)
 
     outputs_dir = f"{instance_dir}/outputs/true_V_value"
+    os.makedirs(outputs_dir, exist_ok=True)
     output_dict = {
         "mean": V_mean,
         "std": V_std,
@@ -86,4 +87,5 @@ if __name__ == "__main__":
         "values": V_vec[:max_num_saved_samples].tolist(),
         "dist_values": distsq_mat[:max_num_saved_samples, :].tolist()
     }
+
     save_json(output_dict, outputs_dir, 'true_V_value.json')

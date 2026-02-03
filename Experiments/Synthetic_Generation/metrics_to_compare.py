@@ -33,8 +33,8 @@ def W2_to_bary_compute(bary_samples, generated_samples):
 
 def evaluate_zipped(args):
     '''
-    Compute both the (empirical) V-value and the (empirical) Wasserstein distance between the generated samples from the G-mapping
-    and the barycenter samples.
+    Compute both the (empirical) V-value and the (empirical) Wasserstein distance (without square) between samples from an approximate barycenter and
+    and samples from the true barycenter.
     The inputs are passed via a tuple for ease of parallelization
     '''
     eval_samples, input_measure_samples_collection, true_bary_samples = args
@@ -44,6 +44,6 @@ def evaluate_zipped(args):
         V_value += W2_pot(eval_samples, np.array(input_measure_samples_collection[measure_index]))
     V_value /= len(input_measure_samples_collection)
 
-    W2_to_bary = W2_pot(eval_samples, true_bary_samples)
+    W2_to_bary = np.sqrt(W2_pot(eval_samples, true_bary_samples))
 
     return V_value, W2_to_bary
