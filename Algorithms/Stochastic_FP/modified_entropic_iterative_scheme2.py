@@ -8,19 +8,7 @@ from Algorithms.Stochastic_FP.modified_entropic_estimate_OT_ott import modified_
 from Algorithms.Stochastic_FP.modified_entropic_estimate_OT_geomloss import modified_entropic_OT_map_estimate_geomloss
 from Algorithms.Stochastic_FP.modified_entropic_estimate_OT_geomloss2 import modified_entropic_OT_map_estimate_geomloss2
 from Algorithms.data_manage import *
-from Experiments.Synthetic_Generation.metrics_to_compare import W2_pot
-
-def evaluate_zipped(args):
-    eval_samples, input_measure_samples_collection, true_bary_samples = args
-
-    V_value = 0
-    for measure_index in range(len(input_measure_samples_collection)):
-        V_value += W2_pot(eval_samples, np.array(input_measure_samples_collection[measure_index]))
-    V_value /= len(input_measure_samples_collection)
-
-    W2_to_bary = W2_pot(eval_samples, true_bary_samples)
-
-    return V_value, W2_to_bary
+from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_zipped
 
 class modified_entropic_iterative_scheme2:
     r'''
@@ -152,18 +140,6 @@ class modified_entropic_iterative_scheme2:
                                 )
                             
         return accepted
-    
-    def V_value_compute(self, bary_samples, input_samples_collection: dict):
-        '''
-        bary_samples denotes the samples from the true/approximated barycenter measure
-        input_samples_collection is a dictionary with k keys, each key corresponds to the samples from the k-th input measure.
-        '''
-        V_value = 0
-        for measure_index in tqdm(range(self.num_measures), desc = "V-value computation", disable=True):
-            input_samples = np.array(input_samples_collection[measure_index])
-            V_value += W2_pot(input_samples, bary_samples)
-        V_value /= self.num_measures
-        return V_value
     
     def map_construct(self, iter, accepted_samples, input_samples_collection: dict, epsilon, map_logger = None):
         '''
