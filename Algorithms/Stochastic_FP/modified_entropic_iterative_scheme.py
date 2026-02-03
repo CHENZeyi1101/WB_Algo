@@ -5,6 +5,7 @@ from wandb import init
 
 from Algorithms.Stochastic_FP.entropic_estimate_OT import *
 from Algorithms.Stochastic_FP.modified_entropic_estimate_OT_ott import modified_entropic_OT_map_estimate_ott
+from Algorithms.Stochastic_FP.modified_entropic_estimate_OT_geomloss import modified_entropic_OT_map_estimate_geomloss
 from Algorithms.data_manage import *
 from Experiments.Synthetic_Generation.metrics_to_compare import W2_pot
 
@@ -62,8 +63,12 @@ class modified_entropic_iterative_scheme:
 
         assert len(self.sample_size_scheme) >= self.num_iters, "sample size scheme mis-specified"
         assert len(self.reg_param_scheme) >= self.num_iters, "regularization scheme mis-specified"
+        assert self.sinkhorn_impl == "ott" or self.sinkhorn_impl == "geomloss", "unknown Sinkhorn implementation"
 
-        self.initializers = [modified_entropic_OT_map_estimate_ott.create_initializer(warm_start) for _ in range(self.num_measures)]
+        if self.sinkhorn_impl == "ott":
+            self.initializers = [modified_entropic_OT_map_estimate_ott.create_initializer(warm_start) for _ in range(self.num_measures)]
+        else:
+            self.initializers = [None] * self.num_measures
 
         # dictionary for storing computed OT maps
         self.OT_collections = {}
@@ -149,7 +154,7 @@ class modified_entropic_iterative_scheme:
         based on the generated samples after iterations;
         Will be envoked each time after iterative_sampling() is called when a new (empirical) G(\mu) measure is obtained.
         '''
-        for measure_index in tqdm(range(self.num_measures), desc = "OT map construction", disable = True):
+        for measure_index in tqdm(range(self.num_measures), desc = "OT map construction", disable = self.sinkhorn_impl == "ott"):
             input_measure_samples = np.array(input_samples_collection[measure_index])
             log_info(map_logger, f"\n"
                                 f"################################################################\n"
@@ -157,10 +162,14 @@ class modified_entropic_iterative_scheme:
                                 f"OT map estimation for Measure_{measure_index}\n"
                                 f"################################################################\n"
                                 )
-
-            OT_map_estimator = modified_entropic_OT_map_estimate_ott(accepted_samples, input_measure_samples, initializer = self.initializers[measure_index])
-            OT_map_estimator.get_dual_potential(epsilon = epsilon)
-            self.initializers[measure_index] = OT_map_estimator.get_initializer()
+            
+            if self.sinkhorn_impl == "ott":
+                OT_map_estimator = modified_entropic_OT_map_estimate_ott(accepted_samples, input_measure_samples, initializer = self.initializers[measure_index])
+                OT_map_estimator.get_dual_potential(epsilon = epsilon)
+                self.initializers[measure_index] = OT_map_estimator.get_initializer()
+            elif self.sinkhorn_impl == "geomloss":
+                OT_map_estimator = modified_entropic_OT_map_estimate_geomloss(accepted_samples, input_measure_samples)
+                OT_map_estimator.get_dual_potential(epsilon = epsilon)
 
             # store the OT map estimator (python class) in the OT_collctions dictionary
             self.OT_collections[(iter, measure_index)] = OT_map_estimator
