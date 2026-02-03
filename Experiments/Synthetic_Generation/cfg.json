@@ -7,7 +7,7 @@
     "num_samples": 10000,
     "num_measures": 5,
     "truncated_radius": 225,
-    "instance_identifier": "TRIAL1",
+    "instance_identifier": "FINAL",
     "alpha_list": [1, 1, 1, 1, 1],
     "theta_list": [2000, 1800, 900, 600, 2000],
     "gamma": 0.05,

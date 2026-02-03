@@ -43,8 +43,8 @@ if __name__ == "__main__":
     rand_state = np.random.RandomState(seed = 7777)
     init_method = {"type": "moment", "sample_size": 10000}
     truncate_radius = params["truncated_radius"]
-    sample_size_scheme = [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000]
-    reg_param_scheme = [20, 20, 20, 20, 20, 20, 20, 20]
+    sample_size_scheme = [20000, 20000, 40000, 80000, 160000, 320000, 320000, 320000]
+    reg_param_scheme = [2, 2, 2, 2, 2, 2, 2, 2]
     # sinkhorn_impl = "ott"
     # warm_start = {"type": "first-order"}
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         warm_start = warm_start,
         bary_sample_collection = bary_samples_collection_loaded, 
         input_sampler_for_evaluation = input_sampler_for_evaluation,
-        eval_num_samples = 1000,
+        eval_num_samples = eval_num_samples,
         eval_MC_size = eval_MC_size,
         num_parallel = 10
     )
