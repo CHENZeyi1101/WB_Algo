@@ -5,6 +5,7 @@ from multiprocessing import Pool
 
 from Algorithms.Stochastic_FP.entropic_estimate_OT import *
 from Algorithms.Stochastic_FP.modified_entropic_estimate_OT_ott import modified_entropic_OT_map_estimate_ott
+from Algorithms.Stochastic_FP.modified_entropic_estimate_OT_ott2 import modified_entropic_OT_map_estimate_ott2
 from Algorithms.Stochastic_FP.modified_entropic_estimate_OT_geomloss import modified_entropic_OT_map_estimate_geomloss
 from Algorithms.Stochastic_FP.modified_entropic_estimate_OT_geomloss2 import modified_entropic_OT_map_estimate_geomloss2
 from Algorithms.data_manage import *
@@ -70,7 +71,7 @@ class modified_entropic_iterative_scheme2:
         assert self.sinkhorn_impl == "ott" or self.sinkhorn_impl == "geomloss", "unknown Sinkhorn implementation"
 
         if self.sinkhorn_impl == "ott":
-            self.initializers = [modified_entropic_OT_map_estimate_ott.create_initializer(warm_start) for _ in range(self.num_measures)]
+            self.initializers = [modified_entropic_OT_map_estimate_ott2.create_initializer(warm_start) for _ in range(self.num_measures)]
         else:
             self.initializers = [None] * self.num_measures
 
@@ -157,7 +158,7 @@ class modified_entropic_iterative_scheme2:
                                 )
             
             if self.sinkhorn_impl == "ott":
-                OT_map_estimator = modified_entropic_OT_map_estimate_ott(accepted_samples, input_measure_samples, initializer = self.initializers[measure_index])
+                OT_map_estimator = modified_entropic_OT_map_estimate_ott2(accepted_samples, input_measure_samples, initializer = self.initializers[measure_index])
                 OT_map_estimator.get_dual_potential(epsilon = epsilon)
                 self.initializers[measure_index] = OT_map_estimator.get_initializer()
             elif self.sinkhorn_impl == "geomloss":

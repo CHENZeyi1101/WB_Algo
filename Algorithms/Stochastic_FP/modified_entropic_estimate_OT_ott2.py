@@ -3,14 +3,9 @@ import jax
 jax.config.update("jax_enable_x64", True)
 
 import jax.numpy as jnp
-import warnings
-import pdb
 from ott.geometry import pointcloud
 from ott.problems.linear import linear_problem
 from ott.solvers.linear import sinkhorn
-import time
-
-import numpy as np
 from sklearn.neighbors import KNeighborsRegressor
 
 class FirstOrderConditionInitializer:
@@ -98,7 +93,18 @@ def sinkhorn_solve(X : jnp.ndarray, Y : jnp.ndarray,
                         (init_f, init_g))
     return out.f, out.g
 
-class modified_entropic_OT_map_estimate_ott:
+@jax.jit
+def sinkhorn_modified_entropic_OT_map(X_new : jnp.ndarray, 
+                                      Y : jnp.ndarray, g : jnp.ndarray, 
+                                      reg : float, radius : float):
+    diff_mat = (g[jnp.newaxis, :] - ((X_new[:, jnp.newaxis, :] - Y[jnp.newaxis, :, :]) ** 2).sum(axis = -1)) / reg
+    weight_mat = jax.nn.softmax(diff_mat, axis = 1)
+
+    X_new_norm_halfsq_diff = 0.5 * (jnp.sum(jnp.square(X_new), axis = 1) - radius ** 2)
+    modification_weights = jnp.where(X_new_norm_halfsq_diff > 0, jnp.exp(-1 / X_new_norm_halfsq_diff), 0.0)
+    return weight_mat @ Y + modification_weights[:, jnp.newaxis] * X_new
+
+class modified_entropic_OT_map_estimate_ott2:
 
     r'''
     Python class for constructing the regularized entropic OT map estimator
@@ -107,7 +113,7 @@ class modified_entropic_OT_map_estimate_ott:
         Support of the empirical measure \widehat{\mu}; i.e., samples from the source distribution \mu \in \CP(\CX)
     Y: numpy array, shape (m, d)
         Support of the empirical measure \widehat{\nu}; i.e., samples from the input distribution \nu \in \CP(\CY)
-    log: boolean, default True
+    log: boolean, default None
         If True, the class will log the outputs
     
     Methods:
@@ -119,13 +125,11 @@ class modified_entropic_OT_map_estimate_ott:
         Regularize the entropic OT map at the point x to make the corresponding potential strongly convex
     '''
     
-    def __init__(self, X, Y, log = True, initializer : FirstOrderConditionInitializer | KNNInitializer | None = None):
-        self.X = X
-        self.Y = Y
-        self.log = log
+    def __init__(self, X, Y, log = None, initializer : FirstOrderConditionInitializer | KNNInitializer | None = None):
+        self.X = jnp.array(X)
+        self.Y = jnp.array(Y)
         self.g_potential = None
         self.epsilon = None
-        self.dual_potentials = None
         self.initializer = initializer
 
     @staticmethod
@@ -151,71 +155,28 @@ class modified_entropic_OT_map_estimate_ott:
         ./src/ott/solvers/linear/sinkhorn.py
         '''
 
-        X, Y = jnp.array(self.X), jnp.array(self.Y)
         if self.initializer is not None:
-            init_f, init_g = self.initializer.init_f_and_g(X, Y, epsilon)
+            init_f, init_g = self.initializer.init_f_and_g(self.X, self.Y, epsilon)
         else:
-            init_f, init_g = jnp.zeros(X.shape[0]), jnp.zeros(Y.shape[0])
+            init_f, init_g = jnp.zeros(self.X.shape[0]), jnp.zeros(self.Y.shape[0])
 
-        f, g = sinkhorn_solve(X, Y, epsilon, init_f, init_g)
+        f, g = sinkhorn_solve(self.X, self.Y, epsilon, init_f, init_g)
         # Make sure to wait for completion if using JAX with device async
         f = jax.block_until_ready(f)  # if available
         g = jax.block_until_ready(g)  # if available
-        # t1 = time.perf_counter()
 
-        # elapsed = t1 - t0
-        # print(f"OT map constructed in {elapsed:.4f} seconds")
-
-        self.dual_potentials = [f, g]
         self.g_potential = g
         self.epsilon = epsilon
 
         if self.initializer is not None:
-            self.initializer.set_prev(X_prev = X, Y_prev = Y, 
+            self.initializer.set_prev(X_prev = self.X, Y_prev = self.Y, 
                                       f_prev = f, g_prev = g)
     
     def get_initializer(self):
         return self.initializer
     
-    def construct_entropic_OT_map(self, x):
-        Y = self.Y
-        n = Y.shape[0]
-        epsilon = self.epsilon
-        g_potential = self.g_potential
-
-        x_tile = np.tile(x, (n, 1))
-        exponent_vec = (g_potential - np.sum(np.square(x_tile - Y), axis = 1)) / epsilon
-        exponent_vec_max = np.max(exponent_vec)
-        exponent_vec -= exponent_vec_max # normalize the exponent_vec for numerical stability in np.exp()
-
-        # Convert warnings to exceptions within this block
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            try:
-                numerator = Y.T @ np.exp(exponent_vec)
-                denominator = np.sum(np.exp(exponent_vec))
-                entropic_image = numerator / denominator
-            except Warning as w:
-                print(f"Warning converted to exception: {w}")
-                pdb.set_trace()  # Trigger breakpoint for debugging
-            except Exception as e:
-                print(f"Error encountered: {e}")
-                pdb.set_trace()  # Trigger breakpoint for debugging
-
-        return entropic_image
-    
-    def regularize_entropic_OT_map(self, M, x):
-        # Regularize the entropic OT map at point x to make the corresponding potential strongly convex
-        # To avoid amendation of the original entropic OT map on the support of \widehat{\mu}
-        # We set M = 0.5 * R^2, where R is the radius of the support of \widehat{\mu}
-
-        entropic_image = self.construct_entropic_OT_map(x)
-        half_xsq = 0.5 * x.T @ x
-        if half_xsq <= M:
-            return entropic_image
-        else:
-            regularized_entropic_image = entropic_image + np.exp(-1/(half_xsq - M)) * x
-            return regularized_entropic_image
+    def compute_modified_entropic_OT_map(self, X_new, radius):
+        return sinkhorn_modified_entropic_OT_map(jnp.array(X_new), self.Y, self.g_potential, self.epsilon, radius).block_until_ready()
         
 
 
