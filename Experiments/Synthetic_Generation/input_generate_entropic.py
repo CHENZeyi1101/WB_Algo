@@ -5,9 +5,6 @@ from tqdm import tqdm
 from Experiments.Synthetic_Generation.MOG import *
 from Experiments.Synthetic_Generation.metrics_to_compare import *
 from Algorithms.Stochastic_FP.entropic_estimate_OT import *
-import pandas as pd
-import os
-# from .samplers_dim2 import *
 
 class entropic_input_sampler:
     '''

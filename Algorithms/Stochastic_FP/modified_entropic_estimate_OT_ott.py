@@ -16,7 +16,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from ott.initializers.linear.initializers import SinkhornInitializer  # adjust import path if your version differs
 from ott.utils import default_progress_fn
 
-class FirstOrderConditionInitializer(SinkhornInitializer):
+class FirstOrderConditionInitializer:
     """
     Initialize the Sinkhorn algorithm using the first-order optimality condition from a previous run
     """
@@ -35,79 +35,39 @@ class FirstOrderConditionInitializer(SinkhornInitializer):
         self.f_prev = f_prev
         self.g_prev = g_prev
 
-    def init_gv(
-        self,
-        ot_prob: linear_problem.LinearProblem,
-        lse_mode: bool,
-        rng: Optional[jax.Array] = None,
-    ) -> jnp.ndarray:
-        """Initialize Sinkhorn potential/scaling f_u.
-
-        Args:
-        ot_prob: Linear OT problem.
-        lse_mode: Return potential if ``True``, scaling if ``False``.
-        rng: Random number generator for stochastic initializers.
-
-        Returns:
-        potential/scaling, array of size ``[n,]``.
-        """
-        geom : pointcloud.PointCloud = ot_prob.geom
-        Y_curr = geom.y
-        epsilon = geom.epsilon
-        num_pt = Y_curr.shape[0]
+    def init_f_and_g(self, 
+                     X_new : jnp.ndarray, Y_new : jnp.ndarray,
+                     epsilon : jnp.ndarray):
+        num_pt_X = X_new.shape[0]
+        num_pt_Y = Y_new.shape[0]
 
         if self.X_prev is None or self.Y_prev is None or self.f_prev is None or self.g_prev is None:
-            return jnp.zeros(num_pt)
+            return jnp.zeros(num_pt_X), jnp.zeros(num_pt_Y)
 
-        g_interp = [None] * num_pt
-        for i in range(num_pt):
-            exponents = (self.f_prev - jnp.sum(jnp.square(Y_curr[i, :] - self.X_prev), axis=1)) / epsilon
-            exponents_max = jnp.max(exponents)
-            g_interp[i] = -epsilon * (jnp.log(jnp.mean(jnp.exp(exponents - exponents_max))) + exponents_max)
-        
-        return jnp.array(g_interp)
-    
+        f_interp = [None] * num_pt_X
+        g_interp = [None] * num_pt_Y
 
-    def init_fu(
-        self,
-        ot_prob: linear_problem.LinearProblem,
-        lse_mode: bool,
-        rng: Optional[jax.Array] = None,
-    ) -> jnp.ndarray:
-        """Initialize Sinkhorn potential/scaling g_v.
-
-        Args:
-        ot_prob: Linear OT problem.
-        lse_mode: Return potential if ``True``, scaling if ``False``.
-        rng: Random number generator for stochastic initializers.
-
-        Returns:
-        potential/scaling, array of size ``[m,]``.
-        """
-        geom : pointcloud.PointCloud = ot_prob.geom
-        X_curr = geom.x
-        epsilon = geom.epsilon
-        num_pt = X_curr.shape[0]
-
-        if self.X_prev is None or self.Y_prev is None or self.f_prev is None or self.g_prev is None:
-            return jnp.zeros(num_pt)
-
-        f_interp = [None] * num_pt
-        for i in range(num_pt):
-            exponents = (self.g_prev - jnp.sum(jnp.square(X_curr[i, :] - self.Y_prev), axis=1)) / epsilon
+        for i in range(num_pt_X):
+            exponents = (self.g_prev - jnp.sum(jnp.square(X_new[i, :] - self.Y_prev), axis=1)) / epsilon
             exponents_max = jnp.max(exponents)
             f_interp[i] = -epsilon * (jnp.log(jnp.mean(jnp.exp(exponents - exponents_max))) + exponents_max)
 
-        return jnp.array(f_interp)
+        for j in range(num_pt_Y):
+            exponents = (self.f_prev - jnp.sum(jnp.square(Y_new[j, :] - self.X_prev), axis=1)) / epsilon
+            exponents_max = jnp.max(exponents)
+            g_interp[j] = -epsilon * (jnp.log(jnp.mean(jnp.exp(exponents - exponents_max))) + exponents_max)
+        
+        return jnp.array(f_interp), jnp.array(g_interp)
 
-class KNNInitializer(SinkhornInitializer):
+
+class KNNInitializer:
     """
     Initialize the Sinkhorn algorithm via the k-nearest-neighbors using the potentials from a previous run
     """
     def __init__(self, 
                  n_neighbors : int):
         super().__init__()
-        self.n_neighbors = 1
+        self.n_neighbors = n_neighbors
         self.f_knr = None
         self.g_knr = None
     
@@ -119,60 +79,27 @@ class KNNInitializer(SinkhornInitializer):
 
         self.g_knr = KNeighborsRegressor(n_neighbors=self.n_neighbors)
         self.g_knr.fit(Y_prev, g_prev)
-
-    def init_gv(
-        self,
-        ot_prob: linear_problem.LinearProblem,
-        lse_mode: bool,
-        rng: Optional[jax.Array] = None,
-    ) -> jnp.ndarray:
-        """Initialize Sinkhorn potential/scaling f_u.
-
-        Args:
-        ot_prob: Linear OT problem.
-        lse_mode: Return potential if ``True``, scaling if ``False``.
-        rng: Random number generator for stochastic initializers.
-
-        Returns:
-        potential/scaling, array of size ``[n,]``.
-        """
-        geom : pointcloud.PointCloud = ot_prob.geom
-        Y_curr = geom.y
-
-        if self.f_knr is None or self.g_knr is None:
-            return jnp.zeros(Y_curr.shape[0])
-        
-        g_interp = self.g_knr.predict(Y_curr)
-        
-        return jnp.array(g_interp.tolist())
     
-
-    def init_fu(
-        self,
-        ot_prob: linear_problem.LinearProblem,
-        lse_mode: bool,
-        rng: Optional[jax.Array] = None,
-    ) -> jnp.ndarray:
-        """Initialize Sinkhorn potential/scaling g_v.
-
-        Args:
-        ot_prob: Linear OT problem.
-        lse_mode: Return potential if ``True``, scaling if ``False``.
-        rng: Random number generator for stochastic initializers.
-
-        Returns:
-        potential/scaling, array of size ``[m,]``.
-        """
-        geom : pointcloud.PointCloud = ot_prob.geom
-        X_curr = geom.x
+    def init_f_and_g(self, 
+                     X_new : jnp.ndarray, Y_new : jnp.ndarray,
+                     epsilon : jnp.ndarray):
 
         if self.f_knr is None or self.g_knr is None:
-            return jnp.zeros(X_curr.shape[0])
+            return jnp.zeros(X_new.shape[0]), jnp.zeros(Y_new.shape[0])
 
-        f_interp = self.f_knr.predict(X_curr)
+        f_interp = self.f_knr.predict(X_new)
+        g_interp = self.g_knr.predict(Y_new)
         
-        return jnp.array(f_interp.tolist())
+        return jnp.array(f_interp.tolist()), jnp.array(g_interp.tolist())
 
+@jax.jit
+def sinkhorn_solve(X : jnp.ndarray, Y : jnp.ndarray, 
+                   reg : float, 
+                   init_f : jnp.ndarray, init_g : jnp.ndarray):
+    out = sinkhorn.iterations(linear_problem.LinearProblem(pointcloud.PointCloud(X, Y, epsilon = reg)), 
+                        sinkhorn.Sinkhorn(lse_mode = True, min_iterations=100, max_iterations=2000),
+                        (init_f, init_g))
+    return out.f, out.g
 
 class modified_entropic_OT_map_estimate_ott:
 
@@ -195,7 +122,7 @@ class modified_entropic_OT_map_estimate_ott:
         Regularize the entropic OT map at the point x to make the corresponding potential strongly convex
     '''
     
-    def __init__(self, X, Y, log = True, initializer : SinkhornInitializer | None = None):
+    def __init__(self, X, Y, log = True, initializer : FirstOrderConditionInitializer | KNNInitializer | None = None):
         self.X = X
         self.Y = Y
         self.log = log
@@ -227,33 +154,28 @@ class modified_entropic_OT_map_estimate_ott:
         ./src/ott/solvers/linear/sinkhorn.py
         '''
 
-        X, Y = self.X, self.Y
-        geom = pointcloud.PointCloud(X, Y, epsilon = epsilon) # set the epsilon parameter for the entropic regularization
-        prob = linear_problem.LinearProblem(geom) # uniform weights
+        X, Y = jnp.array(self.X), jnp.array(self.Y)
+        if self.initializer is not None:
+            init_f, init_g = self.initializer.init_f_and_g(X, Y, epsilon)
+        else:
+            init_f, init_g = jnp.zeros(X.shape[0]), jnp.zeros(Y.shape[0])
 
-        # t0 = time.perf_counter()
-        progress_fn = default_progress_fn()
-        solver = sinkhorn.Sinkhorn(
-            initializer = self.initializer, 
-            progress_fn = progress_fn, 
-            inner_iterations = 100, 
-            max_iterations = 100000)
-        
-        out = solver(prob) # <class 'ott.solvers.linear.sinkhorn.SinkhornOutput'>
+        f, g = sinkhorn_solve(X, Y, epsilon, init_f, init_g)
         # Make sure to wait for completion if using JAX with device async
-        out = jax.block_until_ready(out)  # if available
+        f = jax.block_until_ready(f)  # if available
+        g = jax.block_until_ready(g)  # if available
         # t1 = time.perf_counter()
 
         # elapsed = t1 - t0
         # print(f"OT map constructed in {elapsed:.4f} seconds")
 
-        self.dual_potentials = out.potentials
-        self.g_potential = out.g
+        self.dual_potentials = [f, g]
+        self.g_potential = g
         self.epsilon = epsilon
 
         if self.initializer is not None:
-            self.initializer.set_prev(X_prev = jnp.array(X), Y_prev = jnp.array(Y), 
-                                      f_prev = out.f, g_prev = out.g)
+            self.initializer.set_prev(X_prev = X, Y_prev = Y, 
+                                      f_prev = f, g_prev = g)
     
     def get_initializer(self):
         return self.initializer

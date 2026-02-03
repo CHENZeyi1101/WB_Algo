@@ -24,12 +24,15 @@ if __name__ == "__main__":
     gamma = params["gamma"]
     num_components = params["num_components"]
     num_samples = params["num_samples"]
+    surjective_mapping = {int(key) : params["surjective_mapping"][key] for key in params["surjective_mapping"]}
     bary_MC_size = params["MC_size"]
 
     if dim == 2:
         bound_type = "eigen_bound"
     else:
         bound_type = "norm_bound"
+    
+    num_samples_in_preparation = 10**7
 
     instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
 
@@ -52,6 +55,27 @@ if __name__ == "__main__":
                                                                        num_components = num_components, 
                                                                        master_sampling_rng = master_auxiliary_rng, 
                                                                        auxiliary_seeds_list = auxiliary_seeds_list)
+    
+    tilde_K = len(auxiliary_measure_sampler_set)
+
+    surjective_mapping_seed = cfg_dict["surjective_mapping_seed"]
+    A_matrices_seed = cfg_dict["A_matrices_seed"]
+    A_matrices_dict = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
+
+    entropic_sampler = entropic_input_sampler(dim = dim, 
+                                              num_measures = num_measures, 
+                                              auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, 
+                                              source_sampler = source_sampler, 
+                                              n_k = 1000, 
+                                              alpha_list = alpha_list,
+                                              theta_list = theta_list,
+                                              gamma = gamma, 
+                                              truncated_radius = truncated_radius,
+                                              bound_type = "eigen_bound",
+                                              surjective_mapping = surjective_mapping,
+                                              A_matrices_dict = A_matrices_dict,
+                                              maxeig_grid_size = 500)
+    entropic_sampler = load_sampler(samplers_info_dir, entropic_sampler, sampler_type = "entropic")
 
     data_dir = f"{instance_dir}/samples_for_evaluation"
     os.makedirs(data_dir, exist_ok=True)
@@ -69,12 +93,25 @@ if __name__ == "__main__":
     with open(json_path, 'w') as json_file:
         json.dump(bary_samples_collection_tolist, json_file)
 
-    for i in tqdm(range(num_measures), desc="Shuffling CSV files"):
-        old_csv_path = f"{instance_dir}/input_samples/csv_files/input_measure_samples_{i}.csv"
-        csv_evaluate_dir = f"{instance_dir}/samples_for_evaluation"
-        os.makedirs(csv_evaluate_dir, exist_ok=True)
-        new_csv_path = f"{csv_evaluate_dir}/input_measure_samples_{i}_for_evaluation.csv"
-        csv_shuffle(old_csv_path, new_csv_path, seed = 200 + i)
+    # Generate input samples for evaluation
+    csv_evaluate_dir = f"{instance_dir}/samples_for_evaluation"
+    os.makedirs(csv_evaluate_dir, exist_ok=True)
+    
+    input_measure_samples_for_evaluation = entropic_sampler.sample(num_samples_in_preparation)
+
+    for measure_index in range(num_measures):
+        measure_samples = np.asarray(input_measure_samples_for_evaluation[measure_index])
+        csv_filename = f"{csv_evaluate_dir}/input_measure_samples_{i}_for_evaluation.csv"
+        pd.DataFrame(measure_samples).to_csv(csv_filename, index=False, header=False)
+    print("Input samples for evaluation saved to CSV files.")
+
+
+    # for i in tqdm(range(num_measures), desc="Shuffling CSV files"):
+    #     old_csv_path = f"{instance_dir}/input_samples/csv_files/input_measure_samples_{i}.csv"
+    #     csv_evaluate_dir = f"{instance_dir}/samples_for_evaluation"
+    #     os.makedirs(csv_evaluate_dir, exist_ok=True)
+    #     new_csv_path = f"{csv_evaluate_dir}/input_measure_samples_{i}_for_evaluation.csv"
+    #     csv_shuffle(old_csv_path, new_csv_path, seed = 200 + i)
     
 
     

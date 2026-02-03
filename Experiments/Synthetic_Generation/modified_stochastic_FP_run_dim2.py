@@ -1,5 +1,9 @@
-from Algorithms.Stochastic_FP.modified_entropic_iterative_scheme import *
-from Algorithms.Stochastic_FP.entropic_iterative_scheme import *
+import os
+os.environ["PYKEOPS_VERBOSE"] = "0"
+
+from Algorithms.Stochastic_FP.modified_entropic_iterative_scheme import modified_entropic_iterative_scheme
+from Algorithms.Stochastic_FP.modified_entropic_iterative_scheme2 import modified_entropic_iterative_scheme2
+from Algorithms.Stochastic_FP.entropic_iterative_scheme import entropic_iterative_scheme
 from Algorithms.data_manage import *
 from Experiments.Synthetic_Generation.samplers import *
 from Experiments.Synthetic_Generation.visualize_measures_dim2 import *
@@ -39,8 +43,8 @@ if __name__ == "__main__":
     rand_state = np.random.RandomState(seed = 7777)
     init_method = {"type": "moment", "sample_size": 10000}
     truncate_radius = params["truncated_radius"]
-    sample_size_scheme = [20000, 20000, 40000, 40000, 80000, 80000, 160000, 160000]
-    reg_param_scheme = [2, 2, 2, 2, 2, 2, 2, 2]
+    sample_size_scheme = [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000]
+    reg_param_scheme = [20, 20, 20, 20, 20, 20, 20, 20]
     # sinkhorn_impl = "ott"
     # warm_start = {"type": "first-order"}
 
@@ -62,7 +66,7 @@ if __name__ == "__main__":
     input_sampler_for_evaluation.set_streamers()
 
     # Set up the entropic iterative computer
-    entropic_iterative_computer = modified_entropic_iterative_scheme(
+    entropic_iterative_computer = modified_entropic_iterative_scheme2(
         dim = dim,
         num_iters = num_iters,
         input_sampler = input_sampler,
@@ -75,8 +79,9 @@ if __name__ == "__main__":
         warm_start = warm_start,
         bary_sample_collection = bary_samples_collection_loaded, 
         input_sampler_for_evaluation = input_sampler_for_evaluation,
-        eval_num_samples = eval_num_samples,
-        eval_MC_size = eval_MC_size
+        eval_num_samples = 1000,
+        eval_MC_size = eval_MC_size,
+        num_parallel = 10
     )
 
     entropic_iterative_computer.converge(logger = {'sample_logger': None, 'map_logger': None}, data_dir = outputs_dir)
