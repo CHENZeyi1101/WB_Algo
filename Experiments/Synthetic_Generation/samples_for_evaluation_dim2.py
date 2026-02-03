@@ -39,10 +39,10 @@ if __name__ == "__main__":
     samplers_info_dir = f"{instance_dir}/samplers_info"
     os.makedirs(samplers_info_dir, exist_ok=True)
 
-    source_component_seed = cfg_dict["source_components_seed"]
-    master_source_rng = np.random.SeedSequence(cfg_dict["evaluation_source_sampling_seed"])
-    auxiliary_seeds_list = cfg_dict["auxiliary_seeds_list"]
-    master_auxiliary_rng = np.random.SeedSequence(cfg_dict["master_auxiliary_sampling_seed"])
+    source_component_seed = params["seeds"]["source_components_seed"]
+    master_source_rng = np.random.SeedSequence(params["seeds"]["evaluation_source_sampling_seed"])
+    auxiliary_seeds_list = params["seeds"]["auxiliary_seeds_list"]
+    master_auxiliary_rng = np.random.SeedSequence(params["seeds"]["master_auxiliary_sampling_seed"])
 
     source_sampler = characterize_source_sampler(dim = dim, 
                                                 num_components = num_components, 
@@ -58,8 +58,8 @@ if __name__ == "__main__":
     
     tilde_K = len(auxiliary_measure_sampler_set)
 
-    surjective_mapping_seed = cfg_dict["surjective_mapping_seed"]
-    A_matrices_seed = cfg_dict["A_matrices_seed"]
+    surjective_mapping_seed = params["seeds"]["surjective_mapping_seed"]
+    A_matrices_seed = params["seeds"]["A_matrices_seed"]
     A_matrices_dict = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
 
     entropic_sampler = entropic_input_sampler(dim = dim, 
@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
     for measure_index in range(num_measures):
         measure_samples = np.asarray(input_measure_samples_for_evaluation[measure_index])
-        csv_filename = f"{csv_evaluate_dir}/input_measure_samples_{i}_for_evaluation.csv"
+        csv_filename = f"{csv_evaluate_dir}/input_measure_samples_{measure_index}_for_evaluation.csv"
         pd.DataFrame(measure_samples).to_csv(csv_filename, index=False, header=False)
     print("Input samples for evaluation saved to CSV files.")
 

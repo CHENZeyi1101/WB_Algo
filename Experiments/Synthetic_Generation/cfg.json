@@ -23,25 +23,51 @@
         "7": 4,
         "9": 0},
     "MC_size": 20,
-    "eval_num_samples": 10000
+    "eval_num_samples": 10000,
+    "seeds": {
+      "master_source_sampling_seed": 2026,
+      "evaluation_source_sampling_seed": 2620,
+      "true_V_val_source_sampling_seed": 6202,
+      "source_components_seed": 1009,
+      "master_auxiliary_sampling_seed": 3037,
+      "auxiliary_seeds_list": [1010, 1018, 1014, 1016, 1038],
+      "surjective_mapping_seed": 120,
+      "A_matrices_seed": 2000
+    }
   },
 
   "params_synthetic_generation_dim10": {
     "dim": 10,
     "num_components": 5,
-    "num_samples": 1000,
-    "num_measures": 10,
-    "truncated_radius": 5000,
-    "instance_theta": 2000,
-    "MC_size": 20
-  },
-
-  "master_source_sampling_seed": 2026,
-  "evaluation_source_sampling_seed": 2620,
-  "true_V_val_source_sampling_seed": 6202,
-  "source_components_seed": 1009,
-  "master_auxiliary_sampling_seed": 3037,
-  "auxiliary_seeds_list": [1010, 1018, 1014, 1016, 1038],
-  "surjective_mapping_seed": 120,
-  "A_matrices_seed": 2000
+    "num_samples": 10000,
+    "num_measures": 5,
+    "truncated_radius": 225,
+    "instance_identifier": "FINAL",
+    "alpha_list": [1, 1, 1, 1, 1],
+    "theta_list": [2000, 1800, 900, 600, 2000],
+    "gamma": 0.05,
+    "surjective_mapping": {
+        "0": 0,
+        "2": 1,
+        "4": 2,
+        "6": 1,
+        "8": 2,
+        "1": 4,
+        "3": 3,
+        "5": 3,
+        "7": 4,
+        "9": 0},
+    "MC_size": 20,
+    "eval_num_samples": 10000,
+    "seeds": {
+      "master_source_sampling_seed": 2026,
+      "evaluation_source_sampling_seed": 2620,
+      "true_V_val_source_sampling_seed": 6202,
+      "source_components_seed": 1009,
+      "master_auxiliary_sampling_seed": 3037,
+      "auxiliary_seeds_list": [1010, 1018, 1014, 1016, 1038],
+      "surjective_mapping_seed": 120,
+      "A_matrices_seed": 2000
+    }
+  }
 }

@@ -28,8 +28,8 @@ if __name__ == "__main__":
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
-    source_component_seed = cfg_dict["source_components_seed"]
-    master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
+    source_component_seed = params["seeds"]["source_components_seed"]
+    master_source_rng = np.random.SeedSequence(params["seeds"]["master_source_sampling_seed"])
     source_sampler = characterize_source_sampler(dim = dim, 
                                                 num_components = num_components, 
                                                 master_sampling_rng = master_source_rng,
