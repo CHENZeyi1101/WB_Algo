@@ -23,8 +23,6 @@ if __name__ == "__main__":
     num_components = params["num_components"]
     surjective_mapping = {int(key) : params["surjective_mapping"][key] for key in params["surjective_mapping"]}
 
-    setup = True # whether to set up the sampler or load existing one
-
     if dim == 2:
         bound_type = "eigen_bound"
     else:
@@ -74,22 +72,7 @@ if __name__ == "__main__":
                                               A_matrices_dict = A_matrices_dict,
                                               maxeig_grid_size = 500)
     
-    if setup:
-        entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir = samplers_info_dir)
-    else:
-        entropic_sampler = load_sampler(samplers_info_dir, entropic_sampler, sampler_type = "entropic")
-
-    # Generate input samples
-    csv_path = f"{instance_dir}/input_samples/csv_files"
-    os.makedirs(csv_path, exist_ok=True)
-    
-    input_measure_samples = entropic_sampler.sample(num_samples_in_preparation)
-
-    for measure_index in range(num_measures):
-        measure_samples = np.asarray(input_measure_samples[measure_index])
-        csv_filename = os.path.join(csv_path, f"input_measure_samples_{measure_index}.csv")
-        pd.DataFrame(measure_samples).to_csv(csv_filename, index=False, header=False)
-    print("Input samples saved to CSV files.")
+    entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir = samplers_info_dir)
 
     
     
