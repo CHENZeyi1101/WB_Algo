@@ -1,8 +1,8 @@
-from Experiments.Synthetic_Generation.samplers import *
-import pandas as pd
-from Experiments.CSV_read import *
 from pathlib import Path
 import json, os
+
+from Experiments.Synthetic_Generation.input_generate_entropic import entropic_input_sampler
+from Experiments.CSV_read import *
 
 if __name__ == "__main__":
 
@@ -14,65 +14,45 @@ if __name__ == "__main__":
 
     # take all items in params
     dim = params["dim"]
-    num_measures = params["num_measures"]
+
+    source_info = {
+        "num_components": params["num_components"],
+        "component_seed": params["seeds"]["source_components_seed"],
+        "master_sampling_rng": np.random.SeedSequence(params["seeds"]["master_source_sampling_seed"])
+    }
+
+    auxiliary_info = {
+        "num_components": params["num_components"],
+        "auxiliary_seeds_list": params["seeds"]["auxiliary_seeds_list"],
+        "master_sampling_rng": np.random.SeedSequence(params["seeds"]["master_auxiliary_sampling_seed"])
+    }
+
     truncated_radius = params["truncated_radius"]
+    n_k = params["n_k"]
     instance_identifier = params["instance_identifier"]
     alpha_list = params["alpha_list"]
     theta_list = params["theta_list"]
     gamma = params["gamma"]
     num_components = params["num_components"]
     surjective_mapping = {int(key) : params["surjective_mapping"][key] for key in params["surjective_mapping"]}
-
-    if dim == 2:
-        bound_type = "eigen_bound"
-    else:
-        bound_type = "norm_bound"
-
-    num_samples_in_preparation = 10**7
+    A_matrix_seed = params["seeds"]["A_matrices_seed"]
 
     instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
-
     samplers_info_dir = f"{instance_dir}/samplers_info"
     os.makedirs(samplers_info_dir, exist_ok=True)
 
-    source_component_seed = params["seeds"]["source_components_seed"]
-    master_source_rng = np.random.SeedSequence(params["seeds"]["master_source_sampling_seed"])
-    auxiliary_seeds_list = params["seeds"]["auxiliary_seeds_list"]
-    master_auxiliary_rng = np.random.SeedSequence(params["seeds"]["master_auxiliary_sampling_seed"])
-
-    source_sampler = characterize_source_sampler(dim = dim, 
-                                                num_components = num_components, 
-                                                master_sampling_rng = master_source_rng,
-                                                component_seed = source_component_seed,
-                                                truncated_radius = truncated_radius,
-                                                save_dir = samplers_info_dir)
-
-    auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(dim = dim,
-                                                                       num_components = num_components, 
-                                                                       master_sampling_rng = master_auxiliary_rng, 
-                                                                       auxiliary_seeds_list = auxiliary_seeds_list)
-    
-    tilde_K = len(auxiliary_measure_sampler_set)
-
-    surjective_mapping_seed = params["seeds"]["surjective_mapping_seed"]
-    A_matrices_seed = params["seeds"]["A_matrices_seed"]
-    A_matrices_dict = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
-
-    entropic_sampler = entropic_input_sampler(dim = dim, 
-                                              num_measures = num_measures, 
-                                              auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, 
-                                              source_sampler = source_sampler, 
-                                              n_k = 1000, 
-                                              alpha_list = alpha_list,
-                                              theta_list = theta_list,
-                                              gamma = gamma, 
-                                              truncated_radius = truncated_radius,
-                                              bound_type = "eigen_bound",
-                                              surjective_mapping = surjective_mapping,
-                                              A_matrices_dict = A_matrices_dict,
-                                              maxeig_grid_size = 500)
-    
-    entropic_sampler = set_up_entropic_sampler(entropic_sampler, save_dir = samplers_info_dir)
+    entropic_sampler = entropic_input_sampler.setup(dim = dim,
+                                                    source_info = source_info,
+                                                    auxiliary_info = auxiliary_info,
+                                                    n_k = n_k,
+                                                    alpha_list = alpha_list,
+                                                    theta_list = theta_list,
+                                                    gamma = gamma,
+                                                    truncated_radius = truncated_radius,
+                                                    surjective_mapping = surjective_mapping,
+                                                    A_matrices_seed = A_matrix_seed,
+                                                    maxeig_grid_size = 500,
+                                                    save_dir = samplers_info_dir)
 
     
     

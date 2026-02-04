@@ -109,6 +109,9 @@ class MixtureOfGaussians:
         self.dim = dim
 
         self.component_seed = component_seed
+    
+    def set_master_rng(self, master_rng):
+        self.master_rng = master_rng
 
     def add_gaussian(self, mean, cov):
         self.gaussians.append((mean, cov))

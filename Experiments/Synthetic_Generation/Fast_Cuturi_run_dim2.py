@@ -25,6 +25,7 @@ if __name__ == "__main__":
     instance_identifier = params["instance_identifier"]
     MC_size = params["MC_size"]
     num_samples = params["num_samples"]
+    eval_num_samples = params["eval_num_samples"]
 
     # number of atoms in the discrete supports
     support_size = 10000
@@ -74,8 +75,8 @@ if __name__ == "__main__":
 
     # Evaluation
     approx_bary_it = [approx_bary for _ in range(MC_size)]
-    input_measure_samples_collection_it = [input_sampler_for_evaluation.sample(num_samples) for _ in range(MC_size)]
-    true_bary_samples_it = [bary_samples_collection_loaded[str(i)][:num_samples] for i in range(MC_size)]
+    input_measure_samples_collection_it = [input_sampler_for_evaluation.sample(eval_num_samples) for _ in range(MC_size)]
+    true_bary_samples_it = [bary_samples_collection_loaded[str(i)][:eval_num_samples] for i in range(MC_size)]
     
     with Pool(processes = 10) as pool, tqdm(total = MC_size) as pbar:
         for V_value, W2_to_bary in pool.imap(evaluate_zipped, 
