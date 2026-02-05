@@ -41,9 +41,17 @@ class modified_entropic_OT_map_estimate_geomloss2:
     
     def compute_modified_entropic_OT_map(self, X_new, radius):
         X_new = torch.asarray(X_new)
-        diff_mat = (self.g_potential[torch.newaxis, :] - torch.square(torch.cdist(X_new, self.Y, p = 2))) / self.epsilon
-        weight_mat = torch.softmax(diff_mat, dim = 1)
+        unmod_list = []
+        chunk_size = 10**9 // self.Y.shape[0] 
+
+        for X_new_sub in [X_new[i:min(i + chunk_size, X_new.shape[0])] for i in range(0, X_new.shape[0], chunk_size)]:
+            unmod_list.append(self._compute_modified_entropic_OT_map_inner(X_new_sub))
 
         X_new_norm_halfsq_diff = 0.5 * (torch.sum(torch.square(X_new), dim = 1) - radius ** 2)
         modification_weights = torch.where(X_new_norm_halfsq_diff > 0, torch.exp(-1 / X_new_norm_halfsq_diff), 0.0)
-        return (weight_mat @ self.Y + modification_weights[:, torch.newaxis] * X_new).numpy()
+        return (torch.vstack(unmod_list) + modification_weights[:, torch.newaxis] * X_new).numpy()
+    
+    def _compute_modified_entropic_OT_map_inner(self, X_new):
+        diff_mat = (self.g_potential[torch.newaxis, :] - torch.square(torch.cdist(X_new, self.Y, p = 2))) / self.epsilon
+        return torch.softmax(diff_mat, dim = 1) @ self.Y
+

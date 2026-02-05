@@ -13,15 +13,15 @@ def generate_A_matrices(dim, num_measures, seed = 2000):
     We generate a bunch of psd matrices whose weighted sum is K * identity matrix. (the sum is to be further weighted by gamma)
     The main idea is that, in case the generated maps seem too similar to the ground-truth measure, this part at least imposes some location-scatter transformation (e.g., rotation) to make the generated measures differ in shape.
     In other words, we look for some middle ground between purely nonlinear transformation (but seemingly affine) and location-scatter transformation.
-    It is general challenging to generate such a group of psd matrices, but we can ues the following strategy from Proposition~4.1 and Theorem~4.2 of Alvarez-Esteban et al. (2019):
+    It is general challenging to generate such a group of psd matrices, but we can ues the following strategy from Proposition~4.1 and Theorem~4.2 of Alvarez-Esteban et al. (2016):
     1. Generate $\Sigma_j$ for j = 1, \dots, J which are a collection of covariance matrices. (One can consider the problem of solving the W_2 barycenter of J Gaussian measures.)
-    2. Apply the deterministic iterative scheme in Theorem~4.2 of Alvarez-Esteban et al. (2019) to approximate $\Sigma_0$, the covariance matrix of the Gaussian barycenter.
+    2. Apply the deterministic iterative scheme in Theorem~4.2 of Alvarez-Esteban et al. (2016) to approximate $\Sigma_0$, the covariance matrix of the Gaussian barycenter.
     3. From Proposition~4.1 we know that $H(\Sigma_0) = Id$ is a necessary and sufficient condition for $\Sigma_0$ to be a barycenter. The idea now is to use the terms without weights as the psd matrices of our interests, namely
     $\Sigma^{-\frac{1}{2}} (\Sigma^{-\frac{1}{2}} \Sigma_j \Sigma^{-\frac{1}{2}})^{\frac{1}{2}} \Sigma^{-\frac{1}{2}}$ for j = 1, \dots, J.
     '''
     if seed is None:
         return None
-    # the updating function from Thm 4.2 of Alvarez-Esteban et al. (2019)
+    # the updating function from Thm 4.2 of Alvarez-Esteban et al. (2016)
     def compute_bary_cov(covariance_list, Sigma):
         Sigma_sum = np.zeros((dim, dim))
         for i in range(len(covariance_list)):
@@ -32,7 +32,7 @@ def generate_A_matrices(dim, num_measures, seed = 2000):
         Sigma_update = np.linalg.solve(sqrtm(Sigma), np.eye(dim)) @ Sigma_sum @ Sigma_sum @ np.linalg.solve(sqrtm(Sigma), np.eye(dim))
         return Sigma_update
     
-    # compute V_value of a covariance matrix (Eq. (15) of Alvarez-Esteban et al. (2019))
+    # compute V_value of a covariance matrix (Eq. (15) of Alvarez-Esteban et al. (2016))
     def compute_V(covariance_list, Sigma):
         trace1_list = [] # the first trace term in the equation
         trace2_list = [] # the second trace term in the equation
@@ -68,7 +68,7 @@ def generate_A_matrices(dim, num_measures, seed = 2000):
 
     print(f"The V_value record is {V_list}.")
 
-    # refer to H() below Eq. (17) of Alvarez-Esteban et al. (2019)
+    # refer to H() below Eq. (17) of Alvarez-Esteban et al. (2016)
     A_matrices_dict = {}
     for i in range(num_matrices):
         sub_Sigma_square = sqrtm(Sigma) @ covariance_list[i] @ sqrtm(Sigma)

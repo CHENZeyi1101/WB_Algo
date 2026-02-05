@@ -81,7 +81,7 @@ if __name__ == "__main__":
         input_sampler_for_evaluation = input_sampler_for_evaluation,
         eval_num_samples = eval_num_samples,
         eval_MC_size = eval_MC_size,
-        num_parallel = 10
+        num_parallel = 5
     )
 
     entropic_iterative_computer.converge(logger = {'sample_logger': None, 'map_logger': None}, data_dir = outputs_dir)

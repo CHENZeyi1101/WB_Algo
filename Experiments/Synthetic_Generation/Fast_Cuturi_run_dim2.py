@@ -1,8 +1,10 @@
+import os
+os.environ["PYKEOPS_VERBOSE"] = "0"
 import numpy as np
 import ot
 from tqdm import tqdm
 from multiprocessing import Pool
-import json, os
+import json
 from pathlib import Path
 
 from Experiments.Synthetic_Generation.samplers import *
@@ -69,7 +71,7 @@ if __name__ == "__main__":
         k=support_size,
         init="random",
         numItermax=200,
-        verbose=True,
+        verbose=False,
         seed=42,
     )
 
@@ -78,7 +80,7 @@ if __name__ == "__main__":
     input_measure_samples_collection_it = [input_sampler_for_evaluation.sample(eval_num_samples) for _ in range(MC_size)]
     true_bary_samples_it = [bary_samples_collection_loaded[str(i)][:eval_num_samples] for i in range(MC_size)]
     
-    with Pool(processes = 10) as pool, tqdm(total = MC_size) as pbar:
+    with Pool(processes = 5) as pool, tqdm(total = MC_size) as pbar:
         for V_value, W2_to_bary in pool.imap(evaluate_zipped, 
                                 zip(approx_bary_it, 
                                     input_measure_samples_collection_it, 

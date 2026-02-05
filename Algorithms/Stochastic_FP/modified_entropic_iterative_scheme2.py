@@ -212,7 +212,7 @@ class modified_entropic_iterative_scheme2:
             for eval_samples in eval_samples_it:
                 accepted_samples_list.append(eval_samples.tolist())
             
-            with Pool(processes = self.num_parallel) as pool, tqdm(total = self.eval_MC_size) as pbar:
+            with Pool(processes = self.num_parallel) as pool, tqdm(total = self.eval_MC_size, desc = f"Evaluation of iter {iter}") as pbar:
                 for V_value, W2_to_bary in pool.imap(evaluate_zipped, 
                                         zip(eval_samples_it, 
                                             input_measure_samples_collection_it, 

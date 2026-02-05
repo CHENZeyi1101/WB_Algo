@@ -176,8 +176,13 @@ class modified_entropic_OT_map_estimate_ott2:
         return self.initializer
     
     def compute_modified_entropic_OT_map(self, X_new, radius):
-        return sinkhorn_modified_entropic_OT_map(jnp.array(X_new), self.Y, self.g_potential, self.epsilon, radius).block_until_ready()
-        
+        X_new = jnp.array(X_new)
+        unmod_list = []
+        chunk_size = 10**9 // self.Y.shape[0] 
 
-
+        for X_new_sub in [X_new[i:min(i + chunk_size, X_new.shape[0])] for i in range(0, X_new.shape[0], chunk_size)]:
+            unmod_list.append(self._compute_modified_entropic_OT_map_inner(X_new_sub, radius))
+        return jnp.vstack(unmod_list)
     
+    def _compute_modified_entropic_OT_map_inner(self, X_new, radius):
+        return sinkhorn_modified_entropic_OT_map(X_new, self.Y, self.g_potential, self.epsilon, radius).block_until_ready()
