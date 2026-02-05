@@ -2,38 +2,192 @@ import numpy as np
 import math
 from scipy.linalg import sqrtm, norm
 from tqdm import tqdm
+import os
+import pickle
 from Experiments.Synthetic_Generation.MOG import *
 from Experiments.Synthetic_Generation.metrics_to_compare import *
 from Algorithms.Stochastic_FP.entropic_estimate_OT import *
-import pandas as pd
-import os
-# from .samplers_dim2 import *
+
+def generate_A_matrices(dim, num_measures, seed = 2000):
+    r'''
+    We generate a bunch of psd matrices whose weighted sum is K * identity matrix. (the sum is to be further weighted by gamma)
+    The main idea is that, in case the generated maps seem too similar to the ground-truth measure, this part at least imposes some location-scatter transformation (e.g., rotation) to make the generated measures differ in shape.
+    In other words, we look for some middle ground between purely nonlinear transformation (but seemingly affine) and location-scatter transformation.
+    It is general challenging to generate such a group of psd matrices, but we can ues the following strategy from Proposition~4.1 and Theorem~4.2 of Alvarez-Esteban et al. (2016):
+    1. Generate $\Sigma_j$ for j = 1, \dots, J which are a collection of covariance matrices. (One can consider the problem of solving the W_2 barycenter of J Gaussian measures.)
+    2. Apply the deterministic iterative scheme in Theorem~4.2 of Alvarez-Esteban et al. (2016) to approximate $\Sigma_0$, the covariance matrix of the Gaussian barycenter.
+    3. From Proposition~4.1 we know that $H(\Sigma_0) = Id$ is a necessary and sufficient condition for $\Sigma_0$ to be a barycenter. The idea now is to use the terms without weights as the psd matrices of our interests, namely
+    $\Sigma^{-\frac{1}{2}} (\Sigma^{-\frac{1}{2}} \Sigma_j \Sigma^{-\frac{1}{2}})^{\frac{1}{2}} \Sigma^{-\frac{1}{2}}$ for j = 1, \dots, J.
+    '''
+    if seed is None:
+        return None
+    # the updating function from Thm 4.2 of Alvarez-Esteban et al. (2016)
+    def compute_bary_cov(covariance_list, Sigma):
+        Sigma_sum = np.zeros((dim, dim))
+        for i in range(len(covariance_list)):
+            sub_Sigma_square = sqrtm(Sigma) @ covariance_list[i] @ sqrtm(Sigma)
+            sub_Sigma = sqrtm(sub_Sigma_square)
+            Sigma_sum += sub_Sigma
+        Sigma_sum = Sigma_sum / len(covariance_list)
+        Sigma_update = np.linalg.solve(sqrtm(Sigma), np.eye(dim)) @ Sigma_sum @ Sigma_sum @ np.linalg.solve(sqrtm(Sigma), np.eye(dim))
+        return Sigma_update
+    
+    # compute V_value of a covariance matrix (Eq. (15) of Alvarez-Esteban et al. (2016))
+    def compute_V(covariance_list, Sigma):
+        trace1_list = [] # the first trace term in the equation
+        trace2_list = [] # the second trace term in the equation
+        for i in range(len(covariance_list)):
+            trace1_list.append(np.trace(covariance_list[i]))
+        for i in range(len(covariance_list)):
+            sub_Sigma_square = sqrtm(Sigma) @ covariance_list[i] @ sqrtm(Sigma)
+            trace2_list.append(np.trace(sqrtm(sub_Sigma_square)))
+        V = np.trace(Sigma) + np.mean(trace1_list) - 2 * np.mean(trace2_list)
+        return V
+
+    # construct covariance matrices.
+    rng_comp = np.random.RandomState(seed)
+    num_matrices = num_measures
+    covariance_list = []
+    for _ in range(num_matrices):
+        if dim == 2:
+            cov = construct_2d_covariance_ellipsoid(3, 4, rng_comp)
+        else:
+            cov = construct_high_dim_covariance_ellipsoid(3, 4, dim, rng_comp)
+        covariance_list.append(cov)
+
+    # initialize Sigma
+    Sigma = np.eye(dim)
+    V_Sigma = compute_V(covariance_list, Sigma)
+    V_list = [V_Sigma]
+    difference = math.inf
+    while difference > 1e-5:
+        Sigma = compute_bary_cov(covariance_list, Sigma)
+        V_Sigma = compute_V(covariance_list, Sigma)
+        difference = abs(V_Sigma - V_list[-1])
+        V_list.append(V_Sigma)
+
+    print(f"The V_value record is {V_list}.")
+
+    # refer to H() below Eq. (17) of Alvarez-Esteban et al. (2016)
+    A_matrices_dict = {}
+    for i in range(num_matrices):
+        sub_Sigma_square = sqrtm(Sigma) @ covariance_list[i] @ sqrtm(Sigma)
+        A_matrix = np.linalg.solve(sqrtm(Sigma), np.eye(dim)) @ sqrtm(sub_Sigma_square) @ np.linalg.solve(sqrtm(Sigma), np.eye(dim))
+        A_matrices_dict[i] = A_matrix
+
+    return A_matrices_dict
+    # beta_k = 1 for all k 
+    
 
 class entropic_input_sampler:
     '''
     Python class for generating samples from input measures using entropic transportation maps
     '''
+    @staticmethod
+    def setup(dim,
+              source_info,
+              auxiliary_info,
+              n_k,
+              alpha_list,
+              theta_list,
+              gamma,
+              truncated_radius,
+              surjective_mapping,
+              A_matrices_seed,
+              maxeig_grid_size,
+              save_dir):
+        source_sampler = MixtureOfGaussians(dim = dim, 
+                                            master_sampling_rng = source_info["master_sampling_rng"], 
+                                            component_seed = source_info["component_seed"])
+        source_sampler.random_components(num_components = source_info["num_components"], 
+                                         uniform_weights = True)
+        source_sampler.set_truncation(truncated_radius)
+
+        auxiliary_measure_sampler_set = []
+        for auxiliary_seed in auxiliary_info["auxiliary_seeds_list"]:
+            auxiliary_measure_sampler = MixtureOfGaussians(dim = dim, 
+                                                           master_sampling_rng = auxiliary_info["master_sampling_rng"])
+            auxiliary_measure_sampler.random_components(num_components = auxiliary_info["num_components"], 
+                                                        uniform_weights = True, manual_component_seed = auxiliary_seed)
+            auxiliary_measure_sampler_set.append(auxiliary_measure_sampler)
+        
+        num_measures = len(auxiliary_measure_sampler_set)
+        A_matrices_dict = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
+
+        if dim == 2:
+            bound_type = "eigen_bound"
+        else:
+            bound_type = "norm_bound"
+        
+        entropic_sampler = entropic_input_sampler(dim=dim, 
+                                              num_measures = num_measures, 
+                                              auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, 
+                                              source_sampler = source_sampler, 
+                                              n_k = n_k, 
+                                              alpha_list = alpha_list,
+                                              theta_list = theta_list,
+                                              gamma = gamma, 
+                                              truncated_radius = truncated_radius,
+                                              bound_type = bound_type,
+                                              surjective_mapping = surjective_mapping,
+                                              A_matrices_dict = A_matrices_dict,
+                                              maxeig_grid_size = maxeig_grid_size)
+        
+        # generate strong convexity parameters of the mappings.
+        entropic_sampler.generate_strong_convexity_param()
+        print("strong convexity parameters all set.")
+        # generate Y matrices
+        entropic_sampler.generate_Y_matrices()
+        print("Y matrices all set.")
+        # generate g vectors
+        entropic_sampler.generate_g_vectors()
+        print("g vectors all set.")
+        # generate smoothness parameters; this involves solving max eigen for each tilde_k
+        entropic_sampler.generate_smoothness_param()
+        print("smoothness parameters all set.")
+
+        if save_dir is not None:
+            os.makedirs(save_dir, exist_ok=True)
+            path = os.path.join(save_dir, "entropic_sampler_info.pkl")
+
+            state = dict(entropic_sampler.__dict__)   # shallow copy
+
+            with open(path, "wb") as f:
+                pickle.dump(state, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+            print(f"Entropic sampler successfully saved to {save_dir}/entropic_sampler_info.pkl")
+        
+        return entropic_sampler
+
+    @staticmethod
+    def load_from_file(load_dir):
+        entropic_sampler = entropic_input_sampler()
+        with open(f"{load_dir}/entropic_sampler_info.pkl", "rb") as f:
+            loaded_data_entropic_sampler = pickle.load(f)
+            print(f"Entropic sampler successfully loaded")
+            entropic_sampler.__dict__.update(loaded_data_entropic_sampler)
+        return entropic_sampler
+
     def __init__(self, 
-                 dim, 
-                 num_measures, 
-                 auxiliary_measure_sampler_set, 
-                 source_sampler, 
-                 n_k, 
-                 alpha_list,
-                 theta_list,
-                 gamma,  
-                 truncated_radius,
-                 bound_type,
-                 surjective_mapping,
-                 A_matrices_dict,
-                 maxeig_grid_size = 200):
+                 dim = None, 
+                 num_measures = None, 
+                 auxiliary_measure_sampler_set = None, 
+                 source_sampler = None, 
+                 n_k = None, 
+                 alpha_list = None,
+                 theta_list = None,
+                 gamma = None,  
+                 truncated_radius = None,
+                 bound_type = None,
+                 surjective_mapping = None,
+                 A_matrices_dict = None,
+                 maxeig_grid_size = None):
         self.dim = dim
         self.num_measures = num_measures
         self.auxiliary_measure_sampler_set = auxiliary_measure_sampler_set
-        self.tilde_K = len(auxiliary_measure_sampler_set) # 2 * tilde_K > num_measures
+        self.tilde_K = len(auxiliary_measure_sampler_set) if auxiliary_measure_sampler_set is not None else 0 # 2 * tilde_K > num_measures
         self.source_sampler = source_sampler
         self.n_k = n_k # we assume that $n_k$ across 1, \dots, \tilde{K} are the same
-        # num_measures < 2 * tilde_K
         self.alpha_list = alpha_list
         self.theta_list = theta_list
         self.gamma = gamma
@@ -265,7 +419,7 @@ class entropic_input_sampler:
     
     def compute_true_V_value_via_OT(self, sample_size, num_rep):
         r'''
-        Approximately compute the true V-value (i.e., the minimal value of the barycenter functional) via computing W2 distances
+        Approximately compute the true V-value (i.e., the minimal value of the barycenter functional) via Monte Carlo integration
         The effects of the truncation of the input measures are ignored
         '''
         # ignore the random seed
@@ -278,7 +432,7 @@ class entropic_input_sampler:
             for k in range(self.num_measures):
                 V_vec[rep] += W2_pot(source_samples, input_samples[k]) / self.num_measures
             
-            print(f"V-value computed = {V_vec[rep]}")
+            print(f"V-valued computed = {V_vec[rep]}")
 
         V_mean = np.mean(V_vec)
         V_std = np.std(V_vec)

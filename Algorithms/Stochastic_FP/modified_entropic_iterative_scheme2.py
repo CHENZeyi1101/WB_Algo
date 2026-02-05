@@ -1,15 +1,17 @@
 import numpy as np
 import os
 from tqdm import tqdm
-from wandb import init
+from multiprocessing import Pool
 
 from Algorithms.Stochastic_FP.entropic_estimate_OT import *
 from Algorithms.Stochastic_FP.modified_entropic_estimate_OT_ott import modified_entropic_OT_map_estimate_ott
+from Algorithms.Stochastic_FP.modified_entropic_estimate_OT_ott2 import modified_entropic_OT_map_estimate_ott2
 from Algorithms.Stochastic_FP.modified_entropic_estimate_OT_geomloss import modified_entropic_OT_map_estimate_geomloss
+from Algorithms.Stochastic_FP.modified_entropic_estimate_OT_geomloss2 import modified_entropic_OT_map_estimate_geomloss2
 from Algorithms.data_manage import *
-from Experiments.Synthetic_Generation.metrics_to_compare import W2_pot
+from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_zipped
 
-class modified_entropic_iterative_scheme:
+class modified_entropic_iterative_scheme2:
     r'''
     Python class for implementing the entropic iterative scheme for approximating the fixed point of the G-operator
     '''
@@ -28,7 +30,8 @@ class modified_entropic_iterative_scheme:
                  bary_sample_collection : dict,
                  input_sampler_for_evaluation,
                  eval_num_samples : int,
-                 eval_MC_size : int):
+                 eval_MC_size : int,
+                 num_parallel : int = 10):
         r'''
         Constructor
         Inputs: 
@@ -43,8 +46,9 @@ class modified_entropic_iterative_scheme:
             warm_start: boolean indicating whether to use a warm-start strategy when running the Sinkhorn algorithm for estimating OT maps
             bary_sample_collection: dictionary containing samples from the reference barycenter/true barycenter for evaluation
             input_sampler_for_evaluation: object used for generating another independent stream of samples from the input measures that are used for approximately computing V-values for evaluation
-            eval_num_samples: number of samples used when evaluating the V-values and the W2 distance to the true barycenter
-            eval_MC_size: number of Monte Carlo repetitions when evaluating the V-values and the W2 distance to the true barycenter
+            eval_num_samples: number of samples used when evaluating the V-values and the W2 distances to the true barycenter
+            eval_MC_size: number of Monte Carlo repetitions when evaluating the V-values and the W2 distances to the true barycenter
+            num_parallel: number of parallel processes when evaluating the V-values and the W2 distances to the true barycenter
         '''
 
         self.num_iters = num_iters
@@ -60,13 +64,14 @@ class modified_entropic_iterative_scheme:
         self.input_sampler_for_evaluation = input_sampler_for_evaluation
         self.eval_num_samples = eval_num_samples
         self.eval_MC_size = eval_MC_size
+        self.num_parallel = num_parallel
 
         assert len(self.sample_size_scheme) >= self.num_iters, "sample size scheme mis-specified"
         assert len(self.reg_param_scheme) >= self.num_iters, "regularization scheme mis-specified"
         assert self.sinkhorn_impl == "ott" or self.sinkhorn_impl == "geomloss", "unknown Sinkhorn implementation"
 
         if self.sinkhorn_impl == "ott":
-            self.initializers = [modified_entropic_OT_map_estimate_ott.create_initializer(warm_start) for _ in range(self.num_measures)]
+            self.initializers = [modified_entropic_OT_map_estimate_ott2.create_initializer(warm_start) for _ in range(self.num_measures)]
         else:
             self.initializers = [None] * self.num_measures
 
@@ -101,52 +106,41 @@ class modified_entropic_iterative_scheme:
         Sample from the pushforward measure by the G-operator at each iteration based on the current OT map estimators
         '''
         count = 0
-        accepted = np.zeros((num_samples, self.dim))
+        accepted_list = []
+        num_samples_batch = int(num_samples * 1.1)
 
-        with tqdm(total=num_samples, desc=f"Sampling from the pushforward measure by G-operator at iteration_{iter}", disable=True) as pbar:
-            while count < num_samples:
-                log_info(sample_logger,
-                        f"\n########## Sampling started at Iteration_{iter} for sample_{count} ##########\n")
+        while count < num_samples:
+            log_info(sample_logger,
+                    f"\n########## Sampling started at Iteration_{iter} for sample_{count} ##########\n")
 
-                sample = self.rand_state.multivariate_normal(self.init_gauss["mean"], self.init_gauss["cov"])
+            samples = self.rand_state.multivariate_normal(self.init_gauss["mean"], self.init_gauss["cov"], size = num_samples_batch)
 
-                for t in range(iter):
-                    sum_sample = np.zeros(self.dim)
-                    for measure_index in range(self.num_measures):
-                        OT_map_estimator = self.OT_collections[(t, measure_index)]
-                        sub_sample = OT_map_estimator.regularize_entropic_OT_map(0.5 * self.truncate_radius**2, sample)
-                        log_info(sample_logger,
-                                f"\n####### Pushforward sample to Measure_{measure_index} at Round_{t} #######\n"
-                                f"Pushforward sample: {sub_sample}\n")
-                        sum_sample += sub_sample
-
-                    sample = sum_sample / self.num_measures
+            for t in range(iter):
+                sum_samples = np.zeros((num_samples_batch, self.dim))
+                for measure_index in range(self.num_measures):
+                    OT_map_estimator = self.OT_collections[(t, measure_index)]
+                    samples_pf = OT_map_estimator.compute_modified_entropic_OT_map(samples, self.truncate_radius)
                     log_info(sample_logger,
-                            f"\n####### Averaged sample at Round_{t} #######\n"
-                            f"Averaged sample: {sample}\n")
+                            f"\n####### Pushforward sample to Measure_{measure_index} at Round_{t} #######\n"
+                            f"Pushforward sample: {samples_pf}\n")
+                    sum_samples += samples_pf
 
-                if np.linalg.norm(sample) <= self.truncate_radius:
-                    accepted[count, :] = sample
-                    count += 1
-                    pbar.update(1)  # update progress bar by one
+                samples = sum_samples / self.num_measures
+                log_info(sample_logger,
+                        f"\n####### Averaged sample at Round_{t} #######\n"
+                        f"Averaged sample: {samples}\n")
+
+            accepted_batch = samples[np.linalg.norm(samples, axis = 1) <= self.truncate_radius, :]
+            accepted_list.append(accepted_batch)
+            count += accepted_batch.shape[0]
+        
+        accepted = np.vstack(accepted_list)[:num_samples, :]
                 
         log_info(sample_logger, f"\n"
                                 f"########## Sampling completed at Iteration_{iter} ##########\n"
                                 )
                             
         return accepted
-    
-    def V_value_compute(self, bary_samples, input_samples_collection: dict):
-        '''
-        bary_samples denotes the samples from the true/approximated barycenter measure
-        input_samples_collection is a dictionary with k keys, each key corresponds to the samples from the k-th input measure.
-        '''
-        V_value = 0
-        for measure_index in tqdm(range(self.num_measures), desc = "V-value computation", disable=True):
-            input_samples = np.array(input_samples_collection[measure_index])
-            V_value += W2_pot(input_samples, bary_samples)
-        V_value /= self.num_measures
-        return V_value
     
     def map_construct(self, iter, accepted_samples, input_samples_collection: dict, epsilon, map_logger = None):
         '''
@@ -164,11 +158,11 @@ class modified_entropic_iterative_scheme:
                                 )
             
             if self.sinkhorn_impl == "ott":
-                OT_map_estimator = modified_entropic_OT_map_estimate_ott(accepted_samples, input_measure_samples, initializer = self.initializers[measure_index])
+                OT_map_estimator = modified_entropic_OT_map_estimate_ott2(accepted_samples, input_measure_samples, initializer = self.initializers[measure_index])
                 OT_map_estimator.get_dual_potential(epsilon = epsilon)
                 self.initializers[measure_index] = OT_map_estimator.get_initializer()
             elif self.sinkhorn_impl == "geomloss":
-                OT_map_estimator = modified_entropic_OT_map_estimate_geomloss(accepted_samples, input_measure_samples)
+                OT_map_estimator = modified_entropic_OT_map_estimate_geomloss2(accepted_samples, input_measure_samples)
                 OT_map_estimator.get_dual_potential(epsilon = epsilon)
 
             # store the OT map estimator (python class) in the OT_collctions dictionary
@@ -207,30 +201,38 @@ class modified_entropic_iterative_scheme:
         iter = 0
         while True:
             # perform the evaluation
-            V_values_list = np.zeros(self.eval_MC_size)
-            W2_to_bary_list = np.zeros(self.eval_MC_size)
+            V_values_list = []
+            W2_to_bary_list = []
             accepted_samples_list = []
-            for i in tqdm(range(self.eval_MC_size), desc = f"Evaluation at iteration {iter} by Monte Carlo"): # Monte carlo sample size
-                bary_samples = self.bary_sample_collection[str(i)][:self.eval_num_samples]
-                accepted_samples = self.iterative_sampling(iter, self.eval_num_samples, sample_logger)
-                input_samples_collection: dict = self.input_sampler_for_evaluation.sample(self.eval_num_samples)
-                V_value = self.V_value_compute(accepted_samples, input_samples_collection)
-                W2_to_bary = W2_pot(bary_samples, accepted_samples)
-                accepted_samples_list.append(accepted_samples.tolist())
-                V_values_list[i] = V_value
-                W2_to_bary_list[i] = W2_to_bary
+
+            eval_samples_it = [self.iterative_sampling(iter, self.eval_num_samples, sample_logger) for _ in range(self.eval_MC_size)]
+            input_measure_samples_collection_it = [self.input_sampler_for_evaluation.sample(self.eval_num_samples) for _ in range(self.eval_MC_size)]
+            true_bary_samples_it = [self.bary_sample_collection[str(i)][:self.eval_num_samples] for i in range(self.eval_MC_size)]
+
+            for eval_samples in eval_samples_it:
+                accepted_samples_list.append(eval_samples.tolist())
+            
+            with Pool(processes = self.num_parallel) as pool, tqdm(total = self.eval_MC_size, desc = f"Evaluation of iter {iter}") as pbar:
+                for V_value, W2_to_bary in pool.imap(evaluate_zipped, 
+                                        zip(eval_samples_it, 
+                                            input_measure_samples_collection_it, 
+                                            true_bary_samples_it)):
+                    V_values_list.append(V_value)
+                    W2_to_bary_list.append(W2_to_bary)
+                    pbar.update(1)
+                    pbar.refresh()
             
             self.V_values_dict[f"iteration_{iter}"] = {
                 "mean": np.mean(V_values_list), 
                 "std": np.std(V_values_list),
                 "sample_size": self.eval_num_samples,
-                "values": V_values_list.tolist()
+                "values": V_values_list
             }
             self.W2_to_bary_dict[f"iteration_{iter}"] = {
                 "mean": np.mean(W2_to_bary_list),
                 "std": np.std(W2_to_bary_list),
                 "sample_size": self.eval_num_samples,
-                "values": W2_to_bary_list.tolist()
+                "values": W2_to_bary_list
             }
 
             self.G_samples_dict[f"iteration_{iter}"] = accepted_samples_list

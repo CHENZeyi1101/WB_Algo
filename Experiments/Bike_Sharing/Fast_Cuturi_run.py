@@ -54,7 +54,7 @@ if __name__ == "__main__":
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
 
-    data_dir = f"../../WB_Data/Bike_Sharing/outputs/Fast_Cuturi_outputs/SupportSize{support_size}_NumSamples{num_samples}"
+    data_dir = f"../../WB_Data/Bike_Sharing/data_outputs/Fast_Cuturi_outputs/SupportSize{support_size}_NumSamples{num_samples}"
     os.makedirs(data_dir, exist_ok=True)
     V_values_dir = os.path.join(data_dir, "V_values")
     W2_to_bary_dir = os.path.join(data_dir, "W2_to_bary")

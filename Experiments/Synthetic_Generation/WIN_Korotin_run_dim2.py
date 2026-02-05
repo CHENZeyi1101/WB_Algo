@@ -1,9 +1,8 @@
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
+from .input_sampler_setup_dim2 import *
 from tqdm import tqdm, tqdm_notebook
-from Experiments.Synthetic_Generation.samplers import *
-from Experiments.CSV_read import *
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -35,7 +34,6 @@ from sklearn.decomposition import PCA
 from copy import deepcopy
 
 import ot
-from pathlib import Path
 
 if __name__ == "__main__":
 
@@ -50,14 +48,14 @@ if __name__ == "__main__":
     dim = params["dim"]
     num_measures = params["num_measures"]
     truncated_radius = params["truncated_radius"]
-    instance_identifier = params["instance_identifier"]
+    instance_theta = params["instance_theta"]
     num_components = params["num_components"]
     MC_size = params["MC_size"]
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
-
+    
     print(torch.cuda.device_count())
     print(torch.cuda.is_available())
 

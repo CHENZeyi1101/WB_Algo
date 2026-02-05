@@ -1,12 +1,18 @@
+import os
+os.environ["PYKEOPS_VERBOSE"] = "0"
 import numpy as np
 import ot
-from Experiments.Synthetic_Generation.samplers import *
-from Experiments.Synthetic_Generation.metrics_to_compare import *
-from Experiments.Synthetic_Generation.input_generate_entropic import *
-import json, os
+from tqdm import tqdm
+from multiprocessing import Pool
+import json
 from pathlib import Path
+
+from Experiments.Synthetic_Generation.samplers import *
+from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_zipped
+from Experiments.Synthetic_Generation.input_generate_entropic import *
 from Algorithms.Fast_Cuturi.free_support_WB import w2_barycenter_free_support_from_samples
 from Experiments.CSV_read import *
+from Algorithms.data_manage import *
 
 if __name__ == "__main__":
     Cfg_PATH = Path(__file__).parent / "cfg.json"
@@ -21,6 +27,7 @@ if __name__ == "__main__":
     instance_identifier = params["instance_identifier"]
     MC_size = params["MC_size"]
     num_samples = params["num_samples"]
+    eval_num_samples = params["eval_num_samples"]
 
     # number of atoms in the discrete supports
     support_size = 10000
@@ -64,46 +71,37 @@ if __name__ == "__main__":
         k=support_size,
         init="random",
         numItermax=200,
-        verbose=True,
+        verbose=False,
         seed=42,
     )
 
-    for i in range(MC_size):
-        print(f"Computing barycenter sample {i+1}/{MC_size}...")
+    # Evaluation
+    approx_bary_it = [approx_bary for _ in range(MC_size)]
+    input_measure_samples_collection_it = [input_sampler_for_evaluation.sample(eval_num_samples) for _ in range(MC_size)]
+    true_bary_samples_it = [bary_samples_collection_loaded[str(i)][:eval_num_samples] for i in range(MC_size)]
+    
+    with Pool(processes = 5) as pool, tqdm(total = MC_size) as pbar:
+        for V_value, W2_to_bary in pool.imap(evaluate_zipped, 
+                                zip(approx_bary_it, 
+                                    input_measure_samples_collection_it, 
+                                    true_bary_samples_it)):
+            V_values_list.append(V_value)
+            W2_to_bary_list.append(W2_to_bary)
+            pbar.update(1)
+            pbar.refresh()
 
-        bary_samples = bary_samples_collection_loaded[str(i)]
-        input_samples_collection_for_evaluation = input_sampler_for_evaluation.sample(num_samples)
+    # save V-values and W2_to_bary values
+    V_values_dict = {
+        "mean": np.mean(V_values_list),
+        "std": np.std(V_values_list),
+        "values": V_values_list}
+    save_json(V_values_dict, V_values_dir, "V_values.json")
 
-        # compute V-value
-        V_value = 0
-        for measure_index in range(num_measures):
-            input_samples = np.array(input_samples_collection_for_evaluation[measure_index])
-            V_value += W2_pot(input_samples, approx_bary)
-        V_value /= num_measures
-        V_values_list.append(V_value)
-        print(f"V-value for barycenter sample {i}: {V_value}")
-
-        # compute W2 to barycenter samples
-        W2_sq = W2_pot(approx_bary, bary_samples)
-        W2_to_bary_list.append(W2_sq)
-        print(f"W2 squared to barycenter samples for barycenter sample {i}: {W2_sq}")
-
-        # save V-values and W2_to_bary values
-        V_values_path = os.path.join(V_values_dir, f"V_values.json")
-        V_values_dict = {
-            "mean": np.mean(np.array(V_values_list)),
-            "std": np.std(np.array(V_values_list)),
-            "values": V_values_list}
-        with open(V_values_path, 'w') as json_file:
-            json.dump(V_values_dict, json_file, indent = 4) 
-
-        W2_to_bary_path = os.path.join(W2_to_bary_dir, f"W2_to_bary.json")
-        W2_to_bary_dict = {
-            "mean": np.mean(np.array(W2_to_bary_list)),
-            "std": np.std(np.array(W2_to_bary_list)),
-            "values": W2_to_bary_list}
-        with open(W2_to_bary_path, 'w') as json_file:
-            json.dump(W2_to_bary_dict, json_file, indent = 4)
+    W2_to_bary_dict = {
+        "mean": np.mean(W2_to_bary_list),
+        "std": np.std(W2_to_bary_list),
+        "values": W2_to_bary_list}
+    save_json(W2_to_bary_dict, W2_to_bary_dir, "W2_to_bary.json")
 
     
 

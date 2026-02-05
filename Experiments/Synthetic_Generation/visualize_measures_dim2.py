@@ -2,15 +2,15 @@ import sys
 import os
 import numpy as np
 from tqdm import tqdm
-import pickle
+import math
 from sklearn.decomposition import PCA
 from scipy.stats import gaussian_kde
-
-from Experiments.Synthetic_Generation.samplers import *
-from Experiments.CSV_read import *
-
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+
+from Experiments.Synthetic_Generation.input_generate_entropic import entropic_input_sampler
+from Experiments.CSV_read import *
+
 
 
 def get_kde_data(samples, bins=1000, xlim=None, ylim=None):
@@ -213,60 +213,16 @@ if __name__ == "__main__":
         cfg_dict = json.load(f)
 
     params = cfg_dict["params_synthetic_generation_dim2"]
-
-    # take all items in params
     dim = params["dim"]
-    num_measures = params["num_measures"]
-    truncated_radius = params["truncated_radius"]
     instance_identifier = params["instance_identifier"]
-    alpha_list = params["alpha_list"]
-    theta_list = params["theta_list"]
-    gamma = params["gamma"]
-    num_components = params["num_components"]
-    surjective_mapping = {int(key) : params["surjective_mapping"][key] for key in params["surjective_mapping"]}
-
-    num_samples_to_plot = 100000
-    plot_radius = 150
-
     instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
-    samplers_info_dir = f"{instance_dir}/samplers_info"
-    os.makedirs(samplers_info_dir, exist_ok=True)
 
-    source_component_seed = cfg_dict["source_components_seed"]
-    auxiliary_seeds_list = cfg_dict["auxiliary_seeds_list"]
+    entropic_sampler = entropic_input_sampler.load_from_file(load_dir = f"{instance_dir}/samplers_info")
+    source_sampler = entropic_sampler.source_sampler
+    auxiliary_measure_sampler_set = entropic_sampler.auxiliary_measure_sampler_set
 
-    source_sampler = characterize_source_sampler(dim = dim, 
-                                                num_components = num_components, 
-                                                master_sampling_rng = 99999,
-                                                component_seed = source_component_seed,
-                                                truncated_radius = truncated_radius,
-                                                save_dir = None)
-
-    auxiliary_measure_sampler_set = characterize_auxiliary_sampler_set(dim = dim,
-                                                                       num_components = num_components, 
-                                                                       master_sampling_rng = 99998, 
-                                                                       auxiliary_seeds_list = auxiliary_seeds_list)
-
-    tilde_K = len(auxiliary_measure_sampler_set)
-
-    surjective_mapping_seed = cfg_dict["surjective_mapping_seed"]
-    A_matrices_seed = cfg_dict["A_matrices_seed"]
-    A_matrices_dict = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
-
-    entropic_sampler = entropic_input_sampler(dim = dim, 
-                                              num_measures = num_measures, 
-                                              auxiliary_measure_sampler_set = auxiliary_measure_sampler_set, 
-                                              source_sampler = source_sampler, 
-                                              n_k = 1000, 
-                                              alpha_list = alpha_list,
-                                              theta_list = theta_list,
-                                              gamma = gamma, 
-                                              truncated_radius = truncated_radius,
-                                              bound_type = "eigen_bound",
-                                              surjective_mapping = surjective_mapping,
-                                              A_matrices_dict = A_matrices_dict)
-    
-    entropic_sampler = load_sampler(samplers_info_dir, entropic_sampler, sampler_type = "entropic")
+    plot_radius = 150
+    num_samples_to_plot = 100000
 
     plot_dir = f"../../WB_data/Synthetic_Generation/dim{dim}_plots/Instance{instance_identifier}"
     os.makedirs(plot_dir, exist_ok=True)
@@ -280,7 +236,7 @@ if __name__ == "__main__":
     plot_2d_measures_kde(source_samples, plot_radius, scatter=False, plot_dirc=f"{plot_dir}/source_measure", plot_name = "source_measure_kde", title=r"KDE of $\bar{\mu}$ samples")
     print("Source measure samples KDE plotted.")
 
-    for idx, auxiliary_seed in enumerate(auxiliary_seeds_list):
+    for idx in range(entropic_sampler.num_measures):
         auxiliary_measure_sampler = auxiliary_measure_sampler_set[idx]
         plot_2d_gm_pdf(auxiliary_measure_sampler, plot_radius, grid_size=1000, plot_contour=False, plot_dirc=f"{plot_dir}/auxiliary_measures", plot_name=f"auxiliary_measure_{idx+1}_pdf", title=fr"PDF of $\varkappa_{{{idx+1}}}$")
         print(f"Auxiliary measure {idx+1} PDF plotted.")
@@ -288,25 +244,25 @@ if __name__ == "__main__":
     ### Generate and visualize samples from the input measures
     # Sample input measures
     
-    input_measure_samples = [np.zeros((num_samples_to_plot, dim)) for _ in range(num_measures)]
-    component_map_pushforwards = [np.zeros((num_samples_to_plot, dim)) for _ in range(num_measures * 2)]
+    input_measure_samples = [np.zeros((num_samples_to_plot, dim)) for _ in range(entropic_sampler.num_measures)]
+    component_map_pushforwards = [np.zeros((num_samples_to_plot, dim)) for _ in range(entropic_sampler.num_measures * 2)]
 
     for i in tqdm(range(num_samples_to_plot), desc="Computing pushforwards"):
         OT_map_pushforward, component_map_pushforward = entropic_sampler.generate_input_measure_sample(source_samples[i])
 
-        for k in range(num_measures):
+        for k in range(entropic_sampler.num_measures):
             input_measure_samples[k][i,:] = OT_map_pushforward[k]
 
-        for tilde_k in range(num_measures * 2):
+        for tilde_k in range(entropic_sampler.num_measures * 2):
             component_map_pushforwards[tilde_k][i,:] = component_map_pushforward[tilde_k]
 
-    for measure_index in range(num_measures):
+    for measure_index in range(entropic_sampler.num_measures):
         measure_samples = input_measure_samples[measure_index]
         # Plot the KDE for each input measure
         plot_2d_measures_kde(measure_samples, bins = 400, plot_radius = plot_radius, scatter=False, plot_dirc=f"{plot_dir}/input_measures", plot_name=f"input_measure_{measure_index}_kde", title=fr"KDE of $\nu_{{{measure_index + 1}}}$ samples")
         print(f"Input measure {measure_index} KDE plotted.")
     
-    for tilde_k in range(num_measures * 2):
+    for tilde_k in range(entropic_sampler.num_measures * 2):
         pushforward_samples = component_map_pushforwards[tilde_k]
 
         plot_name_suffix = "plus" if (tilde_k % 2 == 0) else "minus"

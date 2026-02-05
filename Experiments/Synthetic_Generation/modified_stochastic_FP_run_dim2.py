@@ -1,5 +1,9 @@
-from Algorithms.Stochastic_FP.modified_entropic_iterative_scheme import *
-from Algorithms.Stochastic_FP.entropic_iterative_scheme import *
+import os
+os.environ["PYKEOPS_VERBOSE"] = "0"
+
+from Algorithms.Stochastic_FP.modified_entropic_iterative_scheme import modified_entropic_iterative_scheme
+from Algorithms.Stochastic_FP.modified_entropic_iterative_scheme2 import modified_entropic_iterative_scheme2
+from Algorithms.Stochastic_FP.entropic_iterative_scheme import entropic_iterative_scheme
 from Algorithms.data_manage import *
 from Experiments.Synthetic_Generation.samplers import *
 from Experiments.Synthetic_Generation.visualize_measures_dim2 import *
@@ -35,14 +39,17 @@ if __name__ == "__main__":
     eval_MC_size = params["MC_size"]
     eval_num_samples = params["eval_num_samples"]
 
-    num_iters = 10
+    num_iters = 8
     rand_state = np.random.RandomState(seed = 7777)
     init_method = {"type": "moment", "sample_size": 10000}
     truncate_radius = params["truncated_radius"]
-    sinkhorn_impl = "ott"
-    sample_size_scheme = [1000, 1000, 2000, 2000, 5000, 5000, 10000, 10000, 20000, 20000]
-    reg_param_scheme = [20, 10, 10, 5, 5, 2, 2, 1, 1, 0.5]
-    warm_start = {"type": "first-order"}
+    sample_size_scheme = [20000, 20000, 40000, 80000, 160000, 320000, 320000, 320000]
+    reg_param_scheme = [2, 2, 2, 2, 2, 2, 2, 2]
+    # sinkhorn_impl = "ott"
+    # warm_start = {"type": "first-order"}
+
+    sinkhorn_impl = "geomloss"
+    warm_start = None
 
     bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize{eval_MC_size}_numsamples{eval_num_samples}.json"
     with open(bary_sample_path, 'r') as json_file:
@@ -59,7 +66,7 @@ if __name__ == "__main__":
     input_sampler_for_evaluation.set_streamers()
 
     # Set up the entropic iterative computer
-    entropic_iterative_computer = modified_entropic_iterative_scheme(
+    entropic_iterative_computer = modified_entropic_iterative_scheme2(
         dim = dim,
         num_iters = num_iters,
         input_sampler = input_sampler,
@@ -73,7 +80,8 @@ if __name__ == "__main__":
         bary_sample_collection = bary_samples_collection_loaded, 
         input_sampler_for_evaluation = input_sampler_for_evaluation,
         eval_num_samples = eval_num_samples,
-        eval_MC_size = eval_MC_size
+        eval_MC_size = eval_MC_size,
+        num_parallel = 5
     )
 
     entropic_iterative_computer.converge(logger = {'sample_logger': None, 'map_logger': None}, data_dir = outputs_dir)

@@ -38,7 +38,7 @@ def get_template_name(exp):
     else:
         raise Exception('No template for experiment {}!'.format(exp))
 
-def run(exp, dim, sample_count, working_dir, data_dir, result_dir, result_filename, input_csv_path, num_measures, MC_size):
+def run(exp, dim, sample_count, working_dir, data_dir, result_dir, result_filename, input_csv_path, num_measures):
     '''
     data_dir: directory containing the input distributions (csv files)
     result_dir: directory to save the output barycenter samples
@@ -85,7 +85,7 @@ def run(exp, dim, sample_count, working_dir, data_dir, result_dir, result_filena
     conf['distribution_list'] = source_list
     conf['test'] = {
             'sample_barycenter': {
-                    'num_samples': sample_count * MC_size,
+                    'num_samples': sample_count,
                     'npy_dir': os.path.join(working_dir, g_sample_dir),
                     'npy_file': g_sample_npy,
                     'vis_name': 'barycenter.png',
@@ -144,8 +144,6 @@ if __name__ == '__main__':
     exp = "poisson"
     dim = 2
     sample_count = 10
-    num_measures = 5
-    MC_size = 20
     working_dir = "./"
     data_dir = "../../../../WB_Data/Synthetic_Generation/dim2_data/input_samples/csv_files_InstanceTheta2000"
     print(sorted([
@@ -156,4 +154,4 @@ if __name__ == '__main__':
     result_dir = "result_dir"
     result_filename = "barycenter.npy"
 
-    run(exp, dim, sample_count, working_dir, data_dir, result_dir, result_filename, data_dir, num_measures, MC_size)
+    run(exp, dim, sample_count, working_dir, data_dir, result_dir, result_filename)

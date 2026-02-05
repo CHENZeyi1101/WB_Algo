@@ -42,24 +42,19 @@ if __name__ == '__main__':
     Cfg_PATH = Path(__file__).parent / "cfg.json"
     with open(Cfg_PATH, "r") as f:
         cfg_dict = json.load(f)
-
     params = cfg_dict["params_synthetic_generation_dim2"]
 
-    # take all items in params
-    num_samples = params["num_samples"]
     dim = params["dim"]
+    dim_range = [dim]
     num_measures = params["num_measures"]
-    truncated_radius = params["truncated_radius"]
-    instance_identifier = params["instance_identifier"]
-    num_components = params["num_components"]
-    MC_size = params["MC_size"]
+    sample_count = params["num_samples"]
+    instance_theta = params["instance_theta"]
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
+    repeat_range = range(1)
+
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
-
-    dim_range = [dim]
-    repeat_range = range(1)
 
     exp = "SyntheticGeneration"
 
@@ -67,6 +62,6 @@ if __name__ == '__main__':
 
     g_base_dir = f"{instance_dir}/outputs/CWB_Li_outputs"
 
-    batch_run_exp(exp, "cwb", repeat_range=repeat_range, input_csv_path=input_csv_path, num_measures=num_measures, g_base_dir=g_base_dir, dim_range=dim_range, sample_count=num_samples, MC_size=MC_size)
+    batch_run_exp(exp, "cwb", repeat_range=repeat_range, input_csv_path=input_csv_path, num_measures=num_measures, g_base_dir=g_base_dir, dim_range=dim_range, sample_count=10)
 
     

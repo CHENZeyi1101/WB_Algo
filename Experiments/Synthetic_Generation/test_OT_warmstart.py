@@ -1,6 +1,6 @@
 from typing import Optional
 import jax
-jax.config.update("jax_enable_x64", True)
+# jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp
 
 from ott.geometry import pointcloud
@@ -13,7 +13,7 @@ from sklearn.neighbors import KNeighborsRegressor
 
 from ott.initializers.linear.initializers import SinkhornInitializer  # adjust import path if your version differs
 
-class CustomInitializer(SinkhornInitializer):
+class FirstOrderConditionInitializer(SinkhornInitializer):
     def __init__(self, 
                  X_prev: jnp.ndarray, Y_prev: jnp.ndarray,
                  f_prev: jnp.ndarray, g_prev: jnp.ndarray):
@@ -141,69 +141,156 @@ class KNNInitializer(SinkhornInitializer):
         
         return jnp.array(f_interp.tolist())
 
+def sinkhorn_solve(X : jnp.ndarray, Y : jnp.ndarray, reg : float, init_f : jnp.ndarray, init_g : jnp.ndarray):
+    out = sinkhorn.iterations(linear_problem.LinearProblem(pointcloud.PointCloud(X, Y, epsilon = reg)), 
+                        sinkhorn.Sinkhorn(lse_mode = True, min_iterations=100, max_iterations=1000),
+                        (init_f, init_g))
+    return {"f": out.f, "g": out.g}
+
 def main():
     num_of_rep = 5
-    N = 10000
-    reg = 1
+    N = 5000
+    seed = 2900
+    reg = 100
 
+    # # Sinkhorn OT via OTT with log-sum-exp, without jit
+    # print("Without warm-start, without jit:")
+    # time_list = np.zeros(num_of_rep)
+    # rs = np.random.RandomState(seed = seed)
+    # for iter in range(num_of_rep):
+    #     X = jnp.array(rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[2, 1], [1, 2]]) * 100, size = N))
+    #     Y = jnp.array(rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[1, 0], [0, 1]]) * 100, size = N))
+    #     init_f = jnp.zeros(N)
+    #     init_g = jnp.zeros(N)
+    #     t0 = time.perf_counter()
+    #     out = sinkhorn_solve(X, Y, reg, init_f, init_g)
+    #     out = jax.block_until_ready(out)
+    #     t1 = time.perf_counter()
+    #     f = out["f"]
+    #     g = out["g"]
+    #     print(f"    Iteration {iter}: {t1 - t0} seconds, val = {jnp.mean(f) + jnp.mean(g)}")
+    #     time_list[iter] = t1 - t0
 
-    # Sinkhorn OT via OTT with log-sum-exp and warm-start
-    print("With warm-start (first-order condition):")
-    rs = np.random.RandomState(seed = 2500)
+    print("\n")
+
+    # Sinkhorn OT via OTT with log-sum-exp, with jit
+    print("Without warm-start, with jit:")
     time_list = np.zeros(num_of_rep)
-    initializer = None
+    rs = np.random.RandomState(seed = seed)
+    sinkhorn_solve_jit = jax.jit(sinkhorn_solve)
     for iter in range(num_of_rep):
-        X = rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[2, 1], [1, 2]]) * 100, size = N)
-        Y = rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[1, 0], [0, 1]]) * 100, size = N)
+        X = jnp.array(rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[2, 1], [1, 2]]) * 100, size = N))
+        Y = jnp.array(rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[1, 0], [0, 1]]) * 100, size = N))
+        init_f = jnp.zeros(N)
+        init_g = jnp.zeros(N)
         t0 = time.perf_counter()
-        geom = pointcloud.PointCloud(X, Y, epsilon = reg) # set the epsilon parameter for the entropic regularization
-        ott_problem = linear_problem.LinearProblem(geom) # uniform weights
-
-        solver = sinkhorn.Sinkhorn(lse_mode = True, max_iterations=10**6, initializer=initializer)
-        out = solver(ott_problem)
-        initializer = CustomInitializer(X, Y, out.f, out.g)
+        out = sinkhorn_solve_jit(X, Y, reg, init_f, init_g)
+        out = jax.block_until_ready(out)
         t1 = time.perf_counter()
-        print(f"Iteration {iter}: {t1 - t0} seconds")
+        f = out["f"]
+        g = out["g"]
+        print(f"    Iteration {iter}: {t1 - t0} seconds, val = {jnp.mean(f) + jnp.mean(g)}")
+        print(sinkhorn_solve_jit._cache_size())
         time_list[iter] = t1 - t0
 
     print("\n")
 
-    # Sinkhorn OT via OTT with log-sum-exp and warm-start
-    print("With warm-start (1-NN):")
-    rs = np.random.RandomState(seed = 2500)
-    time_list = np.zeros(num_of_rep)
-    initializer = None
-    for iter in range(num_of_rep):
-        X = rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[2, 1], [1, 2]]) * 100, size = N)
-        Y = rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[1, 0], [0, 1]]) * 100, size = N)
-        t0 = time.perf_counter()
-        geom = pointcloud.PointCloud(X, Y, epsilon = reg) # set the epsilon parameter for the entropic regularization
-        ott_problem = linear_problem.LinearProblem(geom) # uniform weights
 
-        solver = sinkhorn.Sinkhorn(lse_mode = True, max_iterations=10**6, initializer=initializer)
-        out = solver(ott_problem)
-        initializer = KNNInitializer(1, X, Y, out.f, out.g)
-        t1 = time.perf_counter()
-        print(f"Iteration {iter}: {t1 - t0} seconds")
-        time_list[iter] = t1 - t0
+    # # Sinkhorn OT via OTT with log-sum-exp and warm-start via first-order condition, without jit
+    # print("With warm-start (first-order condition), without jit:")
+    # rs = np.random.RandomState(seed = seed)
+    # time_list = np.zeros(num_of_rep)
+    # initializer = None
+    # for iter in range(num_of_rep):
+    #     X = jnp.array(rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[2, 1], [1, 2]]) * 100, size = N))
+    #     Y = jnp.array(rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[1, 0], [0, 1]]) * 100, size = N))
+    #     if iter == 0:
+    #         init_f = jnp.zeros(N)
+    #         init_g = jnp.zeros(N)
+    #     else:
+    #         initializer = FirstOrderConditionInitializer(X_prev = X, Y_prev = Y, f_prev = out.f, g_prev = out.g)
+    #         prob = linear_problem.LinearProblem(pointcloud.PointCloud(X, Y, epsilon = reg))
+    #         init_f, init_g = initializer.init_fu(prob, True), initializer.init_gv(prob, True)
+    #     t0 = time.perf_counter()
+    #     out = sinkhorn_solve(X, Y, reg, init_f, init_g)
+    #     out = jax.block_until_ready(out)
+    #     t1 = time.perf_counter()
+    #     print(f"    Iteration {iter}: {t1 - t0} seconds, val = {jnp.mean(out.f) + jnp.mean(out.g)}")
+    #     time_list[iter] = t1 - t0
 
-    print("\n")
+    # print("\n")
 
-    # Sinkhorn OT via OTT with log-sum-exp
-    print("Without warm-start:")
-    time_list = np.zeros(num_of_rep)
-    rs = np.random.RandomState(seed = 2500)
-    for iter in range(num_of_rep):
-        X = rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[2, 1], [1, 2]]) * 100, size = N)
-        Y = rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[1, 0], [0, 1]]) * 100, size = N)
-        t0 = time.perf_counter()
-        geom = pointcloud.PointCloud(X, Y, epsilon = reg) # set the epsilon parameter for the entropic regularization
-        ott_problem = linear_problem.LinearProblem(geom) # uniform weights
-        solver = sinkhorn.Sinkhorn(lse_mode = True, max_iterations=10**6)
-        out = solver(ott_problem)
-        t1 = time.perf_counter()
-        print(f"Iteration {iter}: {t1 - t0} seconds")
-        time_list[iter] = t1 - t0
+    # # Sinkhorn OT via OTT with log-sum-exp and warm-start via first-order condition, with jit
+    # print("With warm-start (first-order condition), with jit:")
+    # rs = np.random.RandomState(seed = seed)
+    # time_list = np.zeros(num_of_rep)
+    # initializer = None
+    # for iter in range(num_of_rep):
+    #     X = jnp.array(rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[2, 1], [1, 2]]) * 100, size = N))
+    #     Y = jnp.array(rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[1, 0], [0, 1]]) * 100, size = N))
+    #     if iter == 0:
+    #         init_f = jnp.zeros(N)
+    #         init_g = jnp.zeros(N)
+    #     else:
+    #         initializer = FirstOrderConditionInitializer(X_prev = X, Y_prev = Y, f_prev = out.f, g_prev = out.g)
+    #         prob = linear_problem.LinearProblem(pointcloud.PointCloud(X, Y, epsilon = reg))
+    #         init_f, init_g = initializer.init_fu(prob, True), initializer.init_gv(prob, True)
+    #     t0 = time.perf_counter()
+    #     out = sinkhorn_solve_jit(X, Y, reg, init_f, init_g)
+    #     out = jax.block_until_ready(out)
+    #     t1 = time.perf_counter()
+    #     print(f"    Iteration {iter}: {t1 - t0} seconds, val = {jnp.mean(out.f) + jnp.mean(out.g)}")
+    #     time_list[iter] = t1 - t0
+
+    # print("\n")
+
+    # # Sinkhorn OT via OTT with log-sum-exp and warm-start via kNN, without jit
+    # print("With warm-start (kNN), without jit:")
+    # rs = np.random.RandomState(seed = seed)
+    # time_list = np.zeros(num_of_rep)
+    # initializer = None
+    # for iter in range(num_of_rep):
+    #     X = jnp.array(rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[2, 1], [1, 2]]) * 100, size = N))
+    #     Y = jnp.array(rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[1, 0], [0, 1]]) * 100, size = N))
+    #     if iter == 0:
+    #         init_f = jnp.zeros(N)
+    #         init_g = jnp.zeros(N)
+    #     else:
+    #         initializer = KNNInitializer(n_neighbors = 1, X_prev = X, Y_prev = Y, f_prev = out.f, g_prev = out.g)
+    #         prob = linear_problem.LinearProblem(pointcloud.PointCloud(X, Y, epsilon = reg))
+    #         init_f, init_g = initializer.init_fu(prob, True), initializer.init_gv(prob, True)
+    #     t0 = time.perf_counter()
+    #     out = sinkhorn_solve(X, Y, reg, init_f, init_g)
+    #     out = jax.block_until_ready(out)
+    #     t1 = time.perf_counter()
+    #     print(f"    Iteration {iter}: {t1 - t0} seconds, val = {jnp.mean(out.f) + jnp.mean(out.g)}")
+    #     time_list[iter] = t1 - t0
+
+    # print("\n")
+
+    # # Sinkhorn OT via OTT with log-sum-exp and warm-start via kNN, with jit
+    # print("With warm-start (kNN), with jit:")
+    # rs = np.random.RandomState(seed = seed)
+    # time_list = np.zeros(num_of_rep)
+    # initializer = None
+    # for iter in range(num_of_rep):
+    #     X = jnp.array(rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[2, 1], [1, 2]]) * 100, size = N))
+    #     Y = jnp.array(rs.multivariate_normal(mean=np.array([0.0, 0.0]), cov=np.array([[1, 0], [0, 1]]) * 100, size = N))
+    #     if iter == 0:
+    #         init_f = jnp.zeros(N)
+    #         init_g = jnp.zeros(N)
+    #     else:
+    #         initializer = KNNInitializer(n_neighbors = 1, X_prev = X, Y_prev = Y, f_prev = out.f, g_prev = out.g)
+    #         prob = linear_problem.LinearProblem(pointcloud.PointCloud(X, Y, epsilon = reg))
+    #         init_f, init_g = initializer.init_fu(prob, True), initializer.init_gv(prob, True)
+    #     t0 = time.perf_counter()
+    #     out = sinkhorn_solve_jit(X, Y, reg, init_f, init_g)
+    #     out = jax.block_until_ready(out)
+    #     t1 = time.perf_counter()
+    #     print(f"    Iteration {iter}: {t1 - t0} seconds, val = {jnp.mean(out.f) + jnp.mean(out.g)}")
+    #     time_list[iter] = t1 - t0
+
+    # print("\n")
 
 if __name__ == "__main__":
     main()

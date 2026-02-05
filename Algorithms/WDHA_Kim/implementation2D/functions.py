@@ -161,6 +161,7 @@ def frechet_mean(dists, n_iter,name, plot_option = False,save_option = True, ret
     lr = np.exp(-(i+1)/n_iter)
     rho = np.ones_like(rd)
     bf.pushforward(rho, id+ lr*(np.mean(prev_psi,axis=0)-id), rd)
+    # make sure rd is normalized
     rd = rho / np.sum(rho)
 
     if (i+1) % 50 == 0:
