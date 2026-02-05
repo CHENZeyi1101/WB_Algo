@@ -104,7 +104,7 @@ def sinkhorn_modified_entropic_OT_map(X_new : jnp.ndarray,
     modification_weights = jnp.where(X_new_norm_halfsq_diff > 0, jnp.exp(-1 / X_new_norm_halfsq_diff), 0.0)
     return weight_mat @ Y + modification_weights[:, jnp.newaxis] * X_new
 
-class modified_entropic_OT_map_estimate_ott2:
+class entropic_OT_map_estimate_ott:
 
     r'''
     Python class for constructing the regularized entropic OT map estimator

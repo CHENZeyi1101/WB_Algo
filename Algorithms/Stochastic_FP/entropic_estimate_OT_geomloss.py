@@ -1,7 +1,7 @@
 from geomloss import SamplesLoss
 import torch
 
-class modified_entropic_OT_map_estimate_geomloss2:
+class entropic_OT_map_estimate_geomloss:
 
     r'''
     Python class for constructing the regularized entropic OT map estimator

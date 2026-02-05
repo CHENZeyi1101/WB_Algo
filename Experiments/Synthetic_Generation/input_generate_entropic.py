@@ -6,7 +6,7 @@ import os
 import pickle
 from Experiments.Synthetic_Generation.MOG import *
 from Experiments.Synthetic_Generation.metrics_to_compare import *
-from Algorithms.Stochastic_FP.entropic_estimate_OT import *
+from Algorithms.Stochastic_FP.entropic_estimate_OT_ott import *
 
 def generate_A_matrices(dim, num_measures, seed = 2000):
     r'''
@@ -226,7 +226,7 @@ class entropic_input_sampler:
         g_vector_dict = {}
         for i in range(self.tilde_K):
             Y = Y_matrix_dict[i]
-            entropic_OT_map_generator = entropic_OT_map_estimate(X, Y, log = False)
+            entropic_OT_map_generator = entropic_OT_map_estimate_ott(X, Y, log = False)
             epsilon = epsilon
             entropic_OT_map_generator.get_dual_potential(epsilon = epsilon)
 
