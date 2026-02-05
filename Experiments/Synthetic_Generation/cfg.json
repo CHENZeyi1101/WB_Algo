@@ -41,7 +41,7 @@
     "dim": 10,
     "num_components": 5,
     "num_samples": 10000,
-    "num_measures": 5,
+    "num_measures": 10,
     "truncated_radius": 225,
     "n_k": 1000,
     "instance_identifier": "TRIAL1",
@@ -58,7 +58,7 @@
         "3": 3,
         "5": 3,
         "7": 4,
-        "9": 0},
+        "9": 0}, 
     "MC_size": 20,
     "eval_num_samples": 10000,
     "seeds": {
