@@ -60,14 +60,15 @@ def kde_to_unit_grid_mass(samples_unit, n1, n2, bw_method=None, eps=1e-12):
 
     pdf = kde(pts).reshape(Y.shape)  # (n2,n1), units 1/area on unit square
 
-    dx = float(x_u[1] - x_u[0]) if n1 > 1 else 1.0
-    dy = float(y_u[1] - y_u[0]) if n2 > 1 else 1.0
-
-    mass = pdf * dx * dy
-    s = mass.sum()
+    dx = float(x_u[1] - x_u[0]) if n1 > 1 else 1.0 
+    dy = float(y_u[1] - y_u[0]) if n2 > 1 else 1.0 
+    
+    mass = pdf * dx * dy 
+    s = mass.sum() 
     if not np.isfinite(s) or s < eps:
-        raise ValueError("KDE mass is invalid; check bw_method/support.")
-    mass /= s
+        raise ValueError("KDE mass is invalid; check bw_method/support.") 
+    mass /= s 
+    
     return mass
 
 

@@ -30,7 +30,7 @@ if __name__ == "__main__":
     else:
         bound_type = "norm_bound"
 
-    num_samples_in_preparation = 10**7
+    num_samples_in_preparation = 10**6
 
     instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
 
