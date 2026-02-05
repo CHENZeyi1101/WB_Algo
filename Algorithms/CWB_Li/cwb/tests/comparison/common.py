@@ -21,7 +21,7 @@ g_cwb_working_dir = os.path.join(g_base_dir, 'cwb_tmp/')
 g_claici_working_dir = os.path.join(g_base_dir, 'claici_tmp/')
 
 g_result_filename_dict = {
-        'cwb': 'cwb.npy',
+        'cwb': 'cwb.npz',
         'cuturi': 'cuturi.pkl',
         'claici': 'claici.npy',
         'bregman': 'bregman.npz',

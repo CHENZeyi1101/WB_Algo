@@ -13,7 +13,7 @@ if __name__ == "__main__":
     max_iter = 5
     epsilon = 10 ** -8
     warm_start = False
-    data_dir = f"../../WB_Data/Bike_Sharing/outputs/stochastic_FP_outputs"
+    data_dir = f"../../WB_Data/Bike_Sharing/data_outputs/stochastic_FP_outputs"
     os.makedirs(data_dir, exist_ok=True)
 
     ##### Set up the samplers for Bike Sharing data #####

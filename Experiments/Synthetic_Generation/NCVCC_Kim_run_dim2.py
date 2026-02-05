@@ -60,15 +60,14 @@ def kde_to_unit_grid_mass(samples_unit, n1, n2, bw_method=None, eps=1e-12):
 
     pdf = kde(pts).reshape(Y.shape)  # (n2,n1), units 1/area on unit square
 
-    dx = float(x_u[1] - x_u[0]) if n1 > 1 else 1.0 
-    dy = float(y_u[1] - y_u[0]) if n2 > 1 else 1.0 
-    
-    mass = pdf * dx * dy 
-    s = mass.sum() 
+    dx = float(x_u[1] - x_u[0]) if n1 > 1 else 1.0
+    dy = float(y_u[1] - y_u[0]) if n2 > 1 else 1.0
+
+    mass = pdf * dx * dy
+    s = mass.sum()
     if not np.isfinite(s) or s < eps:
-        raise ValueError("KDE mass is invalid; check bw_method/support.") 
-    mass /= s 
-    
+        raise ValueError("KDE mass is invalid; check bw_method/support.")
+    mass /= s
     return mass
 
 
@@ -142,46 +141,51 @@ def sample_from_unit_mass_grid(mass_unit, lo, hi, num_samples, seed=None):
     samples = map_out_points(samples_unit, lo, hi)
     return samples
 
+from pathlib import Path
+
+Cfg_PATH = Path(__file__).parent / "cfg.json"
+with open(Cfg_PATH, "r") as f:
+    cfg_dict = json.load(f)
+
+params = cfg_dict["params_synthetic_generation_dim2"]
+
+# take all items in params
+num_samples = params["num_samples"]
+dim = params["dim"]
+num_measures = params["num_measures"]
+truncated_radius = params["truncated_radius"]
+instance_theta = params["instance_theta"]
+num_components = params["num_components"]
+MC_size = params["MC_size"]
+
+n1, n2 = 1024, 1024
+
+instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
+# assert existence
+assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
+
+SEEDS_PATH = Path(__file__).parent / "seeds.json"
+with open(SEEDS_PATH, "r") as f:
+    seeds_dict = json.load(f)
+
+source_component_seed = cfg_dict["source_components_seed"]
+master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
+
+outputs_dir = f"{instance_dir}/outputs/NCVCC_Kim_outputs"
+os.makedirs(outputs_dir, exist_ok=True)
+
+
 
 if __name__ == "__main__":
     
-    from pathlib import Path
-
-    Cfg_PATH = Path(__file__).parent / "cfg.json"
-    with open(Cfg_PATH, "r") as f:
-        cfg_dict = json.load(f)
-
-    params = cfg_dict["params_synthetic_generation_dim2"]
-
-    # take all items in params
-    num_samples = params["num_samples"]
-    dim = params["dim"]
-    num_measures = params["num_measures"]
-    truncated_radius = params["truncated_radius"]
-    instance_identifier = params["instance_identifier"]
-    num_components = params["num_components"]
-    MC_size = params["MC_size"]
-
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
-    # assert existence
-    assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
-
-    n1, n2 = 1024, 1024
-
-    source_component_seed = cfg_dict["source_components_seed"]
-    master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
-
-    outputs_dir = f"{instance_dir}/outputs/NCVCC_Kim_outputs"
-    os.makedirs(outputs_dir, exist_ok=True)
-
-
-    input_csv_dir = f"{instance_dir}/input_samples/csv_files"
-    input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_dir, 
+    
+    input_csv_path = f"{instance_dir}/input_samples/csv_files"
+    input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
                                                 num_measures, 
                                                 multiplication_factor=1)
     input_sampler.set_streamers()
 
-    bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize{MC_size}_numsamples{num_samples}.json"
+    bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize50_numsamples1000.json"
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}

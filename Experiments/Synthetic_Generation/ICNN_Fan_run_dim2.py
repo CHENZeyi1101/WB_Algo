@@ -285,11 +285,11 @@ if __name__ == '__main__':
     dim = params["dim"]
     num_measures = params["num_measures"]
     truncated_radius = params["truncated_radius"]
-    instance_identifier = params["instance_identifier"]
+    instance_theta = params["instance_theta"]
     num_components = params["num_components"]
     MC_size = params["MC_size"]
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
@@ -299,7 +299,7 @@ if __name__ == '__main__':
                                                 multiplication_factor=1)
     input_sampler.set_streamers()
 
-    cfg = Cfg_class(DIM = dim, NUM_DISTRIBUTION=num_measures, N_TRAIN_SAMPLES=10000)#1000000)
+    cfg = Cfg_class(DIM = dim, NUM_DISTRIBUTION=num_measures, N_TRAIN_SAMPLES=1000000)
     
     # gpus_choice = GPUtil.getFirstAvailable(
     #     order='random', maxLoad=0.5, maxMemory=0.5, attempts=5, interval=900, verbose=False)
@@ -311,7 +311,7 @@ if __name__ == '__main__':
     cfg.OUTPUT_DIM = cfg.INPUT_DIM
     cfg.NUM_DISTRIBUTION = num_measures
     cfg.high_dim_flag = False
-    cfg.epochs = 5 #500
+    cfg.epochs = 500
     _, _, results, testresults = LLU.init_path(cfg)
     outputs_dir = f"{instance_dir}/outputs/ICNN_Fan_outputs"
     os.makedirs(outputs_dir, exist_ok=True)

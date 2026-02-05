@@ -22,11 +22,10 @@ num_samples = params["num_samples"]
 dim = params["dim"]
 num_measures = params["num_measures"]
 truncated_radius = params["truncated_radius"]
-instance_identifier = params["instance_identifier"]
+instance_theta = params["instance_theta"]
 num_components = params["num_components"]
 MC_size = params["MC_size"]
-
-instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
+instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}_toy"
 # assert existence
 assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
@@ -39,9 +38,8 @@ evaluation_dir = os.path.join(outputs_dir, "evaluation_results")
 os.makedirs(evaluation_dir, exist_ok=True)
 
 # generate samples from approximated barycenter and save to csv
-max_epoch = 100
 PTU.set_gpu_mode(False, 0)
-for epoch_to_load in range(1, max_epoch + 1):
+for epoch_to_load in range(1, 101):
     for i in tqdm(range(MC_size), desc=f"Epoch {epoch_to_load}"):
         barycenter_samples = CDR.barycenter_sampler(
             cfg, PTU.device, outputs_dir, load_epoch=epoch_to_load

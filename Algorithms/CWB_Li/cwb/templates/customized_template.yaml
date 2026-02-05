@@ -1,13 +1,13 @@
 estimate_map: true
 
-batch_size: 256 #8192
+batch_size: 128
 use_zero_mean_reduction: false
 
 nn_dtype: 'float32'
 potential_model_type: 'nn'
 potential_nn_layers: [128, 256]
 transport_map_nn_layers: [128, 256]
-infer_sample_count: 1000 # 10000
+infer_sample_count: 1000
 
 supp_desc:
     shape: 'bbox_inferred'
