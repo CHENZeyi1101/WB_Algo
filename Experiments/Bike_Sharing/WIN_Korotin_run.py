@@ -2,7 +2,6 @@ import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm, tqdm_notebook
-from Experiments.Synthetic_Generation.samplers import *
 from Experiments.CSV_read import *
 
 import warnings
@@ -43,18 +42,17 @@ if __name__ == "__main__":
     with open(Cfg_PATH, "r") as f:
         cfg_dict = json.load(f)
 
-    params = cfg_dict["params_synthetic_generation_dim2"]
+    params = cfg_dict["params_bike_sharing"]
 
     # take all items in params
     num_samples = params["num_samples"]
     dim = params["dim"]
     num_measures = params["num_measures"]
     truncated_radius = params["truncated_radius"]
-    instance_identifier = params["instance_identifier"]
-    num_components = params["num_components"]
+    # instance_identifier = params["instance_identifier"]
     MC_size = params["MC_size"]
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
+    instance_dir = f"{cfg_dict['data_dir']}/Bike_Sharing"
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
@@ -196,20 +194,24 @@ if __name__ == "__main__":
     # csv_path = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/input_samples/csv_files"
     # csv_sampler = csv_input_sampler(dim = dim, num_measures = num_measures, csv_path = csv_path)
 
-    source_component_seed = cfg_dict["source_components_seed"]
-    master_source_rng = np.random.SeedSequence(cfg_dict["master_source_sampling_seed"])
-    source_sampler = characterize_source_sampler(dim = dim, 
-                                                num_components = num_components, 
-                                                master_sampling_rng = master_source_rng,
-                                                component_seed = source_component_seed,
-                                                truncated_radius = truncated_radius,
-                                                save_dir = None)
+    csv_dir = instance_dir
+    total_posterior_sampler = csv_posterior_sampler_BikeSharing(csv_dir=csv_dir, 
+                                                    num_measures=num_measures, 
+                                                    multiplication_factor=multiplication_factor, 
+                                                    type="full",
+                                                    usecols=range(7, 16),
+                                                    skiprows=52)
+    total_posterior_sampler.set_streamers()
+    print("Total posterior sampler set up.")
 
-    input_csv_path = f"{instance_dir}/input_samples/csv_files"
-    input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
+    split_posterior_sampler = csv_posterior_sampler_BikeSharing(csv_dir, 
                                                 num_measures, 
-                                                multiplication_factor=1)
-    input_sampler.set_streamers()
+                                                multiplication_factor, 
+                                                type="split",
+                                                usecols=range(7, 16),
+                                                skiprows=52)
+    split_posterior_sampler.set_streamers()
+    print("Split posterior sampler set up.")
 
     bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize{MC_size}_numsamples{num_samples}.json"
     with open(bary_sample_path, 'r') as json_file:
@@ -217,11 +219,14 @@ if __name__ == "__main__":
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
  
     eval_dir = f"{instance_dir}/samples_for_evaluation"
-    input_sampler_for_evaluation = csv_input_sampler_for_evaluation_SyntheticGeneration(eval_dir, 
+    split_posterior_sampler_for_evaluation = csv_posterior_sampler_BikeSharing(csv_dir, 
                                                 num_measures, 
-                                                multiplication_factor=1)
-    input_sampler_for_evaluation.set_streamers()
-
+                                                multiplication_factor, 
+                                                type="split",
+                                                usecols=range(7, 16),
+                                                skiprows=6000000) # adjust skiprows for the samples used for evaluation
+    split_posterior_sampler_for_evaluation.set_streamers()
+    print("Split posterior sampler for evaluation set up.")
 
     outputs_dir = f"{instance_dir}/outputs/WIN_Korotin_outputs"
     os.makedirs(outputs_dir, exist_ok=True)
@@ -235,9 +240,9 @@ if __name__ == "__main__":
 
     while it < MAX_ITER:
         freeze(G)
-        input_measure_samples_for_D = input_sampler.sample(BATCH_SIZE * D_ITERS)
-        input_measure_samples_for_T_inv = input_sampler.sample(BATCH_SIZE * D_ITERS * T_ITERS)
-        input_measure_samples_for_D_inv = input_sampler.sample(BATCH_SIZE * D_ITERS)
+        input_measure_samples_for_D = split_posterior_sampler.sample(BATCH_SIZE * D_ITERS)
+        input_measure_samples_for_T_inv = split_posterior_sampler.sample(BATCH_SIZE * D_ITERS * T_ITERS)
+        input_measure_samples_for_D_inv = split_posterior_sampler.sample(BATCH_SIZE * D_ITERS)
         # this is a dictionary with k keys, pointing to the samples collected from each measure
         for k in range(num_measures):
             # D and T optimization cycle
@@ -368,7 +373,7 @@ if __name__ == "__main__":
                     json.dump(G_samples_json, f, indent=4)
 
                 # Compute the V-value
-                input_samples_collection_for_evaluation = input_sampler_for_evaluation.sample(num_samples)
+                input_samples_collection_for_evaluation = split_posterior_sampler_for_evaluation.sample(num_samples)
                 V_value = 0
                 for measure_index in range(num_measures):
                     input_samples = np.array(input_samples_collection_for_evaluation[measure_index])

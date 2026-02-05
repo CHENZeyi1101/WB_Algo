@@ -1,14 +1,14 @@
 import os
 os.environ["PYKEOPS_VERBOSE"] = "0"
+import json
+from pathlib import Path
 
 from Algorithms.Stochastic_FP.entropic_iterative_scheme import entropic_iterative_scheme
 from Algorithms.data_manage import *
 from Experiments.Synthetic_Generation.samplers import *
-from Experiments.Synthetic_Generation.visualize_measures_dim2 import *
 from Experiments.Synthetic_Generation.input_generate_entropic import *
 from Experiments.Synthetic_Generation.MOG import *
-import json
-from pathlib import Path
+from Experiments.CSV_read import *
 
 if __name__ == "__main__":
 

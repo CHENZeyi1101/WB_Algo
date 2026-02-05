@@ -43,27 +43,26 @@ if __name__ == '__main__':
     with open(Cfg_PATH, "r") as f:
         cfg_dict = json.load(f)
 
-    params = cfg_dict["params_synthetic_generation_dim2"]
+    params = cfg_dict["params_bike_sharing"]
 
     # take all items in params
     num_samples = params["num_samples"]
     dim = params["dim"]
     num_measures = params["num_measures"]
     truncated_radius = params["truncated_radius"]
-    instance_identifier = params["instance_identifier"]
-    num_components = params["num_components"]
+    # instance_identifier = params["instance_identifier"]
     MC_size = params["MC_size"]
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
+    instance_dir = f"{cfg_dict['data_dir']}/Bike_Sharing"
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
     dim_range = [dim]
     repeat_range = range(1)
 
-    exp = "SyntheticGeneration"
+    exp = "BikeSharing"
 
-    input_csv_path = f"{instance_dir}/input_samples/csv_files"
+    input_csv_path = instance_dir
 
     g_base_dir = f"{instance_dir}/outputs/CWB_Li_outputs"
 
