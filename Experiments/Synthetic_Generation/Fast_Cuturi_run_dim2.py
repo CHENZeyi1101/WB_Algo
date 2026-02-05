@@ -25,13 +25,17 @@ if __name__ == "__main__":
     dim = params["dim"]
     num_measures = params["num_measures"]
     instance_identifier = params["instance_identifier"]
+    instance_identifier = params["instance_identifier"]
     MC_size = params["MC_size"]
     num_samples = params["num_samples"]
     eval_num_samples = params["eval_num_samples"]
 
     # number of atoms in the discrete supports
     support_size = 10000
+    # number of atoms in the discrete supports
+    support_size = 10000
 
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
     instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
@@ -49,10 +53,12 @@ if __name__ == "__main__":
     input_sampler_for_evaluation.set_streamers()
 
     bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize{MC_size}_numsamples{num_samples}.json"
+    bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize{MC_size}_numsamples{num_samples}.json"
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
     bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
  
+    outputs_dir = f"{instance_dir}/outputs/Fast_Cuturi_outputs_numsamples{num_samples}_support{support_size}"
     outputs_dir = f"{instance_dir}/outputs/Fast_Cuturi_outputs_numsamples{num_samples}_support{support_size}"
     os.makedirs(outputs_dir, exist_ok=True)
 

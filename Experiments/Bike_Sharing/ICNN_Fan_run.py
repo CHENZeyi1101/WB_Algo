@@ -278,26 +278,29 @@ if __name__ == '__main__':
     with open(Cfg_PATH, "r") as f:
         cfg_dict = json.load(f)
 
-    params = cfg_dict["params_synthetic_generation_dim2"]
+    params = cfg_dict["params_bike_sharing"]
 
     # take all items in params
     num_samples = params["num_samples"]
     dim = params["dim"]
     num_measures = params["num_measures"]
     truncated_radius = params["truncated_radius"]
-    instance_identifier = params["instance_identifier"]
-    num_components = params["num_components"]
+    # instance_identifier = params["instance_identifier"]
     MC_size = params["MC_size"]
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
+    instance_dir = f"{cfg_dict['data_dir']}/Bike_Sharing"
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
-    input_csv_path = f"{instance_dir}/input_samples/csv_files"
-    input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
+    input_csv_path = instance_dir
+    split_posterior_sampler = csv_posterior_sampler_BikeSharing(input_csv_path, 
                                                 num_measures, 
-                                                multiplication_factor=1)
-    input_sampler.set_streamers()
+                                                multiplication_factor = 1, 
+                                                type="split",
+                                                usecols=range(7, 16),
+                                                skiprows=52)
+    split_posterior_sampler.set_streamers()
+    print("Split posterior sampler set up.")
 
     cfg = Cfg_class(DIM = dim, NUM_DISTRIBUTION=num_measures, N_TRAIN_SAMPLES=10000)#1000000)
     
@@ -365,7 +368,7 @@ if __name__ == '__main__':
 
     for epoch in range(1, cfg.epochs + 1):
         # Start training
-        train(epoch, input_sampler)
+        train(epoch, split_posterior_sampler)
         if cfg.schedule_learning_rate:
             if epoch % cfg.lr_schedule_per_epoch == 0:
                 for i in range(cfg.NUM_DISTRIBUTION):

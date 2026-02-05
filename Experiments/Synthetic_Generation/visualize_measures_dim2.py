@@ -260,6 +260,7 @@ if __name__ == "__main__":
         measure_samples = input_measure_samples[measure_index]
         # Plot the KDE for each input measure
         plot_2d_measures_kde(measure_samples, bins = 400, plot_radius = plot_radius, scatter=False, plot_dirc=f"{plot_dir}/input_measures", plot_name=f"input_measure_{measure_index}_kde", title=fr"KDE of $\nu_{{{measure_index + 1}}}$ samples")
+        plot_2d_measures_kde(measure_samples, bins = 400, plot_radius = plot_radius, scatter=False, plot_dirc=f"{plot_dir}/input_measures", plot_name=f"input_measure_{measure_index}_kde", title=fr"KDE of $\nu_{{{measure_index + 1}}}$ samples")
         print(f"Input measure {measure_index} KDE plotted.")
     
     for tilde_k in range(entropic_sampler.num_measures * 2):

@@ -6,6 +6,7 @@ import os
 import pickle
 from Experiments.Synthetic_Generation.MOG import *
 from Experiments.Synthetic_Generation.metrics_to_compare import *
+from Experiments.Synthetic_Generation.metrics_to_compare import *
 from Algorithms.Stochastic_FP.entropic_estimate_OT import *
 
 def generate_A_matrices(dim, num_measures, seed = 2000):
@@ -196,11 +197,15 @@ class entropic_input_sampler:
         self.maxeig_grid_size = maxeig_grid_size
         self.surjective_mapping = surjective_mapping
         self.A_matrices_dict = A_matrices_dict
+        self.maxeig_grid_size = maxeig_grid_size
+        self.surjective_mapping = surjective_mapping
+        self.A_matrices_dict = A_matrices_dict
 
     def generate_strong_convexity_param(self):
         r'''
         Set the strong convexity parameter for the entropic OT map estimator
         '''
+        self.strong_convexity_param_dict = {i: 0.0001 for i in range(self.tilde_K)}
         self.strong_convexity_param_dict = {i: 0.0001 for i in range(self.tilde_K)}
 
     def generate_Y_matrices(self):
@@ -208,6 +213,9 @@ class entropic_input_sampler:
         Generate the Y matrices for the entropic OT map estimator (for interpolation purpose)
         '''
         Y_matrix_dict = {}
+        for i in range(self.tilde_K):
+            auxiliary_measure_sampler = self.auxiliary_measure_sampler_set[i]
+            Y = auxiliary_measure_sampler.sample(self.n_k)
         for i in range(self.tilde_K):
             auxiliary_measure_sampler = self.auxiliary_measure_sampler_set[i]
             Y = auxiliary_measure_sampler.sample(self.n_k)
@@ -222,8 +230,10 @@ class entropic_input_sampler:
         The solver is from the ott package.
         '''
         X = self.source_sampler.sample(self.n_k)
+        X = self.source_sampler.sample(self.n_k)
         Y_matrix_dict = self.Y_matrix_dict
         g_vector_dict = {}
+        for i in range(self.tilde_K):
         for i in range(self.tilde_K):
             Y = Y_matrix_dict[i]
             entropic_OT_map_generator = entropic_OT_map_estimate(X, Y, log = False)
@@ -233,9 +243,14 @@ class entropic_input_sampler:
             # here we divide the potential by 2 because the potential returned by entropic_OT_map_estimate is optimal with respect to the cost function norm(x - y) ** 2 without the coefficient 1/2; dividing the potential by 2 makes the interpretation of the parameter theta consistent with Algorithm 3 in the paper
             g_vector_dict[i] = entropic_OT_map_generator.g_potential / 2
 
+
+            # here we divide the potential by 2 because the potential returned by entropic_OT_map_estimate is optimal with respect to the cost function norm(x - y) ** 2 without the coefficient 1/2; dividing the potential by 2 makes the interpretation of the parameter theta consistent with Algorithm 3 in the paper
+            g_vector_dict[i] = entropic_OT_map_generator.g_potential / 2
+
             print(f"Finished generating g vector for auxiliary measure {i}")
         self.g_vector_dict = g_vector_dict
 
+    def entropic_weight_vector(self, x, Y_matrix, g_vector, theta):
     def entropic_weight_vector(self, x, Y_matrix, g_vector, theta):
         r'''
         Compute the entropic weight vector when evaluated at x, given parameter dictionaries.
@@ -246,10 +261,15 @@ class entropic_input_sampler:
 
         # note that here the cost function has the coefficient 1/2
         exponent_vec = (g_vector - norm(x_tile - Y_matrix, axis = 1)**2 / 2) / theta
+        x_tile = np.tile(x, (self.n_k, 1))
+
+        # note that here the cost function has the coefficient 1/2
+        exponent_vec = (g_vector - norm(x_tile - Y_matrix, axis = 1)**2 / 2) / theta
         exponent_vec_max = np.max(exponent_vec)
         exponent_vec -= exponent_vec_max
 
         numerator = np.exp(exponent_vec)
+        return numerator / np.sum(numerator)
         return numerator / np.sum(numerator)
         
     def solve_maxeigen_problem(self, tilde_k):
@@ -263,12 +283,17 @@ class entropic_input_sampler:
         g_vector = self.g_vector_dict[tilde_k]
         theta = self.theta_list[tilde_k]
         grid_space = np.linspace(-self.truncated_radius, self.truncated_radius, self.maxeig_grid_size)
+        theta = self.theta_list[tilde_k]
+        grid_space = np.linspace(-self.truncated_radius, self.truncated_radius, self.maxeig_grid_size)
         max_eigenvalue = 0
         optimal_x = None
 
         for i in tqdm(range(self.maxeig_grid_size), desc= f"tilde_k: {tilde_k}"):
             for j in range(self.maxeig_grid_size): # traverse the grid space   
+        for i in tqdm(range(self.maxeig_grid_size), desc= f"tilde_k: {tilde_k}"):
+            for j in range(self.maxeig_grid_size): # traverse the grid space   
                 x = np.array([grid_space[i], grid_space[j]])
+                w_tilde_k = self.entropic_weight_vector(x, Y_matrix, g_vector, theta)
                 w_tilde_k = self.entropic_weight_vector(x, Y_matrix, g_vector, theta)
 
                 # # old method: slow
@@ -299,17 +324,24 @@ class entropic_input_sampler:
 
         if self.bound_type == "eigen_bound": # only used in 2d case for visually non-trivial measures (slow)
             for tilde_k in range(self.tilde_K):
+            for tilde_k in range(self.tilde_K):
                 max_eigenvalue, _ = self.solve_maxeigen_problem(tilde_k)
                 smoothness_param = max_eigenvalue / self.theta_list[tilde_k] + 2 * self.strong_convexity_param_dict[tilde_k]
                 smoothness_param_dict[tilde_k] = 1.05 * smoothness_param # buffering for the maximization problem
+                smoothness_param = max_eigenvalue / self.theta_list[tilde_k] + 2 * self.strong_convexity_param_dict[tilde_k]
+                smoothness_param_dict[tilde_k] = 1.05 * smoothness_param # buffering for the maximization problem
         if self.bound_type == "norm_bound":
+            for tilde_k in range(self.tilde_K):
             for tilde_k in range(self.tilde_K):
                 # find the max norm in row vectors of Y_matrix
                 Y_matrix = self.Y_matrix_dict[tilde_k]
                 max_norm = np.max(np.linalg.norm(Y_matrix, axis = 1))
                 smoothness_param = max_norm / self.theta_list[tilde_k] + 2 * self.strong_convexity_param_dict[tilde_k]
                 smoothness_param_dict[tilde_k] = 1.05 * smoothness_param
+                smoothness_param = max_norm / self.theta_list[tilde_k] + 2 * self.strong_convexity_param_dict[tilde_k]
+                smoothness_param_dict[tilde_k] = 1.05 * smoothness_param
         self.smoothness_param_dict = smoothness_param_dict
+    
     
 
     def collect_candidate_maps(self, x):
@@ -320,7 +352,14 @@ class entropic_input_sampler:
         
         candidate_map_dict = {}
         x_tile = np.tile(x, (self.n_k, 1))
+        x_tile = np.tile(x, (self.n_k, 1))
         
+        for i in range(self.tilde_K):
+            g_vector = self.g_vector_dict[i]
+            Y_matrix = self.Y_matrix_dict[i]
+
+            # note that here the cost function has the coefficient 1/2
+            exponent_vec = (g_vector - norm(x_tile - Y_matrix, axis = 1)**2 / 2) / self.theta_list[i]
         for i in range(self.tilde_K):
             g_vector = self.g_vector_dict[i]
             Y_matrix = self.Y_matrix_dict[i]
@@ -329,6 +368,9 @@ class entropic_input_sampler:
             exponent_vec = (g_vector - norm(x_tile - Y_matrix, axis = 1)**2 / 2) / self.theta_list[i]
             exponent_vec_max = np.max(exponent_vec)
             exponent_vec -= exponent_vec_max # divide by the maximum value to avoid numerical instability
+            expval_vec = np.exp(exponent_vec)
+            numerator = Y_matrix.T @ expval_vec
+            denominator = np.sum(expval_vec)
             expval_vec = np.exp(exponent_vec)
             numerator = Y_matrix.T @ expval_vec
             denominator = np.sum(expval_vec)
@@ -347,7 +389,16 @@ class entropic_input_sampler:
         wsum_smoothness = np.sum([self.smoothness_param_dict[i] * self.alpha_list[i] for i in range(self.tilde_K)]) / self.num_measures
         beta_list = np.repeat((1 - self.gamma) * np.array(self.alpha_list) / wsum_smoothness, 2)
 
+
+        wsum_smoothness = np.sum([self.smoothness_param_dict[i] * self.alpha_list[i] for i in range(self.tilde_K)]) / self.num_measures
+        beta_list = np.repeat((1 - self.gamma) * np.array(self.alpha_list) / wsum_smoothness, 2)
+
         candidate_map_dict = self.collect_candidate_maps(x)
+
+        candidate_allocation = {k: [] for k in range(self.num_measures)}
+        for i in range(2 * self.tilde_K):
+            b = self.surjective_mapping[i]
+            candidate_allocation[b].append(candidate_map_dict[i] * beta_list[i])
 
         candidate_allocation = {k: [] for k in range(self.num_measures)}
         for i in range(2 * self.tilde_K):
@@ -357,6 +408,7 @@ class entropic_input_sampler:
         # check whether there is any empty allocation
         if check_empty:
             for b in range(self.num_measures):
+            for b in range(self.num_measures):
                 if len(candidate_allocation[b]) == 0:
                     print(f"Empty allocation for measure {b}")
 
@@ -365,8 +417,14 @@ class entropic_input_sampler:
         else:
             measure_samples_dict = {b: np.sum(candidate_allocation[b], axis = 0) + self.gamma * self.A_matrices_dict[b] @ np.squeeze(x) for b in range(self.num_measures)}
         
+        if self.A_matrices_dict is None:
+            measure_samples_dict = {b: np.sum(candidate_allocation[b], axis = 0) for b in range(self.num_measures)}
+        else:
+            measure_samples_dict = {b: np.sum(candidate_allocation[b], axis = 0) + self.gamma * self.A_matrices_dict[b] @ np.squeeze(x) for b in range(self.num_measures)}
+        
         return measure_samples_dict, candidate_map_dict
     
+    def sample(self, sample_size, print_rejection = False):
     def sample(self, sample_size, print_rejection = False):
         r'''
         Generate the input measure samples for a given sample size
@@ -374,10 +432,26 @@ class entropic_input_sampler:
         '''
 
         batch_sample_collection = {k: np.zeros((sample_size, self.dim)) for k in range(self.num_measures)}
+        batch_sample_collection = {k: np.zeros((sample_size, self.dim)) for k in range(self.num_measures)}
 
         for k in range(self.num_measures):
             # source_samples = self.source_sampler.sample(sample_size)
             num_samples_collected = 0
+            num_samples_rejected = 0
+            with tqdm(total=sample_size, desc=f"Sampling input measure {k}") as pbar:
+                while num_samples_collected < sample_size:
+                # for i in tqdm(range(sample_size), desc= f"Generating {sample_size} input measure samples"):
+                    x = self.source_sampler.sample(1, use_truncation = False)
+                    measure_samples_dict, _ = self.generate_input_measure_sample(x) # a dictionary with k keys
+                    if np.linalg.norm(measure_samples_dict[k]) <= self.truncated_radius: # rejection sampling with the specified radius
+                        batch_sample_collection[k][num_samples_collected] = measure_samples_dict[k]
+                        num_samples_collected += 1
+                        pbar.update(1)
+                    else:
+                        num_samples_rejected += 1
+            
+            if print_rejection:
+                print(f"Sampling from input measure {k} complete, {num_samples_rejected} samples rejected")
             num_samples_rejected = 0
             with tqdm(total=sample_size, desc=f"Sampling input measure {k}") as pbar:
                 while num_samples_collected < sample_size:
