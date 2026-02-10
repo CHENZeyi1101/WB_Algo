@@ -49,19 +49,21 @@ if __name__ == "__main__":
     sinkhorn_impl = "geomloss"
     warm_start = None
 
-    bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize{eval_MC_size}_numsamples{eval_num_samples}.json"
-    with open(bary_sample_path, 'r') as json_file:
-        bary_samples_collection_loaded = json.load(json_file)
-    bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
-
     outputs_dir = f"{instance_dir}/outputs/stochastic_FP_outputs"
     os.makedirs(outputs_dir, exist_ok=True)
 
     eval_dir = f"{instance_dir}/samples_for_evaluation"
-    input_sampler_for_evaluation = csv_input_sampler_for_evaluation_SyntheticGeneration(eval_dir, 
-                                                num_measures, 
-                                                multiplication_factor=1)
-    input_sampler_for_evaluation.set_streamers()
+
+    bary_sample_path = f"{eval_dir}/bary_samples_collection.json"
+    with open(bary_sample_path, 'r') as json_file:
+        bary_samples_collection_loaded = json.load(json_file)
+    bary_samples_collection_loaded = {int(k): np.array(v) for k, v in bary_samples_collection_loaded.items()}
+
+    input_sample_path = f"{eval_dir}/input_samples_collection.json"
+    with open(input_sample_path, 'r') as json_file:
+        input_samples_collection_loaded = json.load(json_file)
+    input_samples_collection_loaded = {int(k): {int(i): np.array(u) for i, u in v.items()}
+                                        for k, v in input_samples_collection_loaded.items()}
 
     # Set up the entropic iterative computer
     entropic_iterative_computer = entropic_iterative_scheme(
@@ -75,8 +77,8 @@ if __name__ == "__main__":
         sample_size_scheme = sample_size_scheme,
         reg_param_scheme = reg_param_scheme,
         warm_start = warm_start,
-        bary_sample_collection = bary_samples_collection_loaded, 
-        input_sampler_for_evaluation = input_sampler_for_evaluation,
+        bary_samples_collection = bary_samples_collection_loaded, 
+        input_samples_for_evaluation = input_samples_collection_loaded,
         eval_num_samples = eval_num_samples,
         eval_MC_size = eval_MC_size,
         num_parallel = 5

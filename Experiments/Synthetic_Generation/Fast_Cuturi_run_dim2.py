@@ -43,15 +43,19 @@ if __name__ == "__main__":
     input_sampler.set_streamers()
 
     eval_dir = f"{instance_dir}/samples_for_evaluation"
-    input_sampler_for_evaluation = csv_input_sampler_for_evaluation_SyntheticGeneration(eval_dir, 
-                                                num_measures, 
-                                                multiplication_factor=1)
-    input_sampler_for_evaluation.set_streamers()
 
-    bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize{MC_size}_numsamples{num_samples}.json"
+    bary_sample_path = f"{eval_dir}/bary_samples_collection.json"
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
-    bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
+    bary_samples_collection_loaded = {int(k): np.array(v) for k, v in bary_samples_collection_loaded.items()}
+
+    input_sample_path = f"{eval_dir}/input_samples_collection.json"
+    with open(input_sample_path, 'r') as json_file:
+        input_samples_collection_loaded = json.load(json_file)
+    input_samples_collection_loaded = {int(k): {int(i): np.array(u) for i, u in v.items()}
+                                        for k, v in input_samples_collection_loaded.items()}
+
+    
  
     outputs_dir = f"{instance_dir}/outputs/Fast_Cuturi_outputs_numsamples{num_samples}_support{support_size}"
     os.makedirs(outputs_dir, exist_ok=True)
@@ -77,7 +81,7 @@ if __name__ == "__main__":
 
     # Evaluation
     approx_bary_it = [approx_bary for _ in range(MC_size)]
-    input_measure_samples_collection_it = [input_sampler_for_evaluation.sample(eval_num_samples) for _ in range(MC_size)]
+    input_measure_samples_collection_it = [{k : input_samples_collection_loaded[i][k][:eval_num_samples] for k in range(num_measures)} for i in range(MC_size)]
     true_bary_samples_it = [bary_samples_collection_loaded[str(i)][:eval_num_samples] for i in range(MC_size)]
     
     with Pool(processes = 5) as pool, tqdm(total = MC_size) as pbar:

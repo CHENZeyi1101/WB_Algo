@@ -24,8 +24,8 @@ class entropic_iterative_scheme:
                  sample_size_scheme : list, 
                  reg_param_scheme : list,
                  warm_start : dict | None, 
-                 bary_sample_collection : dict,
-                 input_sampler_for_evaluation,
+                 bary_samples_collection : dict,
+                 input_samples_for_evaluation : dict,
                  eval_num_samples : int,
                  eval_MC_size : int,
                  num_parallel : int = 10):
@@ -57,8 +57,8 @@ class entropic_iterative_scheme:
         self.sinkhorn_impl = sinkhorn_impl
         self.sample_size_scheme = sample_size_scheme
         self.reg_param_scheme = reg_param_scheme
-        self.bary_sample_collection = bary_sample_collection
-        self.input_sampler_for_evaluation = input_sampler_for_evaluation
+        self.bary_samples_collection = bary_samples_collection
+        self.input_samples_for_evaluation = input_samples_for_evaluation
         self.eval_num_samples = eval_num_samples
         self.eval_MC_size = eval_MC_size
         self.num_parallel = num_parallel
@@ -203,8 +203,8 @@ class entropic_iterative_scheme:
             accepted_samples_list = []
 
             eval_samples_it = [self.iterative_sampling(iter, self.eval_num_samples, sample_logger) for _ in range(self.eval_MC_size)]
-            input_measure_samples_collection_it = [self.input_sampler_for_evaluation.sample(self.eval_num_samples) for _ in range(self.eval_MC_size)]
-            true_bary_samples_it = [self.bary_sample_collection[str(i)][:self.eval_num_samples] for i in range(self.eval_MC_size)]
+            input_measure_samples_collection_it = [{k : self.input_samples_for_evaluation[i][k][:self.eval_num_samples] for k in range(self.num_measures)} for i in range(self.eval_MC_size)]
+            true_bary_samples_it = [self.bary_samples_collection[i][:self.eval_num_samples] for i in range(self.eval_MC_size)]
 
             for eval_samples in eval_samples_it:
                 accepted_samples_list.append(eval_samples.tolist())
