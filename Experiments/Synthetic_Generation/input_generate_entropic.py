@@ -7,6 +7,7 @@ import pickle
 from Experiments.Synthetic_Generation.MOG import *
 from Experiments.Synthetic_Generation.metrics_to_compare import *
 from Algorithms.Stochastic_FP.entropic_estimate_OT_ott import *
+from Algorithms.Stochastic_FP.entropic_estimate_OT_old import *
 
 def generate_A_matrices(dim, num_measures, seed = 2000):
     r'''
@@ -227,7 +228,6 @@ class entropic_input_sampler:
         for i in range(self.tilde_K):
             Y = Y_matrix_dict[i]
             entropic_OT_map_generator = entropic_OT_map_estimate_ott(X, Y, log = False)
-            epsilon = epsilon
             entropic_OT_map_generator.get_dual_potential(epsilon = epsilon)
 
             # here we divide the potential by 2 because the potential returned by entropic_OT_map_estimate is optimal with respect to the cost function norm(x - y) ** 2 without the coefficient 1/2; dividing the potential by 2 makes the interpretation of the parameter theta consistent with Algorithm 3 in the paper
@@ -432,7 +432,7 @@ class entropic_input_sampler:
             for k in range(self.num_measures):
                 V_vec[rep] += W2_pot(source_samples, input_samples[k]) / self.num_measures
             
-            print(f"V-valued computed = {V_vec[rep]}")
+            print(f"V-value computed = {V_vec[rep]}")
 
         V_mean = np.mean(V_vec)
         V_std = np.std(V_vec)

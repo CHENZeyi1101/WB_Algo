@@ -75,14 +75,14 @@ if __name__ == "__main__":
         k=support_size,
         init="random",
         numItermax=200,
-        verbose=False,
+        verbose=True,
         seed=42,
     )
 
     # Evaluation
     approx_bary_it = [approx_bary for _ in range(MC_size)]
     input_measure_samples_collection_it = [{k : input_samples_collection_loaded[i][k][:eval_num_samples] for k in range(num_measures)} for i in range(MC_size)]
-    true_bary_samples_it = [bary_samples_collection_loaded[str(i)][:eval_num_samples] for i in range(MC_size)]
+    true_bary_samples_it = [bary_samples_collection_loaded[i][:eval_num_samples] for i in range(MC_size)]
     
     with Pool(processes = 5) as pool, tqdm(total = MC_size) as pbar:
         for V_value, W2_to_bary in pool.imap(evaluate_zipped, 
