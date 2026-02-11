@@ -1,10 +1,6 @@
 
 *.log
 
-*.json
-!Experiments/Synthetic_Generation/cfg.json
-*G_samples.json
-
 *.zip
 # *.csv
 .vscode/settings.json
