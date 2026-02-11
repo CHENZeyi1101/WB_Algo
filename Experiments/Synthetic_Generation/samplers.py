@@ -136,44 +136,6 @@ def load_sampler(load_dir, sampler, sampler_type = "entropic"):
 
 # ------ for configuring entropic sampler ------
 
-def construct_surjective_mapping(tilde_K, num_measures, seed = 120):
-    r'''
-    Construct a surjective mapping from 2 * tilde_K to num_measures
-    To ensure no cancellation of mappings, we will use the following strategy:
-    1. We map the maps with odd indices to the first half of the measures
-    2. We map the maps with even indices to the second half of the measures
-    '''
-    rng_entropy = np.random.RandomState(seed)
-
-    A = list(range(2 * tilde_K))
-    B = list(range(num_measures))
-
-    A_odd = [a for a in A if a % 2 == 1]
-    A_even = [a for a in A if a % 2 == 0]
-
-    B_1 = [b for b in B if b < num_measures // 2]
-    B_2 = [b for b in B if b >= num_measures // 2]
-
-    mapping = {a: None for a in A}
-
-    # map the odd indices to the first half of the measures
-    chosen_A_odd = rng_entropy.choice(A_odd, size=len(B_1), replace=False)
-    for b, a in zip(B_1, chosen_A_odd):
-        mapping[a] = b
-    remaining_A_odd = [a for a in A_odd if mapping[a] is None]
-    for a in remaining_A_odd:
-        mapping[a] = rng_entropy.choice(B_1)
-
-    # map the even indices to the second half of the measures
-    chosen_A_even = rng_entropy.choice(A_even, size=len(B_2), replace=False)
-    for b, a in zip(B_2, chosen_A_even):
-        mapping[a] = b
-    remaining_A_even = [a for a in A_even if mapping[a] is None]
-    for a in remaining_A_even:
-        mapping[a] = rng_entropy.choice(B_2)
-
-    return mapping
-
 if __name__ == "__main__":
     dim = 2
     num_components = 5

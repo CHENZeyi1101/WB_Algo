@@ -1,91 +1,108 @@
+import os
+os.environ["PYKEOPS_VERBOSE"] = "0"
 import numpy as np
 import ot
+from tqdm import tqdm
+from multiprocessing import Pool
+import json
+from pathlib import Path
+
 from Experiments.Synthetic_Generation.samplers import *
-from Experiments.Synthetic_Generation.metrics_to_compare import *
+from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_zipped
 from Experiments.Synthetic_Generation.input_generate_entropic import *
-import json, os
 from Algorithms.Fast_Cuturi.free_support_WB import w2_barycenter_free_support_from_samples
 from Experiments.CSV_read import *
+from Algorithms.data_manage import *
 
 if __name__ == "__main__":
-    dim = 10
-    num_samples = 10000
-    num_measures = 10
-    truncated_radius = 5000
-    MC_size = 20
-    instance_theta = 2000
+    Cfg_PATH = Path(__file__).parent / "cfg.json"
+    with open(Cfg_PATH, "r") as f:
+        cfg_dict = json.load(f)
 
-    source_csv_file = f"../../WB_data/Synthetic_Generation/dim{dim}_data/source_samples/csv_files/source_measure_samples.csv"
-    source_sampler = csv_source_sampler_SyntheticGeneration(source_csv_file, 
-                                                multiplication_factor=1,
-                                                usecols=None,
-                                                skiprows=0)
-    source_sampler.set_streamer()
+    params = cfg_dict["params_synthetic_generation_dim10"]
 
-    input_csv_path = f"../../WB_data/Synthetic_Generation/dim{dim}_data/input_samples/csv_files_InstanceTheta2000"
+    # take all items in params
+    dim = params["dim"]
+    num_measures = params["num_measures"]
+    instance_identifier = params["instance_identifier"]
+    MC_size = params["MC_size"]
+    num_samples = params["num_samples"]
+    eval_num_samples = params["eval_num_samples"]
+
+    # number of atoms in the discrete supports
+    support_size = 10000
+
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
+    # assert existence
+    assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
+
+    input_csv_path = f"{instance_dir}/input_samples/csv_files"
     input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
                                                 num_measures, 
                                                 multiplication_factor=1)
     input_sampler.set_streamers()
 
-    bary_sample_path = f"../../WB_Data/Synthetic_Generation/dim{dim}_data/bary_samples_collection/bary_samples_collection_dim{dim}_MCsize50_numsamples10000.json"
+    eval_dir = f"{instance_dir}/samples_for_evaluation"
+
+    bary_sample_path = f"{eval_dir}/bary_samples_collection.json"
     with open(bary_sample_path, 'r') as json_file:
         bary_samples_collection_loaded = json.load(json_file)
-    bary_samples_collection_loaded = {k: np.array(v) for k, v in bary_samples_collection_loaded.items()}
+    bary_samples_collection_loaded = {int(k): np.array(v) for k, v in bary_samples_collection_loaded.items()}
 
-    data_dir = f"./WB_Algo/Experiments/Synthetic_Generation/dim{dim}_data/InstanceTheta{instance_theta}/Fast_Cuturi_outputs"
-    os.makedirs(data_dir, exist_ok=True)
-    V_values_dir = os.path.join(data_dir, "V_values")
-    W2_to_bary_dir = os.path.join(data_dir, "W2_to_bary")
+    input_sample_path = f"{eval_dir}/input_samples_collection.json"
+    with open(input_sample_path, 'r') as json_file:
+        input_samples_collection_loaded = json.load(json_file)
+    input_samples_collection_loaded = {int(k): {int(i): np.array(u) for i, u in v.items()}
+                                        for k, v in input_samples_collection_loaded.items()}
+
+    
+ 
+    outputs_dir = f"{instance_dir}/outputs/Fast_Cuturi_outputs"
+    os.makedirs(outputs_dir, exist_ok=True)
+
+    V_values_dir = os.path.join(outputs_dir, "V_values")
+    W2_to_bary_dir = os.path.join(outputs_dir, "W2_to_bary")
     os.makedirs(V_values_dir, exist_ok=True)
     os.makedirs(W2_to_bary_dir, exist_ok=True)
 
     V_values_list = []
     W2_to_bary_list = []
-    for i in range(MC_size):
-        print(f"Computing barycenter sample {i+1}/{MC_size}...")
-        input_samples_collection = csv_sampler.sample(num_samples)
-        samples_list = [np.array(input_samples_collection[key]) for key in sorted(input_samples_collection.keys())]
-        approx_bary = w2_barycenter_free_support_from_samples(
-            samples_list,
-            k=5000,
-            init="kmeans",
-            numItermax=200,
-            verbose=True,
-            seed=42,
-        )
-        bary_samples = bary_samples_collection_loaded[str(i)]
 
-        # compute V-value
-        V_value = 0
-        for measure_index in range(num_measures):
-            input_samples = np.array(input_samples_collection[measure_index])
-            V_value += W2_pot(input_samples, approx_bary)
-        V_value /= num_measures
-        V_values_list.append(V_value)
-        print(f"V-value for barycenter sample {i}: {V_value}")
+    input_samples_collection = input_sampler.sample(num_samples)
+    samples_list = [np.array(input_samples_collection[key]) for key in sorted(input_samples_collection.keys())]
+    approx_bary = w2_barycenter_free_support_from_samples(
+        samples_list,
+        k=support_size,
+        init="random",
+        numItermax=200,
+        verbose=True,
+        seed=942,
+    )
 
-        # compute W2 to barycenter samples
-        W2_sq = W2_pot(approx_bary, bary_samples)
-        W2_to_bary_list.append(W2_sq)
-        print(f"W2 squared to barycenter samples for barycenter sample {i}: {W2_sq}")
-
-        # save V-values and W2_to_bary values
-        V_values_path = os.path.join(V_values_dir, f"V_values.json")
-        with open(V_values_path, 'w') as json_file:
-            json.dump(V_values_list, json_file) 
-
-        W2_to_bary_path = os.path.join(W2_to_bary_dir, f"W2_to_bary.json")
-        with open(W2_to_bary_path, 'w') as json_file:
-            json.dump(W2_to_bary_list, json_file)
-
+    # Evaluation
+    approx_bary_it = [approx_bary for _ in range(MC_size)]
+    input_measure_samples_collection_it = [{k : input_samples_collection_loaded[i][k][:eval_num_samples] for k in range(num_measures)} for i in range(MC_size)]
+    true_bary_samples_it = [bary_samples_collection_loaded[i][:eval_num_samples] for i in range(MC_size)]
     
+    with Pool(processes = 5) as pool, tqdm(total = MC_size) as pbar:
+        for V_value, W2_to_bary in pool.imap(evaluate_zipped, 
+                                zip(approx_bary_it, 
+                                    input_measure_samples_collection_it, 
+                                    true_bary_samples_it)):
+            V_values_list.append(V_value)
+            W2_to_bary_list.append(W2_to_bary)
+            pbar.update(1)
+            pbar.refresh()
 
-   
+    # save V-values and W2_to_bary values
+    V_values_dict = {
+        "mean": np.mean(V_values_list),
+        "std": np.std(V_values_list),
+        "values": V_values_list}
+    save_json(V_values_dict, V_values_dir, "V_values.json")
 
-
-
-
-
-
-    
+    W2_to_bary_dict = {
+        "mean": np.mean(W2_to_bary_list),
+        "std": np.std(W2_to_bary_list),
+        "values": W2_to_bary_list}
+    save_json(W2_to_bary_dict, W2_to_bary_dir, "W2_to_bary.json")

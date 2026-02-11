@@ -106,14 +106,3 @@ if __name__ == "__main__":
         "std": np.std(W2_to_bary_list),
         "values": W2_to_bary_list}
     save_json(W2_to_bary_dict, W2_to_bary_dir, "W2_to_bary.json")
-
-    
-
-   
-
-
-
-
-
-
-    

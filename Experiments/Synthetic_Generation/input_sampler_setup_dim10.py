@@ -1,8 +1,8 @@
 from pathlib import Path
 import json, os
 
+from Experiments.Synthetic_Generation.input_generate_entropic import entropic_input_sampler, generate_A_matrices, construct_surjective_mapping
 from Experiments.CSV_read import *
-from Experiments.Synthetic_Generation.input_generate_entropic import entropic_input_sampler, generate_A_matrices
 
 if __name__ == "__main__":
 
@@ -10,7 +10,7 @@ if __name__ == "__main__":
     with open(Cfg_PATH, "r") as f:
         cfg_dict = json.load(f)
 
-    params = cfg_dict["params_synthetic_generation_dim2"]
+    params = cfg_dict["params_synthetic_generation_dim10"]
 
     # take all items in params
     dim = params["dim"]
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     theta_list = params["theta_list"]
     gamma = params["gamma"]
     num_components = params["num_components"]
-    surjective_mapping = {int(key) : params["surjective_mapping"][key] for key in params["surjective_mapping"]}
+    surjective_mapping_seed = params["seeds"]["surjective_mapping_seed"]
     A_matrices_seed = params["seeds"]["A_matrices_seed"]
     num_measures = len(auxiliary_info["auxiliary_seeds_list"])
 
@@ -42,6 +42,7 @@ if __name__ == "__main__":
     samplers_info_dir = f"{instance_dir}/samplers_info"
     os.makedirs(samplers_info_dir, exist_ok=True)
 
+    surjective_mapping = construct_surjective_mapping(tilde_K = num_measures, num_measures = num_measures, seed = surjective_mapping_seed)
     A_matrices = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
 
     entropic_sampler = entropic_input_sampler.setup(dim = dim,
@@ -54,7 +55,7 @@ if __name__ == "__main__":
                                                     truncated_radius = truncated_radius,
                                                     surjective_mapping = surjective_mapping,
                                                     A_matrices = A_matrices,
-                                                    maxeig_grid_size = 500,
+                                                    maxeig_grid_size = None,
                                                     save_dir = samplers_info_dir)
 
     
