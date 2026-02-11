@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     
  
-    outputs_dir = f"{instance_dir}/outputs/Fast_Cuturi_outputs_numsamples{num_samples}_support{support_size}"
+    outputs_dir = f"{instance_dir}/outputs/Fast_Cuturi_outputs"
     os.makedirs(outputs_dir, exist_ok=True)
 
     V_values_dir = os.path.join(outputs_dir, "V_values")
