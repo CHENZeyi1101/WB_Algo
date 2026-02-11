@@ -1,6 +1,7 @@
 {
   "data_dir": "../../WB_data/Bike_Sharing",
   "stan_dir": "../../WB_data/Bike_Sharing/stan",
+  "samples_dir": "../../WB_data/Bike_Sharing/generated_samples",
 
   "params_posterior_aggregation_dim9": {
     "dim": 9,
