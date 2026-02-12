@@ -1,8 +1,8 @@
 from pathlib import Path
 import json, os
 
-from Experiments.Synthetic_Generation.input_generate_entropic import entropic_input_sampler
 from Experiments.CSV_read import *
+from Experiments.Synthetic_Generation.input_generate_entropic import entropic_input_sampler, generate_A_matrices
 
 if __name__ == "__main__":
 
@@ -35,11 +35,14 @@ if __name__ == "__main__":
     gamma = params["gamma"]
     num_components = params["num_components"]
     surjective_mapping = {int(key) : params["surjective_mapping"][key] for key in params["surjective_mapping"]}
-    A_matrix_seed = params["seeds"]["A_matrices_seed"]
+    A_matrices_seed = params["seeds"]["A_matrices_seed"]
+    num_measures = len(auxiliary_info["auxiliary_seeds_list"])
 
     instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
     samplers_info_dir = f"{instance_dir}/samplers_info"
     os.makedirs(samplers_info_dir, exist_ok=True)
+
+    A_matrices = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
 
     entropic_sampler = entropic_input_sampler.setup(dim = dim,
                                                     source_info = source_info,
@@ -50,7 +53,7 @@ if __name__ == "__main__":
                                                     gamma = gamma,
                                                     truncated_radius = truncated_radius,
                                                     surjective_mapping = surjective_mapping,
-                                                    A_matrices_seed = A_matrix_seed,
+                                                    A_matrices = A_matrices,
                                                     maxeig_grid_size = 500,
                                                     save_dir = samplers_info_dir)
 

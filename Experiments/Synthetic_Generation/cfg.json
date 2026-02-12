@@ -1,6 +1,5 @@
 {
   "data_dir": "../../WB_data",
-
   "params_synthetic_generation_dim2": {
     "dim": 2,
     "num_components": 5,
@@ -9,20 +8,33 @@
     "truncated_radius": 225,
     "n_k": 1000,
     "instance_identifier": "FINAL",
-    "alpha_list": [1, 1, 1, 1, 1],
-    "theta_list": [2000, 1800, 900, 600, 2000],
+    "alpha_list": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "theta_list": [
+      2000,
+      1800,
+      900,
+      600,
+      2000
+    ],
     "gamma": 0.05,
     "surjective_mapping": {
-        "0": 0,
-        "2": 1,
-        "4": 2,
-        "6": 1,
-        "8": 2,
-        "1": 4,
-        "3": 3,
-        "5": 3,
-        "7": 4,
-        "9": 0},
+      "0": 0,
+      "2": 1,
+      "4": 2,
+      "6": 1,
+      "8": 2,
+      "1": 4,
+      "3": 3,
+      "5": 3,
+      "7": 4,
+      "9": 0
+    },
     "MC_size": 20,
     "eval_num_samples": 10000,
     "seeds": {
@@ -31,34 +43,52 @@
       "true_V_val_source_sampling_seed": 6202,
       "source_components_seed": 1009,
       "master_auxiliary_sampling_seed": 3037,
-      "auxiliary_seeds_list": [1010, 1018, 1014, 1016, 1038],
+      "auxiliary_seeds_list": [
+        1010,
+        1018,
+        1014,
+        1016,
+        1038
+      ],
       "surjective_mapping_seed": 120,
       "A_matrices_seed": 2000
     }
   },
-
   "params_synthetic_generation_dim10": {
     "dim": 10,
     "num_components": 5,
     "num_samples": 10000,
     "num_measures": 10,
-    "truncated_radius": 225,
+    "truncated_radius": 500,
     "n_k": 1000,
     "instance_identifier": "TRIAL1",
-    "alpha_list": [1, 1, 1, 1, 1],
-    "theta_list": [2000, 1800, 900, 600, 2000],
+    "alpha_list": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "theta_list": [
+      2000,
+      1800,
+      900,
+      600,
+      2000
+    ],
     "gamma": 0.05,
     "surjective_mapping": {
-        "0": 0,
-        "2": 1,
-        "4": 2,
-        "6": 1,
-        "8": 2,
-        "1": 4,
-        "3": 3,
-        "5": 3,
-        "7": 4,
-        "9": 0}, 
+      "0": 0,
+      "2": 1,
+      "4": 2,
+      "6": 1,
+      "8": 2,
+      "1": 4,
+      "3": 3,
+      "5": 3,
+      "7": 4,
+      "9": 0
+    },
     "MC_size": 20,
     "eval_num_samples": 10000,
     "seeds": {
@@ -67,9 +97,23 @@
       "true_V_val_source_sampling_seed": 96202,
       "source_components_seed": 91009,
       "master_auxiliary_sampling_seed": 93037,
-      "auxiliary_seeds_list": [91010, 91018, 91014, 91016, 91038],
+      "auxiliary_seeds_list": [
+        91010,
+        91018,
+        91014,
+        91016,
+        91038
+      ],
       "surjective_mapping_seed": 9120,
       "A_matrices_seed": 92000
     }
+  },
+  "devices": {
+    "WGHA_Kim": "cpu",
+    "Fast_Cuturi": "cpu",
+    "CWB_Li": "mps",
+    "WIN_Korotin": "mps",
+    "ICNN_Fan": "mps",
+    "stochastic_FP": "cpu"
   }
 }

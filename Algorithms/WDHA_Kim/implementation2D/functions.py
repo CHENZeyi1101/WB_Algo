@@ -161,11 +161,10 @@ def frechet_mean(dists, n_iter,name, plot_option = False,save_option = True, ret
     lr = np.exp(-(i+1)/n_iter)
     rho = np.ones_like(rd)
     bf.pushforward(rho, id+ lr*(np.mean(prev_psi,axis=0)-id), rd)
-    # make sure rd is normalized
-    rd = rho / np.sum(rho)
+    rd = rho
 
-    if (i+1) % 50 == 0:
-      print(f"Number of Iterations : {i+1}")
+    # if (i+1) % 50 == 0:
+    #   print(f"Number of Iterations : {i+1}")
   toc = time()
   if plot_option:
     plotting(dists, rd,name,save_option = save_option)

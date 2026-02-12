@@ -1,15 +1,13 @@
 
 *.log
 
-*.json
-!Experiments/Synthetic_Generation/cfg.json
-*G_samples.json
-
 *.zip
 # *.csv
 .vscode/settings.json
 *.pyc
 .DS_Store
+
+Experiments/Bike_Sharing/data_outputs/stochastic_FP_outputs/G_samples
 
 Algorithms/WDHA_Kim/implementation2D/.DS_Store
 Experiments/Bike_Sharing/.DS_Store
@@ -30,3 +28,4 @@ log_dir/
 # BFM 
 bfm/
 
+Experiments/Bike_Sharing/.DS_Store

@@ -7,7 +7,44 @@ import pickle
 from Experiments.Synthetic_Generation.MOG import *
 from Experiments.Synthetic_Generation.metrics_to_compare import *
 from Algorithms.Stochastic_FP.entropic_estimate_OT_ott import *
-from Algorithms.Stochastic_FP.entropic_estimate_OT_old import *
+
+def construct_surjective_mapping(tilde_K, num_measures, seed = 120):
+    r'''
+    Construct a surjective mapping from 2 * tilde_K to num_measures
+    To ensure no cancellation of mappings, we will use the following strategy:
+    1. We map the maps with odd indices to the first half of the measures
+    2. We map the maps with even indices to the second half of the measures
+    '''
+    rng_entropy = np.random.RandomState(seed)
+
+    A = list(range(2 * tilde_K))
+    B = list(range(num_measures))
+
+    A_odd = [a for a in A if a % 2 == 1]
+    A_even = [a for a in A if a % 2 == 0]
+
+    B_1 = [b for b in B if b < num_measures // 2]
+    B_2 = [b for b in B if b >= num_measures // 2]
+
+    mapping = {a: None for a in A}
+
+    # map the odd indices to the first half of the measures
+    chosen_A_odd = rng_entropy.choice(A_odd, size=len(B_1), replace=False)
+    for b, a in zip(B_1, chosen_A_odd):
+        mapping[a] = b
+    remaining_A_odd = [a for a in A_odd if mapping[a] is None]
+    for a in remaining_A_odd:
+        mapping[a] = rng_entropy.choice(B_1)
+
+    # map the even indices to the second half of the measures
+    chosen_A_even = rng_entropy.choice(A_even, size=len(B_2), replace=False)
+    for b, a in zip(B_2, chosen_A_even):
+        mapping[a] = b
+    remaining_A_even = [a for a in A_even if mapping[a] is None]
+    for a in remaining_A_even:
+        mapping[a] = rng_entropy.choice(B_2)
+
+    return mapping
 
 def generate_A_matrices(dim, num_measures, seed = 2000):
     r'''
@@ -94,7 +131,7 @@ class entropic_input_sampler:
               gamma,
               truncated_radius,
               surjective_mapping,
-              A_matrices_seed,
+              A_matrices,
               maxeig_grid_size,
               save_dir):
         source_sampler = MixtureOfGaussians(dim = dim, 
@@ -113,7 +150,6 @@ class entropic_input_sampler:
             auxiliary_measure_sampler_set.append(auxiliary_measure_sampler)
         
         num_measures = len(auxiliary_measure_sampler_set)
-        A_matrices_dict = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
 
         if dim == 2:
             bound_type = "eigen_bound"
@@ -131,7 +167,7 @@ class entropic_input_sampler:
                                               truncated_radius = truncated_radius,
                                               bound_type = bound_type,
                                               surjective_mapping = surjective_mapping,
-                                              A_matrices_dict = A_matrices_dict,
+                                              A_matrices_dict = A_matrices,
                                               maxeig_grid_size = maxeig_grid_size)
         
         # generate strong convexity parameters of the mappings.
@@ -287,8 +323,6 @@ class entropic_input_sampler:
                     max_eigenvalue = max_eigenvalue_candidate
                     optimal_x = x
 
-        print(f"max eigenvalue for {tilde_k}: {max_eigenvalue}.")
-
         return max_eigenvalue, optimal_x
     
     def generate_smoothness_param(self):
@@ -300,15 +334,17 @@ class entropic_input_sampler:
         if self.bound_type == "eigen_bound": # only used in 2d case for visually non-trivial measures (slow)
             for tilde_k in range(self.tilde_K):
                 max_eigenvalue, _ = self.solve_maxeigen_problem(tilde_k)
+                print(f"max eigenvalue for {tilde_k}: {max_eigenvalue}.")
                 smoothness_param = max_eigenvalue / self.theta_list[tilde_k] + 2 * self.strong_convexity_param_dict[tilde_k]
                 smoothness_param_dict[tilde_k] = 1.05 * smoothness_param # buffering for the maximization problem
         if self.bound_type == "norm_bound":
             for tilde_k in range(self.tilde_K):
                 # find the max norm in row vectors of Y_matrix
                 Y_matrix = self.Y_matrix_dict[tilde_k]
-                max_norm = np.max(np.linalg.norm(Y_matrix, axis = 1))
-                smoothness_param = max_norm / self.theta_list[tilde_k] + 2 * self.strong_convexity_param_dict[tilde_k]
-                smoothness_param_dict[tilde_k] = 1.05 * smoothness_param
+                max_normsq = np.max(np.sum(np.square(Y_matrix), axis = 1))
+                print(f"max squared norm for {tilde_k}: {max_normsq}.")
+                smoothness_param = max_normsq / self.theta_list[tilde_k] + 2 * self.strong_convexity_param_dict[tilde_k]
+                smoothness_param_dict[tilde_k] = 1.0 * smoothness_param
         self.smoothness_param_dict = smoothness_param_dict
     
 

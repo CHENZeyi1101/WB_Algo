@@ -1,0 +1,15 @@
+{
+  "data_dir": "../../WB_data/Bike_Sharing",
+  "stan_dir": "../../WB_data/Bike_Sharing/stan",
+  "samples_dir": "../../WB_data/Bike_Sharing/generated_samples",
+
+  "params_posterior_aggregation_dim9": {
+    "dim": 9,
+    "selected_columns": ["season", "hr", "workingday", "weathersit", "temp", "atemp", "hum", "windspeed"],
+    "truncated_radius": 5,
+    "n_k": 1000,
+    "instance_identifier": "FINAL",
+    "MC_size": 20,
+    "eval_num_samples": 10000
+  }
+}

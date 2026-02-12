@@ -43,7 +43,9 @@ class StandardNormalSampler(Sampler):
         self.mean = np.zeros(dim, dtype=np.float32)
         self.var, self.cov = float(dim), np.eye(dim, dtype=np.float32)
         
-    def sample(self, size=10):
+    def sample(self, size=10, seed = None):
+        if seed is not None:
+            torch.manual_seed(seed)
         return torch.randn(
             size, self.dim,
             device=self.device
