@@ -19,7 +19,17 @@ Caveat: check customized_template.yaml in Algorithms/CWB_Li/cwb/templates to ens
 
 
 if __name__ == '__main__':
-    
+    np.random.seed(44)
+    tf.random.set_seed(44)
+
+    # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+    # gpu_devices = tf.config.experimental.list_physical_devices('GPU')
+    # if len(gpu_devices) > 0:
+    #     tf.config.experimental.set_memory_growth(gpu_devices[0], True)
+
+    # ---- FORCE CPU ONLY ----
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
     # ---- Reproducibility ----
     np.random.seed(44)
     tf.random.set_seed(44)
@@ -27,6 +37,9 @@ if __name__ == '__main__':
     # ---- Reduce TF logging ----
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
+    # ---- (Optional) verify ----
+    print("GPUs visible to TF:", tf.config.list_physical_devices("GPU"))
+    print("CPUs visible to TF:", tf.config.list_physical_devices("CPU"))
 
     ##############################
 
@@ -34,7 +47,7 @@ if __name__ == '__main__':
     with open(Cfg_PATH, "r") as f:
         cfg_dict = json.load(f)
 
-    params = cfg_dict["params_synthetic_generation_dim2"]
+    params = cfg_dict["params_synthetic_generation_dim10"]
 
     # take all items in params
     dim = params["dim"]

@@ -82,7 +82,7 @@ def train(epoch, input_sampler):
 
     for batch_idx, real_data in enumerate(train_loader):
         # real_data = real_data.cuda(PTU.device)
-        real_data = real_data.cpu()
+        real_data = real_data.to(DEVICE)
 
         miu_i = real_data[:, :, 0:cfg.NUM_DISTRIBUTION]
         epsilon = real_data[:, :, cfg.NUM_DISTRIBUTION]
@@ -94,9 +94,9 @@ def train(epoch, input_sampler):
         g_constraints_loss_value_batch = 0  # containing four g networks
         remaining_f_loss_value_batch = [0] * cfg.NUM_DISTRIBUTION
         mu_2moment_loss_value_batch = 0
-        miu_mean_value_batch = torch.zeros([cfg.INPUT_DIM])
-        miu_var_value_batch = np.zeros(
-            [cfg.INPUT_DIM, cfg.INPUT_DIM])
+        miu_mean_value_batch = torch.zeros([cfg.INPUT_DIM]).to(DEVICE)
+        miu_var_value_batch = torch.zeros(
+            [cfg.INPUT_DIM, cfg.INPUT_DIM]).to(DEVICE)
 
         ######################################################
         #                Medium Loop Begin                   #
@@ -149,9 +149,9 @@ def train(epoch, input_sampler):
             ######################################################
             #                Inner Loop Ends                     #
             ######################################################
-            miu = generator_h(epsilon)
-            miu_mean = miu.mean(dim=0).cpu()
-            miu_var = np.cov(miu.cpu().detach().numpy().T)
+            miu = generator_h(epsilon).to(DEVICE)
+            miu_mean = miu.mean(dim=0).to(DEVICE)
+            miu_var = torch.from_numpy(np.cov(miu.cpu().detach().numpy().T)).float().to(DEVICE)
             miu_mean_value_batch += miu_mean
             miu_var_value_batch += miu_var
 
@@ -299,13 +299,14 @@ if __name__ == '__main__':
                                                 multiplication_factor=1)
     input_sampler.set_streamers()
 
+    device = cfg_dict["devices"]["ICNN_Fan"]
+    DEVICE = torch.device(device)
+
     cfg = Cfg_class(DIM = dim, NUM_DISTRIBUTION=num_measures, N_TRAIN_SAMPLES=10000)#1000000)
     
     # gpus_choice = GPUtil.getFirstAvailable(
     #     order='random', maxLoad=0.5, maxMemory=0.5, attempts=5, interval=900, verbose=False)
     # PTU.set_gpu_mode(True, gpus_choice[0])
-
-    PTU.set_gpu_mode(False, 0)
 
     cfg.INPUT_DIM = dim
     cfg.OUTPUT_DIM = cfg.INPUT_DIM
@@ -342,10 +343,10 @@ if __name__ == '__main__':
 
         # convex_f[i].cuda(PTU.device)
         # convex_g[i].cuda(PTU.device)
-        convex_f[i].cpu()
-        convex_g[i].cpu()
+        convex_f[i].to(DEVICE)
+        convex_g[i].to(DEVICE)
     # generator_h.cuda(PTU.device)
-    generator_h.cpu()
+    generator_h.to(DEVICE)
 
     optimizer_f = []
     optimizer_g = []

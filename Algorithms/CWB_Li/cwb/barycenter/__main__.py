@@ -27,6 +27,7 @@ if __name__ == '__main__':
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     gpu_devices = tf.config.experimental.list_physical_devices('GPU')
     if len(gpu_devices) > 0:
+        print('GPUs detected: ', len(gpu_devices))
         gpu_id = conf.get('GPU', 0)
         if args.gpu is not None:
             gpu_id = args.gpu
