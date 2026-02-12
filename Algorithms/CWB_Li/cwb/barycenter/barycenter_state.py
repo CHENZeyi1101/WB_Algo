@@ -382,7 +382,7 @@ class BarycenterState:
         with tf.GradientTape() as tape:
             obj = 0
             reg_tot = 0
-            for i in tqdm(range(self.num_sources), desc="Training potentials"):
+            for i in range(self.num_sources):
                 w = self.weight_list[i]
                 f = self.potential_f_list[i]
                 g = self.potential_g_list[i]
@@ -402,15 +402,11 @@ class BarycenterState:
         grads = tape.gradient(neg_obj, self.potential_vars)
         self.potential_optimizer.apply_gradients(zip(grads, self.potential_vars))
 
-        print("check")
 
         if self.conf['moving_averages']['potential_enabled']:
             self.potential_MA.update_step()
 
-        print("end training potentials...")
-
         self.potential_step.assign_add(1)
-        print("trained potentials for one step.")
 
         return obj, reg_tot
 

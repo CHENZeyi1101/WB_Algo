@@ -5,7 +5,25 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Module",
+            "name": "Python Debugger: CWB_Li_run_dim2",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "Experiments.Synthetic_Generation.CWB_Li_run_dim2"
+        },
+        {
+            "name": "Python Debugger: ICNN_Fan_run_dim2",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "Experiments.Synthetic_Generation.ICNN_Fan_run_dim2"
+        },
+        {
+            "name": "Python Debugger: WIN_Korotin_run_dim2",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "Experiments.Synthetic_Generation.WIN_Korotin_run_dim2"
+        },
+        {
+            "name": "Python Debugger: stochastic_FP_run_dim2",
             "type": "debugpy",
             "request": "launch",
             "module": "Experiments.Synthetic_Generation.stochastic_FP_run_dim2",
