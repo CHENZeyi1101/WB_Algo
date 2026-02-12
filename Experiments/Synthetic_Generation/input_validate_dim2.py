@@ -61,6 +61,7 @@ if __name__ == "__main__":
             norm_sq = np.sum((input_mat - input_mat[i, :]) ** 2, axis=1)
             norm_sq[i] = 1
             innerprod_vec = np.sum((input_mat - input_mat[i, :]) * (Brenier_grad_mat_list[k] - Brenier_grad_mat_list[k][i, :]), axis=1) / norm_sq
+            # see Theorem~2.1.9 in Nesterov's book for equivalent representations of strong convexity
             innerprod_vec[i] = np.inf
             strong_convexity_LB = np.minimum(strong_convexity_LB, np.min(innerprod_vec))
             innerprod_vec[i] = -np.inf
