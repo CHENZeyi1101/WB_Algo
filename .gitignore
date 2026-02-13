@@ -26,8 +26,9 @@ results/
 Algorithms/CWB_Li/result/
 Algorithms/CWB_Li/results/
 log_dir/
+
 # BFM 
 bfm/
 
-Experiments/Bike_Sharing/.DS_Store
+# binary
 Experiments/Bike_Sharing/bike_sharing_PoissonGLM

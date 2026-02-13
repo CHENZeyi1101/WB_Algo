@@ -111,6 +111,10 @@ if __name__ == "__main__":
     num_measures = params["num_measures"]
     MC_size = params["MC_size"]
 
+    hi = truncated_radius
+    lo = -truncated_radius
+    L = hi - lo
+
     eval_dir = f"{instance_dir}/samples_for_evaluation"
 
     bary_sample_path = f"{eval_dir}/bary_samples_collection.json"
@@ -124,7 +128,7 @@ if __name__ == "__main__":
     input_samples_collection_loaded = {int(k): {int(i): np.array(u) for i, u in v.items()}
                                         for k, v in input_samples_collection_loaded.items()}
 
-    outputs_dir = f"{instance_dir}/outputs/NCVCC_Kim_outputs"
+    outputs_dir = f"{instance_dir}/outputs/WDHA_Kim_outputs"
     os.makedirs(outputs_dir, exist_ok=True)
 
     V_values_dir = os.path.join(outputs_dir, "V_values")
@@ -142,13 +146,13 @@ if __name__ == "__main__":
 
     for i in range(num_measures):
         density_unit_i = np.load(f"{outputs_dir}/density_unit_{i}.npy")
-        plot_density_heatmap(density_unit_i, 0, 1, title=f"NCVCC input density {i} (unit mass)", show_colorbar=True, plot_dir = plot_dir, filename = f"density_unit_{i}.png")
+        plot_density_heatmap(density_unit_i, 0, 1, title=f"WDHA input density {i} (unit mass)", show_colorbar=True, plot_dir = plot_dir, filename = f"density_unit_{i}.png")
     
     bary_density_unit = np.load(f"{outputs_dir}/barycenter_density_unit.npy")
-    plot_density_heatmap(bary_density_unit, 0, 1, title="NCVCC barycenter density (unit mass)", show_colorbar=True, plot_dir = plot_dir, filename = "barycenter_density_unit.png")
+    plot_density_heatmap(bary_density_unit, 0, 1, title="WDHA barycenter density (unit mass)", show_colorbar=True, plot_dir = plot_dir, filename = "barycenter_density_unit.png")
 
     mu_WGHA_scaled = mu_WGHA_unit / (L * L)  # density w.r.t (x,y) coords
-    plot_density_heatmap(mu_WGHA_scaled, lo, hi, title="NCVCC barycenter density (scaled)", show_colorbar=True, plot_dir = plot_dir, filename = "barycenter_density_scaled.png")
+    plot_density_heatmap(mu_WGHA_scaled, lo, hi, title="WDHA barycenter density (scaled)", show_colorbar=True, plot_dir = plot_dir, filename = "barycenter_density_scaled.png")
 
     # sample from the approximated barycenter and evaluate
 

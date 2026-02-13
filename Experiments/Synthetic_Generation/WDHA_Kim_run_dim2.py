@@ -101,11 +101,10 @@ if __name__ == "__main__":
 
     hi = truncated_radius
     lo = -truncated_radius
-    L = hi - lo
 
     n1, n2 = 2048, 2048  # grid size for WGHA_Kim
 
-    outputs_dir = f"{instance_dir}/outputs/NCVCC_Kim_outputs"
+    outputs_dir = f"{instance_dir}/outputs/WDHA_Kim_outputs"
     os.makedirs(outputs_dir, exist_ok=True)
 
     input_csv_dir = f"{instance_dir}/input_samples/csv_files"
@@ -113,17 +112,6 @@ if __name__ == "__main__":
                                                 num_measures, 
                                                 multiplication_factor=1)
     input_sampler.set_streamers()
-
-    bary_sample_path = f"{instance_dir}/samples_for_evaluation/bary_samples_collection_dim{dim}_MCsize{MC_size}_numsamples{num_samples}.json"
-    with open(bary_sample_path, 'r') as json_file:
-        bary_samples_collection_loaded = json.load(json_file)
-    bary_samples_collection_loaded = {k: np.array(v)[:1000] for k, v in bary_samples_collection_loaded.items()}
- 
-    eval_dir = f"{instance_dir}/samples_for_evaluation"
-    input_sampler_for_evaluation = csv_input_sampler_for_evaluation_SyntheticGeneration(eval_dir, 
-                                                num_measures, 
-                                                multiplication_factor=1)
-    input_sampler_for_evaluation.set_streamers()
 
     input_samples_collection = input_sampler.sample(num_samples)
 
