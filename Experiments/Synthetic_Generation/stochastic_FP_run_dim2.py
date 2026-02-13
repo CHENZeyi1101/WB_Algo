@@ -41,8 +41,8 @@ if __name__ == "__main__":
     rand_state = np.random.RandomState(seed = 7777)
     init_method = {"type": "moment", "sample_size": 10000}
     truncate_radius = params["truncated_radius"]
-    sample_size_scheme = [20000, 20000, 40000, 80000, 160000, 320000, 320000, 320000]
-    reg_param_scheme = [2, 2, 2, 2, 2, 2, 2, 2]
+    sample_size_scheme = [5000, 5000, 10000, 10000, 20000, 20000, 40000, 80000, 160000, 160000]
+    reg_param_scheme = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
     # sinkhorn_impl = "ott"
     # warm_start = {"type": "first-order"}
 
