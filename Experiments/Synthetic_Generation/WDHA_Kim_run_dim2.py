@@ -1,7 +1,6 @@
 import json
 from Experiments.CSV_read import *
 from Algorithms.WDHA_Kim.implementation2D.functions import *
-from Experiments.Synthetic_Generation.metrics_to_compare import *
 import os
 
 import numpy as np

@@ -1,9 +1,10 @@
+from multiprocessing import Pool
+import matplotlib.pyplot as plt
+
 from Experiments.Synthetic_Generation.metrics_to_compare import *
 from Experiments.CSV_read import *
-from Experiments.Synthetic_Generation.WDHA_Kim_run_dim2 import *
 from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_zipped
 from Algorithms.data_manage import *
-from multiprocessing import Pool
 
 def plot_density_heatmap(dens_xy, lo, hi, title=None, show_colorbar=True, plot_dir = None, filename = None):
     """
@@ -148,8 +149,8 @@ if __name__ == "__main__":
         density_unit_i = np.load(f"{outputs_dir}/density_unit_{i}.npy")
         plot_density_heatmap(density_unit_i, 0, 1, title=f"WDHA input density {i} (unit mass)", show_colorbar=True, plot_dir = plot_dir, filename = f"density_unit_{i}.png")
     
-    bary_density_unit = np.load(f"{outputs_dir}/barycenter_density_unit.npy")
-    plot_density_heatmap(bary_density_unit, 0, 1, title="WDHA barycenter density (unit mass)", show_colorbar=True, plot_dir = plot_dir, filename = "barycenter_density_unit.png")
+    mu_WGHA_unit = np.load(f"{outputs_dir}/barycenter_density_unit.npy")
+    plot_density_heatmap(mu_WGHA_unit, 0, 1, title="WDHA barycenter density (unit mass)", show_colorbar=True, plot_dir = plot_dir, filename = "barycenter_density_unit.png")
 
     mu_WGHA_scaled = mu_WGHA_unit / (L * L)  # density w.r.t (x,y) coords
     plot_density_heatmap(mu_WGHA_scaled, lo, hi, title="WDHA barycenter density (scaled)", show_colorbar=True, plot_dir = plot_dir, filename = "barycenter_density_scaled.png")
@@ -157,7 +158,7 @@ if __name__ == "__main__":
     # sample from the approximated barycenter and evaluate
 
     sampling_seed_list = [2000 + i for i in range(MC_size)]
-    approx_bary_it = [sample_from_density_grid(mu_WGHA_scaled, lo, hi, num_samples=1000, seed = sampling_seed_list[i]) for i in range(MC_size)]
+    approx_bary_it = [sample_from_density_grid(mu_WGHA_scaled, lo, hi, num_samples=eval_num_samples, seed = sampling_seed_list[i]) for i in range(MC_size)]
     input_measure_samples_collection_it = [{k : input_samples_collection_loaded[i][k][:eval_num_samples] for k in range(num_measures)} for i in range(MC_size)]
     true_bary_samples_it = [bary_samples_collection_loaded[i][:eval_num_samples] for i in range(MC_size)]
     
