@@ -37,7 +37,7 @@ if __name__ == "__main__":
     eval_MC_size = params["MC_size"]
     eval_num_samples = params["eval_num_samples"]
 
-    num_iters = 8
+    num_iters = 10
     rand_state = np.random.RandomState(seed = 97777)
     init_method = {"type": "moment", "sample_size": 10000}
     truncate_radius = params["truncated_radius"]

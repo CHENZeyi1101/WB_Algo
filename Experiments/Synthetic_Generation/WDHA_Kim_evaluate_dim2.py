@@ -1,7 +1,6 @@
 from multiprocessing import Pool
 import matplotlib.pyplot as plt
 
-from Experiments.Synthetic_Generation.metrics_to_compare import *
 from Experiments.CSV_read import *
 from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_zipped
 from Algorithms.data_manage import *

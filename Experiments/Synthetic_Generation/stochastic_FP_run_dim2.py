@@ -37,11 +37,11 @@ if __name__ == "__main__":
     eval_MC_size = params["MC_size"]
     eval_num_samples = params["eval_num_samples"]
 
-    num_iters = 8
+    num_iters = 10
     rand_state = np.random.RandomState(seed = 7777)
     init_method = {"type": "moment", "sample_size": 10000}
     truncate_radius = params["truncated_radius"]
-    sample_size_scheme = [5000, 5000, 10000, 10000, 20000, 20000, 40000, 80000, 160000, 160000]
+    sample_size_scheme = [5000, 5000, 10000, 10000, 20000, 20000, 40000, 40000, 80000, 160000]
     reg_param_scheme = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
     # sinkhorn_impl = "ott"
     # warm_start = {"type": "first-order"}
