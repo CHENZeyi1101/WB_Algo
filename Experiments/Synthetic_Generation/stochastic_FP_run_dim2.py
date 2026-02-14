@@ -1,13 +1,10 @@
 import os
 import json
 from pathlib import Path
+import numpy as np
 
 from Algorithms.Stochastic_FP.entropic_iterative_scheme import entropic_iterative_scheme
-from Algorithms.data_manage import *
-from Experiments.Synthetic_Generation.samplers import *
-from Experiments.Synthetic_Generation.input_generate_entropic import *
-from Experiments.Synthetic_Generation.MOG import *
-from Experiments.CSV_read import *
+from Experiments.CSV_read import csv_input_sampler_SyntheticGeneration
 
 if __name__ == "__main__":
 

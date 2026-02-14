@@ -5,7 +5,7 @@ from tqdm import tqdm
 import os
 import pickle
 from Experiments.Synthetic_Generation.MOG import *
-from Experiments.metrics_to_compare import *
+from Experiments.metrics_to_compare import W2_pot
 from Algorithms.Stochastic_FP.entropic_estimate_OT_ott import *
 
 def construct_surjective_mapping(tilde_K, num_measures, seed = 120):

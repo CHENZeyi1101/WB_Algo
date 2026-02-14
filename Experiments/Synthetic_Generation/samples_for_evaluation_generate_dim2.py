@@ -1,11 +1,10 @@
-from Experiments.Synthetic_Generation.MOG import *
-from Experiments.Synthetic_Generation.samplers import *
-from Experiments.CSV_read import *
-from Experiments.CSV_shuffle import *
 from tqdm import tqdm
 import os
 import json
 from pathlib import Path
+import numpy as np
+
+from Experiments.Synthetic_Generation.input_generate_entropic import entropic_input_sampler 
 
 if __name__ == "__main__":
     Cfg_PATH = Path(__file__).parent / "cfg.json"

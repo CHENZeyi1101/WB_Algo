@@ -3,9 +3,9 @@ import json, os
 from pathlib import Path
 
 from Algorithms.Fast_Cuturi.free_support_WB import w2_barycenter_free_support_from_samples
-from Algorithms.data_manage import *
+from Algorithms.data_manage import save_json
 from Experiments.metrics_to_compare import evaluate_MC
-from Experiments.CSV_read import *
+from Experiments.CSV_read import csv_posterior_sampler_BikeSharing
 
 if __name__ == "__main__":
     Cfg_PATH = Path(__file__).parent / "cfg.json"

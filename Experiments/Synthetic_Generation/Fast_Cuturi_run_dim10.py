@@ -3,12 +3,10 @@ import numpy as np
 import json
 from pathlib import Path
 
-from Experiments.Synthetic_Generation.samplers import *
 from Experiments.metrics_to_compare import evaluate_MC
-from Experiments.Synthetic_Generation.input_generate_entropic import *
 from Algorithms.Fast_Cuturi.free_support_WB import w2_barycenter_free_support_from_samples
-from Experiments.CSV_read import *
-from Algorithms.data_manage import *
+from Experiments.CSV_read import csv_input_sampler_SyntheticGeneration
+from Algorithms.data_manage import save_json
 
 if __name__ == "__main__":
     Cfg_PATH = Path(__file__).parent / "cfg.json"

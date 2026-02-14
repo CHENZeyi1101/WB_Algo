@@ -2,10 +2,8 @@ import numpy as np
 import json, os
 from pathlib import Path
 
-from Algorithms.data_manage import *
 from Algorithms.Stochastic_FP.entropic_iterative_scheme import entropic_iterative_scheme
-from Experiments.metrics_to_compare import evaluate_MC
-from Experiments.CSV_read import *
+from Experiments.CSV_read import csv_posterior_sampler_BikeSharing
 
 if __name__ == "__main__":
     Cfg_PATH = Path(__file__).parent / "cfg.json"
@@ -19,6 +17,7 @@ if __name__ == "__main__":
     # assert existence
     assert os.path.exists(samples_dir), f"Instance directory {samples_dir} does not exist."
 
+    dim = params["dim"]
     num_measures = params["num_measures"]
     eval_MC_size = params["MC_size"]
     eval_num_samples = params["eval_num_samples"]

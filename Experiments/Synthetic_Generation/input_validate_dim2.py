@@ -1,9 +1,9 @@
-from Experiments.Synthetic_Generation.samplers import *
-import pandas as pd
-from Experiments.CSV_read import *
 from pathlib import Path
 import json, os
 from tqdm import tqdm
+import numpy as np
+
+from Experiments.Synthetic_Generation.input_generate_entropic import entropic_input_sampler
 
 if __name__ == "__main__":
 

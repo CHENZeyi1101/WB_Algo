@@ -4,8 +4,8 @@ from scipy.stats import gaussian_kde
 import numpy as np
 from tqdm import tqdm
 
-from Experiments.CSV_read import *
-from Algorithms.WDHA_Kim.implementation2D.functions import *
+from Experiments.CSV_read import csv_input_sampler_SyntheticGeneration
+from Algorithms.WDHA_Kim.implementation2D.functions import frechet_mean
 
 def build_unit_density_grids_from_samples(
     input_samples_collection,
