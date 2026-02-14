@@ -22,9 +22,11 @@ if __name__ == "__main__":
     num_measures = params["num_measures"]
     instance_identifier = params["instance_identifier"]
     MC_size = params["MC_size"]
-    num_samples = params["num_samples"]
     eval_num_samples = params["eval_num_samples"]
 
+    # number of atoms to approximate the input measures
+    num_samples = 10000
+    
     # number of atoms in the discrete supports
     support_size = 10000
 

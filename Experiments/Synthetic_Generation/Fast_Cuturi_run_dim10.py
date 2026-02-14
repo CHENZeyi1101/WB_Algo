@@ -22,9 +22,11 @@ if __name__ == "__main__":
     num_measures = params["num_measures"]
     instance_identifier = params["instance_identifier"]
     MC_size = params["MC_size"]
-    num_samples = params["num_samples"]
     eval_num_samples = params["eval_num_samples"]
 
+    # number of atoms to approximate the input measures
+    num_samples = 10000
+    
     # number of atoms in the discrete supports
     support_size = 10000
 
@@ -50,8 +52,6 @@ if __name__ == "__main__":
         input_samples_collection_loaded = json.load(json_file)
     input_samples_collection_loaded = {int(k): {int(i): np.array(u) for i, u in v.items()}
                                         for k, v in input_samples_collection_loaded.items()}
-
-    
  
     outputs_dir = f"{instance_dir}/outputs/Fast_Cuturi_outputs"
     os.makedirs(outputs_dir, exist_ok=True)
