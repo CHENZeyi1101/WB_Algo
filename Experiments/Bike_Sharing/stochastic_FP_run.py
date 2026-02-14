@@ -22,7 +22,7 @@ if __name__ == "__main__":
     eval_MC_size = params["MC_size"]
     eval_num_samples = params["eval_num_samples"]
     csv_skip_rows = params["csv_skip_rows"]
-    csv_cols_range = params["csv_cols_range"]
+    csv_cols_range = range(params["csv_cols_range"][0], params["csv_cols_range"][1])
 
     num_iters = 9
     rand_state = np.random.RandomState(seed = 88888)

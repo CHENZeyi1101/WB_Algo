@@ -23,7 +23,7 @@ if __name__ == "__main__":
     MC_size = params["MC_size"]
     eval_num_samples = params["eval_num_samples"]
     csv_skip_rows = params["csv_skip_rows"]
-    csv_cols_range = params["csv_cols_range"]
+    csv_cols_range = range(params["csv_cols_range"][0], params["csv_cols_range"][1])
 
     # number of atoms to approximate the input measures
     num_samples = 10000
