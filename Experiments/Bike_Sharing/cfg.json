@@ -13,6 +13,6 @@
     "MC_size": 20,
     "eval_num_samples": 10000,
     "csv_skip_rows": 52,
-    "csv_cols_range": [7, 16]
+    "csv_cols_range": [8, 16]
   }
 }
