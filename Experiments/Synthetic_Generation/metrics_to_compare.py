@@ -1,6 +1,7 @@
 import ot
 import numpy as np
 from tqdm import tqdm
+from multiprocessing import Pool
 
 def W2_pot(X, Y): 
     r'''
@@ -47,3 +48,39 @@ def evaluate_zipped(args):
     W2_to_bary = np.sqrt(W2_pot(eval_samples, true_bary_samples))
 
     return V_value, W2_to_bary
+
+def evaluate_MC(approx_bary_it, input_measure_samples_collection_it, true_bary_samples_it, MC_size,
+                num_parallel_process = None, pbar_text = None):
+    '''
+    Evaluate a computed approximate barycenter measure via Monte Carlo
+    
+    :param approx_bary_it: iterator returning samples from the computed approximate barycenter measure
+    :param input_measure_samples_collection_it: iterator returning collections of samples from the input measures
+    :param true_bary_samples_it: iterator returning samples from the true barycenter measure
+    :param MC_size: number of Monte Carlo repetitions
+    :param num_parallel_process: number of parallel processes for evaluation; if None, then evaluation is done without multiprocessing
+    :param pbar_text: string displayed in the progress bar
+    '''
+    V_values_list = []
+    W2_to_bary_list = []
+
+    if num_parallel_process is not None:
+        with Pool(processes = 5) as pool, tqdm(total = MC_size, desc = pbar_text) as pbar:
+            for V_value, W2_to_bary in pool.imap(evaluate_zipped, 
+                                    zip(approx_bary_it, 
+                                        input_measure_samples_collection_it, 
+                                        true_bary_samples_it)):
+                V_values_list.append(V_value)
+                W2_to_bary_list.append(W2_to_bary)
+                pbar.update(1)
+                pbar.refresh()
+    else:
+        for args in tqdm(zip(approx_bary_it, 
+                             input_measure_samples_collection_it, 
+                             true_bary_samples_it), 
+                             total = MC_size, desc = pbar_text):
+            V_value, W2_to_bary = evaluate_zipped(args)
+            V_values_list.append(V_value)
+            W2_to_bary_list.append(W2_to_bary)
+    
+    return V_values_list, W2_to_bary_list

@@ -1,14 +1,10 @@
 import os
-os.environ["PYKEOPS_VERBOSE"] = "0"
 import numpy as np
-import ot
-from tqdm import tqdm
-from multiprocessing import Pool
 import json
 from pathlib import Path
 
 from Experiments.Synthetic_Generation.samplers import *
-from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_zipped
+from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_MC
 from Experiments.Synthetic_Generation.input_generate_entropic import *
 from Algorithms.Fast_Cuturi.free_support_WB import w2_barycenter_free_support_from_samples
 from Experiments.CSV_read import *
@@ -65,9 +61,6 @@ if __name__ == "__main__":
     os.makedirs(V_values_dir, exist_ok=True)
     os.makedirs(W2_to_bary_dir, exist_ok=True)
 
-    V_values_list = []
-    W2_to_bary_list = []
-
     input_samples_collection = input_sampler.sample(num_samples)
     samples_list = [np.array(input_samples_collection[key]) for key in sorted(input_samples_collection.keys())]
     approx_bary = w2_barycenter_free_support_from_samples(
@@ -84,15 +77,12 @@ if __name__ == "__main__":
     input_measure_samples_collection_it = [{k : input_samples_collection_loaded[i][k][:eval_num_samples] for k in range(num_measures)} for i in range(MC_size)]
     true_bary_samples_it = [bary_samples_collection_loaded[i][:eval_num_samples] for i in range(MC_size)]
     
-    with Pool(processes = 5) as pool, tqdm(total = MC_size) as pbar:
-        for V_value, W2_to_bary in pool.imap(evaluate_zipped, 
-                                zip(approx_bary_it, 
-                                    input_measure_samples_collection_it, 
-                                    true_bary_samples_it)):
-            V_values_list.append(V_value)
-            W2_to_bary_list.append(W2_to_bary)
-            pbar.update(1)
-            pbar.refresh()
+    V_values_list, W2_to_bary_list = evaluate_MC(approx_bary_it, 
+                                                 input_measure_samples_collection_it, 
+                                                 true_bary_samples_it, 
+                                                 MC_size = MC_size, 
+                                                 num_parallel_process = 5, 
+                                                 pbar_text = "Evaluation of Fast_Cuturi")
 
     # save V-values and W2_to_bary values
     V_values_dict = {

@@ -6,7 +6,7 @@ from multiprocessing import Pool
 from Algorithms.Stochastic_FP.entropic_estimate_OT_ott import entropic_OT_map_estimate_ott
 from Algorithms.Stochastic_FP.entropic_estimate_OT_geomloss import entropic_OT_map_estimate_geomloss
 from Algorithms.data_manage import *
-from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_zipped
+from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_MC
 
 class entropic_iterative_scheme:
     r'''
@@ -28,7 +28,7 @@ class entropic_iterative_scheme:
                  input_samples_for_evaluation : dict,
                  eval_num_samples : int,
                  eval_MC_size : int,
-                 num_parallel : int = 10):
+                 num_parallel : int | None = 10):
         r'''
         Constructor
         Inputs: 
@@ -45,7 +45,7 @@ class entropic_iterative_scheme:
             input_sampler_for_evaluation: object used for generating another independent stream of samples from the input measures that are used for approximately computing V-values for evaluation
             eval_num_samples: number of samples used when evaluating the V-values and the W2 distances to the true barycenter
             eval_MC_size: number of Monte Carlo repetitions when evaluating the V-values and the W2 distances to the true barycenter
-            num_parallel: number of parallel processes when evaluating the V-values and the W2 distances to the true barycenter
+            num_parallel: number of parallel processes when evaluating the V-values and the W2 distances to the true barycenter; if None, then multiprocessing is not used
         '''
 
         self.num_iters = num_iters
@@ -198,8 +198,6 @@ class entropic_iterative_scheme:
         iter = 0
         while True:
             # perform the evaluation
-            V_values_list = []
-            W2_to_bary_list = []
             accepted_samples_list = []
 
             eval_samples_it = [self.iterative_sampling(iter, self.eval_num_samples, sample_logger) for _ in range(self.eval_MC_size)]
@@ -209,15 +207,12 @@ class entropic_iterative_scheme:
             for eval_samples in eval_samples_it:
                 accepted_samples_list.append(eval_samples.tolist())
             
-            with Pool(processes = self.num_parallel) as pool, tqdm(total = self.eval_MC_size, desc = f"Evaluation of iter {iter}") as pbar:
-                for V_value, W2_to_bary in pool.imap(evaluate_zipped, 
-                                        zip(eval_samples_it, 
-                                            input_measure_samples_collection_it, 
-                                            true_bary_samples_it)):
-                    V_values_list.append(V_value)
-                    W2_to_bary_list.append(W2_to_bary)
-                    pbar.update(1)
-                    pbar.refresh()
+            V_values_list, W2_to_bary_list = evaluate_MC(eval_samples_it, 
+                                                        input_measure_samples_collection_it, 
+                                                        true_bary_samples_it, 
+                                                        MC_size = self.eval_MC_size, 
+                                                        num_parallel_process = self.num_parallel, 
+                                                        pbar_text = f"Evaluation of iter {iter}")
             
             self.V_values_dict[f"iteration_{iter}"] = {
                 "mean": np.mean(V_values_list), 
