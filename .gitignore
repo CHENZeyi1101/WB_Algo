@@ -32,3 +32,4 @@ bfm/
 
 # binary
 Experiments/Bike_Sharing/bike_sharing_PoissonGLM
+Experiments/.DS_Store

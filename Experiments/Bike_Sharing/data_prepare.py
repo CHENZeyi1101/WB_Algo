@@ -35,6 +35,11 @@ if __name__ == "__main__":
 
     N, d = X.shape
 
+    # standardize covariates
+    m = X.mean(axis = 0)
+    V = np.cov(X, rowvar = False) + 1e-12 * np.eye(X.shape[1])
+    X = np.linalg.solve(np.linalg.cholesky(V), (X - m).T).T
+
     # Samples in the full dataset
     data_full = {'x': X.tolist(), 'y': y.tolist(), 'd': d, 'n': N, 'n_rep': 1}
     with open(os.path.join(stan_dir, "data_full.json"), "w") as json_file:
