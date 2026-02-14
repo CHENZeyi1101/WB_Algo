@@ -26,7 +26,7 @@ from Algorithms.WIN_Korotin.src.tools import ewma, score_gen, freeze, unfreeze
 from Algorithms.WIN_Korotin.src.fid_score import calculate_frechet_distance
 from Algorithms.WIN_Korotin.src import distributions
 from Algorithms.WIN_Korotin.src import bar_benchmark
-from Experiments.Synthetic_Generation.metrics_to_compare import W2_pot
+from Experiments.metrics_to_compare import W2_pot
 import itertools
 
 import gc

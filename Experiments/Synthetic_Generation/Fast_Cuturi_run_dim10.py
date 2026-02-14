@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from Experiments.Synthetic_Generation.samplers import *
-from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_MC
+from Experiments.metrics_to_compare import evaluate_MC
 from Experiments.Synthetic_Generation.input_generate_entropic import *
 from Algorithms.Fast_Cuturi.free_support_WB import w2_barycenter_free_support_from_samples
 from Experiments.CSV_read import *

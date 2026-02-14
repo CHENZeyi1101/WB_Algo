@@ -4,7 +4,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 from Algorithms.CWB_Li.cwb.tests.comparison.common import *
-from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_zipped
+from Experiments.metrics_to_compare import evaluate_zipped
 from multiprocessing import Pool
 from Algorithms.data_manage import save_json
 

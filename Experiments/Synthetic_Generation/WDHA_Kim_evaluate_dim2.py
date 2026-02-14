@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 from Experiments.CSV_read import *
-from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_MC
+from Experiments.metrics_to_compare import evaluate_MC
 from Algorithms.data_manage import *
 
 def plot_density_heatmap(dens_xy, lo, hi, title=None, show_colorbar=True, plot_dir = None, filename = None):

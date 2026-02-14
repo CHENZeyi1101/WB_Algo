@@ -10,7 +10,7 @@ from torch.nn import functional as F
 from copy import deepcopy
 from multiprocessing import Pool
 from Algorithms.data_manage import save_json
-from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_zipped
+from Experiments.metrics_to_compare import evaluate_zipped
 
 from Algorithms.WIN_Korotin.src.icnn import DenseICNN_U
 from Algorithms.WIN_Korotin.src.plotters import plot_training_phase

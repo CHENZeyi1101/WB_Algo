@@ -3,7 +3,6 @@ import Algorithms.ICNN_Fan.optimal_transport_modules.pytorch_utils as PTU
 import Algorithms.ICNN_Fan.optimal_transport_modules.plot_utils as PLU
 import Algorithms.ICNN_Fan.optimal_transport_modules.data_utils as DTU
 import Algorithms.ICNN_Fan.CNX.compare_dist_results as CDR
-from Experiments.Synthetic_Generation.metrics_to_compare import *
 from Experiments.CSV_read import *
 from pathlib import Path
 import json, os
@@ -12,7 +11,7 @@ import pandas as pd
 import numpy as np
 from multiprocessing import Pool
 from Algorithms.data_manage import save_json
-from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_zipped
+from Experiments.metrics_to_compare import evaluate_zipped
 
 Cfg_PATH = Path(__file__).parent / "cfg.json"
 with open(Cfg_PATH, "r") as f:

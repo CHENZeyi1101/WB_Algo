@@ -6,7 +6,7 @@ from multiprocessing import Pool
 from Algorithms.Stochastic_FP.entropic_estimate_OT_ott import entropic_OT_map_estimate_ott
 from Algorithms.Stochastic_FP.entropic_estimate_OT_geomloss import entropic_OT_map_estimate_geomloss
 from Algorithms.data_manage import *
-from Experiments.Synthetic_Generation.metrics_to_compare import evaluate_MC
+from Experiments.metrics_to_compare import evaluate_MC
 
 class entropic_iterative_scheme:
     r'''
