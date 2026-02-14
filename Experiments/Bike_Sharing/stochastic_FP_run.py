@@ -24,11 +24,11 @@ if __name__ == "__main__":
     csv_skip_rows = params["csv_skip_rows"]
     csv_cols_range = params["cvs_cols_range"]
 
-    num_iters = 10
+    num_iters = 9
     rand_state = np.random.RandomState(seed = 88888)
     init_method = {"type": "moment", "sample_size": 10000}
     truncate_radius = params["truncated_radius"]
-    sample_size_scheme = [5000, 5000, 10000, 10000, 20000, 20000, 40000, 40000, 80000, 80000]
+    sample_size_scheme = np.rint(np.exp(np.linspace(np.log(10000), np.log(80000), num_iters)) + 1).astype(int).tolist()
     reg_param_scheme = [1e-8] * num_iters
     # sinkhorn_impl = "ott"
     # warm_start = {"type": "first-order"}
