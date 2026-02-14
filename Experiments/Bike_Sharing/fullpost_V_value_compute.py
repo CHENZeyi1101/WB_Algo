@@ -13,9 +13,9 @@ if __name__ == "__main__":
     
     eval_dir = cfg_dict["samples_for_evaluation_dir"]
     params = cfg_dict["params_posterior_aggregation_dim9"]
-    num_measures = cfg_dict["num_measures"]
-    eval_num_samples = cfg_dict["eval_num_samples"]
-    MC_size = cfg_dict["MC_size"]
+    num_measures = params["num_measures"]
+    eval_num_samples = params["eval_num_samples"]
+    MC_size = params["MC_size"]
     
     outputs_dir = cfg_dict["outputs_dir"]
     save_dir = f"{outputs_dir}/fullpost_V_value"
