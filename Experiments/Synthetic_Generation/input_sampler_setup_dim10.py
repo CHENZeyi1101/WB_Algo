@@ -34,7 +34,7 @@ if __name__ == "__main__":
     theta_list = params["theta_list"]
     gamma = params["gamma"]
     num_components = params["num_components"]
-    surjective_mapping_seed = params["seeds"]["surjective_mapping_seed"]
+    surjective_mapping = {int(key) : params["surjective_mapping"][key] for key in params["surjective_mapping"]}
     A_matrices_seed = params["seeds"]["A_matrices_seed"]
     num_measures = len(auxiliary_info["auxiliary_seeds_list"])
 
@@ -42,7 +42,6 @@ if __name__ == "__main__":
     samplers_info_dir = f"{instance_dir}/samplers_info"
     os.makedirs(samplers_info_dir, exist_ok=True)
 
-    surjective_mapping = construct_surjective_mapping(tilde_K = num_measures, num_measures = num_measures, seed = surjective_mapping_seed)
     A_matrices = generate_A_matrices(dim = dim, num_measures = num_measures, seed = A_matrices_seed)
 
     entropic_sampler = entropic_input_sampler.setup(dim = dim,

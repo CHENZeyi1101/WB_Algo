@@ -306,16 +306,6 @@ class entropic_input_sampler:
             for j in range(self.maxeig_grid_size): # traverse the grid space   
                 x = np.array([grid_space[i], grid_space[j]])
                 w_tilde_k = self.entropic_weight_vector(x, Y_matrix, g_vector, theta)
-
-                # # old method: slow
-                # Y_tilde_k = Y_matrix.T # !!! Y_tilde_k is of dimension d * n
-                # diag_w_k = np.diag(w_tilde_k)  # Creates a diagonal matrix with w_k as its diagonal
-                # outer_product_w_k = np.outer(w_tilde_k, w_tilde_k)  # Outer product of w_k * w_K^T
-                # matrix_diff = diag_w_k - outer_product_w_k
-                # covariance_matrix = Y_tilde_k @ matrix_diff @ Y_tilde_k.T
-                # max_eigenvalue_candidate = np.max(np.linalg.eigvals(covariance_matrix)) # find the maximum eigenvalue of the covariance matrix
-
-                # new method: fast
                 Y_centered = Y_matrix.T - Y_matrix.T @ w_tilde_k[:, np.newaxis]  # Center the Y_matrix using the weights
                 max_eigenvalue_candidate = np.max(np.linalg.eigvals(Y_centered @ (Y_centered.T * w_tilde_k[:, np.newaxis])))
 

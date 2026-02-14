@@ -10,8 +10,6 @@
     "num_measures": 5,
     "selected_columns": ["season", "hr", "workingday", "weathersit", "temp", "atemp", "hum", "windspeed"],
     "truncated_radius": 5,
-    "n_k": 1000,
-    "instance_identifier": "FINAL",
     "MC_size": 20,
     "eval_num_samples": 10000,
     "csv_skip_rows": 52,

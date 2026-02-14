@@ -23,7 +23,7 @@ if __name__ == "__main__":
     print(entropic_sampler.smoothness_param_dict)
 
     # Generate test samples
-    num_test_samples = 250000
+    num_test_samples = 100000
     entropic_sampler.source_sampler.set_master_rng(np.random.SeedSequence(999))
     input_mat = entropic_sampler.source_sampler.sample(num_test_samples)
     Brenier_grad_mat_list = [np.zeros_like(input_mat) for _ in range(num_measures)]

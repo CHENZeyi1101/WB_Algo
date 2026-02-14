@@ -59,9 +59,31 @@
     "num_components": 5,
     "num_samples": 10000,
     "num_measures": 10,
-    "truncated_radius": 500,
+    "truncated_radius": 1000,
     "n_k": 1000,
     "instance_identifier": "TRIAL1",
+    "surjective_mapping": {
+      "0" : 0, 
+      "2" : 1,
+      "4" : 2, 
+      "6" : 3,
+      "8" : 4, 
+      "10": 5,
+      "12": 6, 
+      "14": 7,
+      "16": 8, 
+      "18": 9,
+      "1" : 1, 
+      "3" : 2,
+      "5" : 3, 
+      "7" : 4,
+      "9" : 5, 
+      "11": 6,
+      "13": 7, 
+      "15": 8,
+      "17": 9, 
+      "19": 0
+    },
     "alpha_list": [
       1,
       1,
@@ -107,7 +129,6 @@
         91018,
         91019
       ],
-      "surjective_mapping_seed": 9120,
       "A_matrices_seed": 92000
     }
   },
