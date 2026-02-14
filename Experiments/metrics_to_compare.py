@@ -45,7 +45,7 @@ def evaluate_zipped(args):
         V_value += W2_pot(eval_samples, np.array(input_measure_samples_collection[measure_index]))
     V_value /= len(input_measure_samples_collection)
 
-    W2_to_bary = np.sqrt(W2_pot(eval_samples, true_bary_samples))
+    W2_to_bary = np.sqrt(W2_pot(eval_samples, true_bary_samples)) if true_bary_samples is not None else None
 
     return V_value, W2_to_bary
 

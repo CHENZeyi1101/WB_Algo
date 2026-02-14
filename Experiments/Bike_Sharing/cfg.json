@@ -3,6 +3,7 @@
   "stan_dir": "../../WB_data/Bike_Sharing/stan",
   "samples_dir": "../../WB_data/Bike_Sharing/generated_samples",
   "samples_for_evaluation_dir": "../../WB_data/Bike_Sharing/samples_for_evaluation",
+  "outputs_dir": "../../WB_data/Bike_Sharing/outputs",
 
   "params_posterior_aggregation_dim9": {
     "dim": 9,
