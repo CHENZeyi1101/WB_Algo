@@ -7,7 +7,7 @@ import optimal_transport_modules.icnn_modules as NN_modules
 
 
 def load_generator_h(results_save_path, generator_h, epochs, device=None):
-    model_save_path = results_save_path + '/storing_models'
+    model_save_path = results_save_path + '/storing_models' + f'/epoch_{epochs}'
     generator_h.load_state_dict(torch.load(
         model_save_path + '/generator_h_epoch{0}.pt'.format(epochs), map_location=device))
 

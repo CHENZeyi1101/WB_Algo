@@ -79,12 +79,12 @@ if __name__ == "__main__":
     '''
 
     GPU_DEVICE = 0 # GPU index starting from 0
-    BATCH_SIZE = 256 #1024
+    BATCH_SIZE = 1024
 
     LAMBDA = 10
     G_LR = 1e-4
     D_LR = 1e-3
-    MAX_ITER = 10001
+    MAX_ITER = 100001
 
     D_ITERS = 50
     T_ITERS = 10

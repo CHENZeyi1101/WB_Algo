@@ -312,12 +312,12 @@ if __name__ == '__main__':
     cfg.OUTPUT_DIM = cfg.INPUT_DIM
     cfg.NUM_DISTRIBUTION = num_measures
     cfg.high_dim_flag = False
-    cfg.epochs = 5 #500
+    cfg.epochs = 500 # this is the max number of epochs used in Fan et al. (2021) across all experiments therein
     _, _, results, testresults = LLU.init_path(cfg)
     outputs_dir = f"{instance_dir}/outputs/ICNN_Fan_outputs"
     os.makedirs(outputs_dir, exist_ok=True)
-    model_save_path = outputs_dir + '/storing_models'
-    os.makedirs(model_save_path, exist_ok=True)
+    model_save_dir = outputs_dir + '/storing_models'
+    os.makedirs(model_save_dir, exist_ok=True)
     
     # kwargs = {'num_workers': 4, 'pin_memory': True}
     kwargs = {'pin_memory': True}
@@ -374,8 +374,13 @@ if __name__ == '__main__':
                     optimizer_g[i].param_groups[0]['lr'] *= cfg.lr_schedule_scale
                 optimizer_h.param_groups[0]['lr'] *= cfg.lr_schedule_scale
 
-        LLU.dump_nn(generator_h, convex_f, convex_g, epoch,
-                    model_save_path, num_distribution=cfg.NUM_DISTRIBUTION, save_f=cfg.save_f)
+        
+
+        if epoch % 5 == 0:
+            model_save_dir_epoch = model_save_dir + f'/epoch_{epoch}'
+            os.makedirs(model_save_dir_epoch, exist_ok=True)
+            LLU.dump_nn(generator_h, convex_f, convex_g, epoch,
+                    model_save_dir_epoch, num_distribution=cfg.NUM_DISTRIBUTION, save_f=cfg.save_f)
             
 
 

@@ -170,13 +170,14 @@ if __name__ == "__main__":
     os.makedirs(V_values_dir, exist_ok=True)
     os.makedirs(W2_to_bary_dir, exist_ok=True)
 
-    iterations_to_load = range(1000, 100001, 1000)
+    iterations_to_load = range(300, 10201, 900)
 
     input_measure_samples_collection_it = [{k : input_samples_collection_loaded[i][k][:eval_num_samples] for k in range(num_measures)} for i in range(MC_size)]
     true_bary_samples_it = [bary_samples_collection_loaded[i][:eval_num_samples] for i in range(MC_size)]
 
-    for iteration in iterations_to_load:
+    for iteration in tqdm(iterations_to_load, desc="Evaluating iterations"):
         iter_evaluation_dir = f"{evaluation_dir}/outputs_iteration_{iteration}"
+        os.makedirs(iter_evaluation_dir, exist_ok=True)
         model_path = os.path.join(
             model_save_dir,
             f"trained_models_iter_{iteration}.pth"

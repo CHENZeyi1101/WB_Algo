@@ -33,3 +33,6 @@ bfm/
 # binary
 Experiments/Bike_Sharing/bike_sharing_PoissonGLM
 Experiments/.DS_Store
+Algorithms/ICNN_Fan/CNX/__pycache__/generate_NN.cpython-311.pyc
+Algorithms/ICNN_Fan/CNX/__pycache__/generate_NN.cpython-311.pyc
+Algorithms/ICNN_Fan/optimal_transport_modules/__pycache__/plot_utils.cpython-311.pyc
