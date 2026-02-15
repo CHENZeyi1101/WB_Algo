@@ -6,10 +6,10 @@
   "outputs_dir": "../../WB_data/Bike_Sharing/outputs",
 
   "params_posterior_aggregation_dim9": {
-    "dim": 9,
+    "dim": 8,
     "num_measures": 5,
     "selected_columns": ["season", "hr", "workingday", "weathersit", "temp", "atemp", "hum", "windspeed"],
-    "truncated_radius": 5,
+    "truncated_radius": 15,
     "MC_size": 20,
     "eval_num_samples": 10000,
     "csv_skip_rows": 52,
