@@ -4,15 +4,35 @@
   "samples_dir": "../../WB_data/Bike_Sharing/generated_samples",
   "samples_for_evaluation_dir": "../../WB_data/Bike_Sharing/samples_for_evaluation",
   "outputs_dir": "../../WB_data/Bike_Sharing/outputs",
-
-  "params_posterior_aggregation_dim9": {
+  "params_posterior_aggregation_dim8": {
     "dim": 8,
     "num_measures": 5,
-    "selected_columns": ["season", "hr", "workingday", "weathersit", "temp", "atemp", "hum", "windspeed"],
+    "selected_columns": [
+      "season",
+      "hr",
+      "workingday",
+      "weathersit",
+      "temp",
+      "atemp",
+      "hum",
+      "windspeed"
+    ],
     "truncated_radius": 15,
     "MC_size": 20,
     "eval_num_samples": 10000,
     "csv_skip_rows": 52,
-    "csv_cols_range": [8, 16]
+    "csv_cols_range": [
+      8,
+      16
+    ],
+    "instance_identifier": "FINAL"
+  },
+  "devices": {
+    "WGHA_Kim": "cpu",
+    "Fast_Cuturi": "cpu",
+    "CWB_Li": "mps",
+    "WIN_Korotin": "mps",
+    "ICNN_Fan": "mps",
+    "stochastic_FP": "cpu"
   }
 }
