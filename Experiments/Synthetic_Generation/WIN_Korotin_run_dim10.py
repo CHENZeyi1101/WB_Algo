@@ -234,7 +234,7 @@ if __name__ == "__main__":
 
                 # D optimization
                 with torch.no_grad():
-                    X = G(Z_sampler.sample(BATCH_SIZE))
+                    X = G(Z_sampler.sample(BATCH_SIZE)).to(DEVICE)
                 # Y = torch.tensor(input_measure_samples_for_D[k][d_iter * BATCH_SIZE : (d_iter + 1) * BATCH_SIZE]).float()
                 Y = torch.tensor(
                     input_measure_samples_for_D[k][d_iter * BATCH_SIZE : (d_iter + 1) * BATCH_SIZE],
@@ -255,7 +255,7 @@ if __name__ == "__main__":
                 # T inv optimization
                 unfreeze(Ts_inv[k]); freeze(Ds_inv[k])
                 for t_iter in range(T_ITERS): 
-                    Y = torch.tensor(input_measure_samples_for_T_inv[k][d_iter * T_ITERS * BATCH_SIZE + t_iter * BATCH_SIZE : d_iter * T_ITERS * BATCH_SIZE + (t_iter + 1) * BATCH_SIZE]).float()
+                    Y = torch.tensor(input_measure_samples_for_T_inv[k][d_iter * T_ITERS * BATCH_SIZE + t_iter * BATCH_SIZE : d_iter * T_ITERS * BATCH_SIZE + (t_iter + 1) * BATCH_SIZE]).float().to(DEVICE)
                     Ts_inv_opt[k].zero_grad()
                     T_inv_Y = Ts_inv[k](Y)
                     T_inv_loss = F.mse_loss(Y, T_inv_Y).mean() - Ds_inv[k](T_inv_Y).mean()
@@ -265,7 +265,7 @@ if __name__ == "__main__":
                 # torch.cuda.empty_cache()
 
                 # D inv optimization
-                Y = torch.tensor(input_measure_samples_for_D_inv[k][d_iter * BATCH_SIZE : (d_iter + 1) * BATCH_SIZE]).float()
+                Y = torch.tensor(input_measure_samples_for_D_inv[k][d_iter * BATCH_SIZE : (d_iter + 1) * BATCH_SIZE]).float().to(DEVICE)
                 with torch.no_grad():
                     X = G(Z_sampler.sample(BATCH_SIZE))
                 

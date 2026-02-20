@@ -18,6 +18,7 @@ from Algorithms.WIN_Korotin.src.tools import ewma, score_gen, freeze, unfreeze
 from Algorithms.WIN_Korotin.src.fid_score import calculate_frechet_distance
 from Algorithms.WIN_Korotin.src import distributions
 from Algorithms.WIN_Korotin.src import bar_benchmark
+from Experiments.metrics_to_compare import evaluate_MC
 
 def load_models_from_iteration(model_save_dir, iteration, 
                                G, Ts, Ds, Ts_inv=None, Ds_inv=None,
@@ -170,7 +171,7 @@ if __name__ == "__main__":
     os.makedirs(V_values_dir, exist_ok=True)
     os.makedirs(W2_to_bary_dir, exist_ok=True)
 
-    iterations_to_load = range(300, 10201, 900)
+    iterations_to_load = [100200]
 
     input_measure_samples_collection_it = [{k : input_samples_collection_loaded[i][k][:eval_num_samples] for k in range(num_measures)} for i in range(MC_size)]
     true_bary_samples_it = [bary_samples_collection_loaded[i][:eval_num_samples] for i in range(MC_size)]
@@ -217,17 +218,12 @@ if __name__ == "__main__":
             df = pd.DataFrame(accepted_G_samples)
             df.to_csv(f"{iter_evaluation_dir}/outputs_WIN_samples_iteration_{iteration}_MCSample_{i}.csv",index=False, header=False)
 
-        V_values_list = []
-        W2_to_bary_list = []
-        with Pool(processes = 5) as pool, tqdm(total = MC_size) as pbar:
-            for V_value, W2_to_bary in pool.imap(evaluate_zipped, 
-                                    zip(approx_bary_it, 
-                                        input_measure_samples_collection_it, 
-                                        true_bary_samples_it)):
-                V_values_list.append(V_value)
-                W2_to_bary_list.append(W2_to_bary)
-                pbar.update(1)
-                pbar.refresh()
+        V_values_list, W2_to_bary_list = evaluate_MC(approx_bary_it, 
+                                                input_measure_samples_collection_it, 
+                                                true_bary_samples_it, 
+                                                MC_size = MC_size, 
+                                                num_parallel_process = None, 
+                                                pbar_text = "Evaluation of WIN_Korotin")
 
         # save V-values and W2_to_bary values
         V_values_dict = {

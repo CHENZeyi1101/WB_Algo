@@ -70,7 +70,7 @@ class CfgBase:
     NUM_NEURON: int = 32
     NUM_LAYERS: int = 3
     TRIAL: int = 4
-    N_Gnet_ITERS: int = 6
+    N_Gnet_ITERS: int = 16 # 6
     load_h: int = 0
     load_fg: int = 0
     load_epoch: int = 80
