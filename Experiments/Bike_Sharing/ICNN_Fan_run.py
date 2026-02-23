@@ -45,7 +45,7 @@ def compute_constraint_loss(list_of_params):
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 ############## For each function here, it's an epoch ##################
 
-def train(epoch, input_sampler):
+def train(epoch):
     convex_f.train()
     convex_g.train()
     generator_h.train()
@@ -56,33 +56,10 @@ def train(epoch, input_sampler):
     g_constraints_loss_value_epoch = 0
     remaining_f_loss_value_epoch = [0] * cfg.NUM_DISTRIBUTION
     mu_2moment_loss_value_epoch = 0
-    miu_mean_value_epoch = 0
-    miu_var_value_epoch = 0
-
-    """""""""""""""""""""""""""""""""""""""""""""""""""
-                            Data
-    """""""""""""""""""""""""""""""""""""""""""""""""""
-    total_data = torch.empty(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM, cfg.NUM_DISTRIBUTION + 1)
-
-    input_samples_collection = input_sampler.sample(cfg.N_TRAIN_SAMPLES)
-    for marg_id in range(cfg.NUM_DISTRIBUTION):
-        input_samples_marg = np.asarray(input_samples_collection[marg_id])
-        total_data[:, :, marg_id] = torch.from_numpy(input_samples_marg)
-
-    # for marg_id in range(cfg.NUM_DISTRIBUTION):
-    #     df = pd.read_csv(f"{csv_dir}/input_measure_samples_{marg_id}.csv", header=None)
-    #     # take first cfg.N_TRAIN_SAMPLES rows
-    #     df = df.iloc[:cfg.N_TRAIN_SAMPLES, :]
-    #     total_data[:, :, marg_id] = torch.from_numpy(df.to_numpy())
-
-    total_data[:, :, -1] = torch.randn(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM)
-
-    train_loader = torch.utils.data.DataLoader(
-        total_data, batch_size=cfg.BATCH_SIZE, shuffle=True, **kwargs)
 
     for batch_idx, real_data in enumerate(train_loader):
         # real_data = real_data.cuda(PTU.device)
-        real_data = real_data.cpu()
+        real_data = real_data.to(DEVICE)
 
         miu_i = real_data[:, :, 0:cfg.NUM_DISTRIBUTION]
         epsilon = real_data[:, :, cfg.NUM_DISTRIBUTION]
@@ -94,9 +71,6 @@ def train(epoch, input_sampler):
         g_constraints_loss_value_batch = 0  # containing four g networks
         remaining_f_loss_value_batch = [0] * cfg.NUM_DISTRIBUTION
         mu_2moment_loss_value_batch = 0
-        miu_mean_value_batch = torch.zeros([cfg.INPUT_DIM])
-        miu_var_value_batch = np.zeros(
-            [cfg.INPUT_DIM, cfg.INPUT_DIM])
 
         ######################################################
         #                Medium Loop Begin                   #
@@ -150,10 +124,6 @@ def train(epoch, input_sampler):
             #                Inner Loop Ends                     #
             ######################################################
             miu = generator_h(epsilon)
-            miu_mean = miu.mean(dim=0).cpu()
-            miu_var = np.cov(miu.cpu().detach().numpy().T)
-            miu_mean_value_batch += miu_mean
-            miu_var_value_batch += miu_var
 
             remaining_f_loss = torch.ones(cfg.NUM_DISTRIBUTION)
             # The 3rd loss part useful for f/h parameters
@@ -193,9 +163,6 @@ def train(epoch, input_sampler):
         optimizer_h.step()
         # The four parts loss gradients are accumulated
 
-        miu_mean_value_batch = miu_mean_value_batch / cfg.N_Fnet_ITERS
-        miu_var_value_batch = miu_var_value_batch / cfg.N_Fnet_ITERS
-
         g_OT_loss_value_batch[:] = [
             item / (cfg.N_Gnet_ITERS * cfg.N_Fnet_ITERS) for item in g_OT_loss_value_batch]
         remaining_f_loss_value_batch[:] = [
@@ -212,9 +179,7 @@ def train(epoch, input_sampler):
 
         ##### Calculate all epoch loss ###############
         w2_loss_value_epoch += w2_loss_value_batch
-        miu_mean_value_epoch += miu_mean_value_batch
-        miu_var_value_epoch += miu_var_value_batch
-
+        
         g_OT_loss_value_epoch = [
             a + b for a,
             b in zip(
@@ -237,8 +202,6 @@ def train(epoch, input_sampler):
                 sum(g_OT_loss_value_batch) / cfg.NUM_DISTRIBUTION,
                 sum(remaining_f_loss_value_batch) / cfg.NUM_DISTRIBUTION,
                 mu_2moment_loss_value_batch,
-                miu_mean_value_batch.mean().tolist(),
-                miu_var_value_batch.mean().tolist(),
                 g_constraints_loss_value_batch,
                 w2_loss_value_batch
             ))
@@ -250,26 +213,13 @@ def train(epoch, input_sampler):
     remaining_f_loss_value_epoch[:] = [
         item / len(train_loader) for item in remaining_f_loss_value_epoch]
     mu_2moment_loss_value_epoch /= len(train_loader)
-    miu_mean_value_epoch /= len(train_loader)
-    miu_var_value_epoch /= len(train_loader)
-    if cfg.high_dim_flag:
-        results.add(epoch=epoch,
-                    w2_loss_train_samples=w2_loss_value_epoch,
-                    g_OT_train_loss=g_OT_loss_value_epoch,
-                    g_constraints_train_loss=g_constraints_loss_value_epoch,
-                    remaining_f_train_loss=remaining_f_loss_value_epoch,
-                    mu_2moment_train_loss=mu_2moment_loss_value_epoch
-                    )
-    else:
-        results.add(epoch=epoch,
-                    w2_loss_train_samples=w2_loss_value_epoch,
-                    g_OT_train_loss=g_OT_loss_value_epoch,
-                    g_constraints_train_loss=g_constraints_loss_value_epoch,
-                    remaining_f_train_loss=remaining_f_loss_value_epoch,
-                    mu_2moment_train_loss=mu_2moment_loss_value_epoch,
-                    miu_mean_train=miu_mean_value_epoch.tolist(),
-                    miu_var_train=miu_var_value_epoch.tolist()
-                    )
+    results.add(epoch=epoch,
+                w2_loss_train_samples=w2_loss_value_epoch,
+                g_OT_train_loss=g_OT_loss_value_epoch,
+                g_constraints_train_loss=g_constraints_loss_value_epoch,
+                remaining_f_train_loss=remaining_f_loss_value_epoch,
+                mu_2moment_train_loss=mu_2moment_loss_value_epoch
+                )
     results.save()
 
 
@@ -278,52 +228,54 @@ if __name__ == '__main__':
     with open(Cfg_PATH, "r") as f:
         cfg_dict = json.load(f)
 
-    params = cfg_dict["params_bike_sharing"]
+    params = cfg_dict["params_posterior_aggregation_dim8"]
 
-    # take all items in params
-    num_samples = params["num_samples"]
+    samples_dir = cfg_dict['samples_dir']
+
+    # assert existence
+    assert os.path.exists(samples_dir), f"Instance directory {samples_dir} does not exist."
+
     dim = params["dim"]
     num_measures = params["num_measures"]
-    truncated_radius = params["truncated_radius"]
-    # instance_identifier = params["instance_identifier"]
-    MC_size = params["MC_size"]
+    eval_MC_size = params["MC_size"]
+    eval_num_samples = params["eval_num_samples"]
+    csv_skip_rows = params["csv_skip_rows"]
+    csv_cols_range = range(params["csv_cols_range"][0], params["csv_cols_range"][1])
+    outputs_dir = f"{cfg_dict['outputs_dir']}/ICNN_Fan_outputs"
+    os.makedirs(outputs_dir, exist_ok=True)
 
-    instance_dir = f"{cfg_dict['data_dir']}/Bike_Sharing"
-    # assert existence
-    assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
-
-    input_csv_path = instance_dir
-    split_posterior_sampler = csv_posterior_sampler_BikeSharing(input_csv_path, 
-                                                num_measures, 
+    split_posterior_sampler = csv_posterior_sampler_BikeSharing(csv_dir = samples_dir, 
+                                                num_measures = num_measures, 
                                                 multiplication_factor = 1, 
-                                                type="split",
-                                                usecols=range(7, 16),
-                                                skiprows=52)
+                                                type = "split",
+                                                usecols = csv_cols_range,
+                                                skiprows = csv_skip_rows)
     split_posterior_sampler.set_streamers()
-    print("Split posterior sampler set up.")
 
-    cfg = Cfg_class(DIM = dim, NUM_DISTRIBUTION=num_measures, N_TRAIN_SAMPLES=10000)#1000000)
-    
-    # gpus_choice = GPUtil.getFirstAvailable(
-    #     order='random', maxLoad=0.5, maxMemory=0.5, attempts=5, interval=900, verbose=False)
-    # PTU.set_gpu_mode(True, gpus_choice[0])
+    # input_csv_dir = f"{samples_dir}/input_samples/csv_files"
+    # input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
+    #                                             num_measures, 
+    #                                             multiplication_factor=1)
+    # input_sampler.set_streamers()
 
-    PTU.set_gpu_mode(False, 0)
+    device = cfg_dict["devices"]["ICNN_Fan"]
+    DEVICE = torch.device(device)
+
+    cfg = Cfg_class(DIM = dim, NUM_DISTRIBUTION=num_measures)
 
     cfg.INPUT_DIM = dim
     cfg.OUTPUT_DIM = cfg.INPUT_DIM
     cfg.NUM_DISTRIBUTION = num_measures
     cfg.high_dim_flag = False
-    cfg.epochs = 5 #500
+    cfg.N_TEST = eval_num_samples
+    cfg.epochs = 100
+
     _, _, results, testresults = LLU.init_path(cfg)
-    outputs_dir = f"{instance_dir}/outputs/ICNN_Fan_outputs"
-    os.makedirs(outputs_dir, exist_ok=True)
-    model_save_path = outputs_dir + '/storing_models'
-    os.makedirs(model_save_path, exist_ok=True)
+    model_save_dir = outputs_dir + '/storing_models'
+    os.makedirs(model_save_dir, exist_ok=True)
     
     # kwargs = {'num_workers': 4, 'pin_memory': True}
     kwargs = {'pin_memory': True}
-
     
     convex_f, convex_g, generator_h = g_NN.generate_FixedWeight_NN(cfg)
 
@@ -345,10 +297,10 @@ if __name__ == '__main__':
 
         # convex_f[i].cuda(PTU.device)
         # convex_g[i].cuda(PTU.device)
-        convex_f[i].cpu()
-        convex_g[i].cpu()
+        convex_f[i].to(DEVICE)
+        convex_g[i].to(DEVICE)
     # generator_h.cuda(PTU.device)
-    generator_h.cpu()
+    generator_h.to(DEVICE)
 
     optimizer_f = []
     optimizer_g = []
@@ -360,6 +312,27 @@ if __name__ == '__main__':
         optimizer_h = optim.Adam(
             generator_h.parameters(),
             lr=cfg.LR_h)
+        
+    """""""""""""""""""""""""""""""""""""""""""""""""""
+                            Data
+    """""""""""""""""""""""""""""""""""""""""""""""""""
+    total_data = torch.empty(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM, cfg.NUM_DISTRIBUTION + 1)
+
+    input_samples_collection = split_posterior_sampler.sample(cfg.N_TRAIN_SAMPLES)
+    for marg_id in range(cfg.NUM_DISTRIBUTION):
+        input_samples_marg = np.asarray(input_samples_collection[marg_id])
+        total_data[:, :, marg_id] = torch.from_numpy(input_samples_marg)
+
+    # for marg_id in range(cfg.NUM_DISTRIBUTION):
+    #     df = pd.read_csv(f"{input_csv_dir}/input_measure_samples_{marg_id}.csv", header=None)
+    #     # take first cfg.N_TRAIN_SAMPLES rows
+    #     df = df.iloc[:cfg.N_TRAIN_SAMPLES, :]
+    #     total_data[:, :, marg_id] = torch.from_numpy(df.to_numpy())
+
+    total_data[:, :, -1] = torch.randn(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM)
+
+    train_loader = torch.utils.data.DataLoader(
+        total_data, batch_size=cfg.BATCH_SIZE, shuffle=True, **kwargs)
 
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -368,7 +341,7 @@ if __name__ == '__main__':
 
     for epoch in range(1, cfg.epochs + 1):
         # Start training
-        train(epoch, split_posterior_sampler)
+        train(epoch)
         if cfg.schedule_learning_rate:
             if epoch % cfg.lr_schedule_per_epoch == 0:
                 for i in range(cfg.NUM_DISTRIBUTION):
@@ -376,8 +349,10 @@ if __name__ == '__main__':
                     optimizer_g[i].param_groups[0]['lr'] *= cfg.lr_schedule_scale
                 optimizer_h.param_groups[0]['lr'] *= cfg.lr_schedule_scale
 
+        model_save_dir_epoch = model_save_dir + f'/epoch_{epoch}'
+        os.makedirs(model_save_dir_epoch, exist_ok=True)
         LLU.dump_nn(generator_h, convex_f, convex_g, epoch,
-                    model_save_path, num_distribution=cfg.NUM_DISTRIBUTION, save_f=cfg.save_f)
-            
+                model_save_dir_epoch, num_distribution=cfg.NUM_DISTRIBUTION, save_f=cfg.save_f)
+        
 
 

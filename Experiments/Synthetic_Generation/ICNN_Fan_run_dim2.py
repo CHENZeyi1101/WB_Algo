@@ -329,6 +329,7 @@ if __name__ == '__main__':
         df = df.iloc[:cfg.N_TRAIN_SAMPLES, :]
         total_data[:, :, marg_id] = torch.from_numpy(df.to_numpy())
 
+    # 20260223: add random seed here
     total_data[:, :, -1] = torch.randn(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM)
 
     train_loader = torch.utils.data.DataLoader(
