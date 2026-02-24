@@ -57,6 +57,28 @@ def train(epoch):
     remaining_f_loss_value_epoch = [0] * cfg.NUM_DISTRIBUTION
     mu_2moment_loss_value_epoch = 0
 
+    """""""""""""""""""""""""""""""""""""""""""""""""""
+                            Data
+    """""""""""""""""""""""""""""""""""""""""""""""""""
+    total_data = torch.empty(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM, cfg.NUM_DISTRIBUTION + 1)
+
+    input_samples_collection = input_sampler.sample(cfg.N_TRAIN_SAMPLES)
+    for marg_id in range(cfg.NUM_DISTRIBUTION):
+        input_samples_marg = np.asarray(input_samples_collection[marg_id])
+        total_data[:, :, marg_id] = torch.from_numpy(input_samples_marg)
+
+    # for marg_id in range(cfg.NUM_DISTRIBUTION):
+    #     df = pd.read_csv(f"{input_csv_dir}/input_measure_samples_{marg_id}.csv", header=None)
+    #     # take first cfg.N_TRAIN_SAMPLES rows
+    #     df = df.iloc[:cfg.N_TRAIN_SAMPLES, :]
+    #     total_data[:, :, marg_id] = torch.from_numpy(df.to_numpy())
+
+    gen = torch.Generator(device=total_data.device).manual_seed(epoch * 1000)
+    total_data[:, :, -1] = torch.randn(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM, generator=gen)
+
+    train_loader = torch.utils.data.DataLoader(
+        total_data, batch_size=cfg.BATCH_SIZE, shuffle=False, **kwargs)
+
     for batch_idx, real_data in enumerate(train_loader):
         # real_data = real_data.cuda(PTU.device)
         real_data = real_data.to(DEVICE)
@@ -245,10 +267,10 @@ if __name__ == '__main__':
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
     input_csv_dir = f"{instance_dir}/input_samples/csv_files"
-    # input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
-    #                                             num_measures, 
-    #                                             multiplication_factor=1)
-    # input_sampler.set_streamers()
+    input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_dir, 
+                                                num_measures, 
+                                                multiplication_factor=1)
+    input_sampler.set_streamers()
 
     device = cfg_dict["devices"]["ICNN_Fan"]
     DEVICE = torch.device(device)
@@ -313,27 +335,6 @@ if __name__ == '__main__':
             generator_h.parameters(),
             lr=cfg.LR_h)
         
-    """""""""""""""""""""""""""""""""""""""""""""""""""
-                            Data
-    """""""""""""""""""""""""""""""""""""""""""""""""""
-    total_data = torch.empty(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM, cfg.NUM_DISTRIBUTION + 1)
-
-    # input_samples_collection = input_sampler.sample(cfg.N_TRAIN_SAMPLES)
-    # for marg_id in range(cfg.NUM_DISTRIBUTION):
-    #     input_samples_marg = np.asarray(input_samples_collection[marg_id])
-    #     total_data[:, :, marg_id] = torch.from_numpy(input_samples_marg)
-
-    for marg_id in range(cfg.NUM_DISTRIBUTION):
-        df = pd.read_csv(f"{input_csv_dir}/input_measure_samples_{marg_id}.csv", header=None)
-        # take first cfg.N_TRAIN_SAMPLES rows
-        df = df.iloc[:cfg.N_TRAIN_SAMPLES, :]
-        total_data[:, :, marg_id] = torch.from_numpy(df.to_numpy())
-
-    # 20260223: add random seed here
-    total_data[:, :, -1] = torch.randn(cfg.N_TRAIN_SAMPLES, cfg.INPUT_DIM)
-
-    train_loader = torch.utils.data.DataLoader(
-        total_data, batch_size=cfg.BATCH_SIZE, shuffle=True, **kwargs)
 
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
