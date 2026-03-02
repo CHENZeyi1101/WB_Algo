@@ -18,7 +18,7 @@ class entropic_iterative_scheme:
                  num_iters : int,
                  input_sampler, 
                  rand_state : np.random.RandomState, 
-                 init_method : dict, 
+                 init_method : dict | None, 
                  truncate_radius : float, 
                  sinkhorn_impl: str,
                  sample_size_scheme : list, 
@@ -28,7 +28,8 @@ class entropic_iterative_scheme:
                  input_samples_for_evaluation : dict,
                  eval_num_samples : int,
                  eval_MC_size : int,
-                 num_parallel : int | None = 10):
+                 num_parallel : int | None = 10,
+                 manual_initial_sampler = None):
         r'''
         Constructor
         Inputs: 
@@ -46,6 +47,7 @@ class entropic_iterative_scheme:
             eval_num_samples: number of samples used when evaluating the V-values and the W2 distances to the true barycenter
             eval_MC_size: number of Monte Carlo repetitions when evaluating the V-values and the W2 distances to the true barycenter
             num_parallel: number of parallel processes when evaluating the V-values and the W2 distances to the true barycenter; if None, then multiprocessing is not used
+            manual_initial_samples: array of manually specified initial samples for the iterative scheme (if not None, this overrides the default initialization)
         '''
 
         self.num_iters = num_iters
@@ -62,6 +64,7 @@ class entropic_iterative_scheme:
         self.eval_num_samples = eval_num_samples
         self.eval_MC_size = eval_MC_size
         self.num_parallel = num_parallel
+        self.manual_initial_sampler = manual_initial_sampler
 
         assert len(self.sample_size_scheme) >= self.num_iters, "sample size scheme mis-specified"
         assert len(self.reg_param_scheme) >= self.num_iters, "regularization scheme mis-specified"
@@ -109,8 +112,11 @@ class entropic_iterative_scheme:
         while count < num_samples:
             log_info(sample_logger,
                     f"\n########## Sampling started at Iteration_{iter} for sample_{count} ##########\n")
-
-            samples = self.rand_state.multivariate_normal(self.init_gauss["mean"], self.init_gauss["cov"], size = num_samples_batch)
+            
+            if self.manual_initial_sampler is not None:
+                samples = self.manual_initial_sampler.sample(num_samples_batch)
+            else:
+                samples = self.rand_state.multivariate_normal(self.init_gauss["mean"], self.init_gauss["cov"], size = num_samples_batch)
 
             for t in range(iter):
                 sum_samples = np.zeros((num_samples_batch, self.dim))

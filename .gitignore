@@ -16,6 +16,8 @@ Experiments/Bike_Sharing/bike_sharing_dataset/.DS_Store
 Experiments/Bike_Sharing/build/.DS_Store
 Experiments/Synthetic_Generation/.DS_Store
 
+CNX_outputs/
+
 # CWB temporary outputs
 cwb_tmp/
 Algorithms/CWB_Li/cwb_tmp/

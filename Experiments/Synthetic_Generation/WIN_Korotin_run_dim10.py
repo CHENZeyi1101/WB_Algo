@@ -49,6 +49,7 @@ if __name__ == "__main__":
 
     # take all items in params
     num_samples = params["num_samples"]
+    eval_num_samples = params["eval_num_samples"]
     dim = params["dim"]
     num_measures = params["num_measures"]
     truncated_radius = params["truncated_radius"]
@@ -60,31 +61,33 @@ if __name__ == "__main__":
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
-    outputs_dir = f"{instance_dir}/outputs/WIN_Korotin_outputs"
+    input_csv_dir = f"{instance_dir}/csv_files"
+    input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_dir, 
+                                                num_measures, 
+                                                multiplication_factor=1)
+    input_sampler.set_streamers()
+
+    # device = cfg_dict["devices"]["WIN_Korotin"]
+    device = "cpu"
+
+    outputs_dir = f"{instance_dir}/outputs/WIN_Korotin_outputs_{device}"
     os.makedirs(outputs_dir, exist_ok=True)
     # define the save path
     model_save_dir = f"{outputs_dir}/trained_models"
     os.makedirs(model_save_dir, exist_ok=True)
 
-    input_csv_path = f"{instance_dir}/input_samples/csv_files"
-    input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
-                                                num_measures, 
-                                                multiplication_factor=1)
-    input_sampler.set_streamers()
-
-    device = cfg_dict["devices"]["WIN_Korotin"]
-
+    
     '''
     Set up training parameters
     '''
 
     GPU_DEVICE = 0 # GPU index starting from 0
-    BATCH_SIZE = 256 #1024
+    BATCH_SIZE = 1024
 
     LAMBDA = 10
     G_LR = 1e-4
     D_LR = 1e-3
-    MAX_ITER = 10001
+    MAX_ITER = 100001
 
     D_ITERS = 50
     T_ITERS = 10
@@ -94,7 +97,7 @@ if __name__ == "__main__":
     SCORE_FREQ = 499
 
     # Parameters for input distributions
-    NUM = 5 # we have 5 input measures
+    NUM = num_measures
     ALPHAS = np.array([1. / NUM for _ in range(NUM)])
 
     CASE = {

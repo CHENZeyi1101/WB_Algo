@@ -41,7 +41,7 @@ if __name__ == "__main__":
     print(cwb_data.shape) # (MC_size * num_samples, dim)
 
     approx_bary_it = list(cwb_data.reshape(MC_size, num_samples, dim))
-
+    
 
     eval_dir = f"{instance_dir}/samples_for_evaluation"
 

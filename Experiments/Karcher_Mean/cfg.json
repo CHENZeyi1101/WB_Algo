@@ -1,0 +1,13 @@
+{
+    "data_dir": "../../WB_data",
+    "params_KM_experiment": {
+        "instance_identifier": "Trial2",
+        "num_samples": 2000,
+        "num_iters": 20,
+        "a": 100,
+        "M": 20,
+        "eps": 2,
+        "dim": 2,
+        "reg": 5
+    }
+}

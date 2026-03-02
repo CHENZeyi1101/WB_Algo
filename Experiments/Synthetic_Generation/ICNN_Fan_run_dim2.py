@@ -291,7 +291,7 @@ if __name__ == '__main__':
 
 
     _, _, results, testresults = LLU.init_path(cfg)
-    outputs_dir = f"{instance_dir}/outputs/ICNN_Fan_outputs"
+    outputs_dir = f"{instance_dir}/outputs/ICNN_Fan_outputs_cpu"
     os.makedirs(outputs_dir, exist_ok=True)
     model_save_dir = outputs_dir + '/storing_models'
     os.makedirs(model_save_dir, exist_ok=True)

@@ -18,6 +18,7 @@ from Algorithms.WIN_Korotin.src.tools import ewma, score_gen, freeze, unfreeze
 from Algorithms.WIN_Korotin.src.fid_score import calculate_frechet_distance
 from Algorithms.WIN_Korotin.src import distributions
 from Algorithms.WIN_Korotin.src import bar_benchmark
+from Experiments.metrics_to_compare import evaluate_MC
 
 def load_models_from_iteration(model_save_dir, iteration, 
                                G, Ts, Ds, Ts_inv=None, Ds_inv=None,
@@ -85,13 +86,15 @@ if __name__ == "__main__":
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
-    outputs_dir = f"{instance_dir}/outputs/WIN_Korotin_outputs"
+    # DEVICE = cfg_dict["devices"]["WIN_Korotin"]
+    DEVICE = "cpu"
+
+    outputs_dir = f"{instance_dir}/outputs/WIN_Korotin_outputs_{DEVICE}"
     assert os.path.exists(outputs_dir), f"WIN_Korotin outputs directory {outputs_dir} does not exist."
     # define the save path
     model_save_dir = f"{outputs_dir}/trained_models"
     assert os.path.exists(model_save_dir), f"Model save directory {model_save_dir} does not exist."
 
-    DEVICE = cfg_dict["devices"]["WIN_Korotin"]
 
 
     # load samples for evaluation
@@ -170,13 +173,15 @@ if __name__ == "__main__":
     os.makedirs(V_values_dir, exist_ok=True)
     os.makedirs(W2_to_bary_dir, exist_ok=True)
 
-    iterations_to_load = range(1000, 100001, 1000)
+    # iterations_to_load = range(1000, 100001, 1000)
+    iterations_to_load = [100100]
 
     input_measure_samples_collection_it = [{k : input_samples_collection_loaded[i][k][:eval_num_samples] for k in range(num_measures)} for i in range(MC_size)]
     true_bary_samples_it = [bary_samples_collection_loaded[i][:eval_num_samples] for i in range(MC_size)]
 
     for iteration in iterations_to_load:
         iter_evaluation_dir = f"{evaluation_dir}/outputs_iteration_{iteration}"
+        os.makedirs(iter_evaluation_dir, exist_ok=True)
         model_path = os.path.join(
             model_save_dir,
             f"trained_models_iter_{iteration}.pth"
@@ -216,17 +221,12 @@ if __name__ == "__main__":
             df = pd.DataFrame(accepted_G_samples)
             df.to_csv(f"{iter_evaluation_dir}/outputs_WIN_samples_iteration_{iteration}_MCSample_{i}.csv",index=False, header=False)
 
-        V_values_list = []
-        W2_to_bary_list = []
-        with Pool(processes = 5) as pool, tqdm(total = MC_size) as pbar:
-            for V_value, W2_to_bary in pool.imap(evaluate_zipped, 
-                                    zip(approx_bary_it, 
-                                        input_measure_samples_collection_it, 
-                                        true_bary_samples_it)):
-                V_values_list.append(V_value)
-                W2_to_bary_list.append(W2_to_bary)
-                pbar.update(1)
-                pbar.refresh()
+        V_values_list, W2_to_bary_list = evaluate_MC(approx_bary_it, 
+                                                input_measure_samples_collection_it, 
+                                                true_bary_samples_it, 
+                                                MC_size = MC_size, 
+                                                num_parallel_process = None, 
+                                                pbar_text = "Evaluation of WIN_Korotin")
 
         # save V-values and W2_to_bary values
         V_values_dict = {

@@ -94,7 +94,7 @@ if __name__ == "__main__":
     SCORE_FREQ = 499
 
     # Parameters for input distributions
-    NUM = 5 # we have 5 input measures
+    NUM = num_measures
     ALPHAS = np.array([1. / NUM for _ in range(NUM)])
 
     CASE = {

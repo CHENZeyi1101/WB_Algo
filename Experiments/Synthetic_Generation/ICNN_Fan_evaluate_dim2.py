@@ -52,7 +52,7 @@ if __name__ == "__main__":
     input_samples_collection_loaded = {int(k): {int(i): np.array(u) for i, u in v.items()}
                                         for k, v in input_samples_collection_loaded.items()}
 
-    outputs_dir = f"{instance_dir}/outputs/ICNN_Fan_outputs"
+    outputs_dir = f"{instance_dir}/outputs/ICNN_Fan_outputs_cpu"
     assert os.path.exists(outputs_dir), f"Outputs directory {outputs_dir} does not exist."
 
     evaluation_dir = os.path.join(outputs_dir, "evaluation_results")
@@ -70,8 +70,8 @@ if __name__ == "__main__":
     true_bary_samples_it = [bary_samples_collection_loaded[i][:eval_num_samples] for i in range(MC_size)]
 
  
-    epoch_to_load = 500
-    MC_size = 1
+    epoch_to_load = 39
+    MC_size = 20
     epoch_evaluation_dir = f"{evaluation_dir}/outputs_{epoch_to_load}"
     os.makedirs(epoch_evaluation_dir, exist_ok=True)
     approx_bary_it = []
