@@ -7,6 +7,7 @@ from Algorithms.CWB_Li.cwb.tests.comparison.common import *
 from Experiments.metrics_to_compare import evaluate_zipped
 from multiprocessing import Pool
 from Algorithms.data_manage import save_json
+from Experiments.metrics_to_compare import evaluate_MC
 
 if __name__ == "__main__":
 
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     print(cwb_data.shape) # (MC_size * num_samples, dim)
 
     approx_bary_it = list(cwb_data.reshape(MC_size, num_samples, dim))
-
+    
 
     eval_dir = f"{instance_dir}/samples_for_evaluation"
 
@@ -66,26 +67,12 @@ if __name__ == "__main__":
     input_measure_samples_collection_it = [{k : input_samples_collection_loaded[i][k][:eval_num_samples] for k in range(num_measures)} for i in range(MC_size)]
     true_bary_samples_it = [bary_samples_collection_loaded[i][:eval_num_samples] for i in range(MC_size)]
 
-    # for args in tqdm(
-    #         zip(approx_bary_it,
-    #             input_measure_samples_collection_it,
-    #             true_bary_samples_it),
-    #         total=MC_size):
-
-    #     V_value, W2_to_bary = evaluate_zipped(args)
-
-    #     V_values_list.append(V_value)
-    #     W2_to_bary_list.append(W2_to_bary)
-
-    with Pool(processes = 2) as pool, tqdm(total = MC_size) as pbar:
-        for V_value, W2_to_bary in pool.imap(evaluate_zipped, 
-                                zip(approx_bary_it, 
-                                    input_measure_samples_collection_it, 
-                                    true_bary_samples_it)):
-            V_values_list.append(V_value)
-            W2_to_bary_list.append(W2_to_bary)
-            pbar.update(1)
-            pbar.refresh()
+    V_values_list, W2_to_bary_list = evaluate_MC(approx_bary_it, 
+                                                 input_measure_samples_collection_it, 
+                                                 true_bary_samples_it, 
+                                                 MC_size = MC_size, 
+                                                 num_parallel_process = 2, 
+                                                 pbar_text = "Evaluation of CWB_Li")
 
     # save V-values and W2_to_bary values
     V_values_dict = {
@@ -99,7 +86,6 @@ if __name__ == "__main__":
         "std": np.std(W2_to_bary_list),
         "values": W2_to_bary_list}
     save_json(W2_to_bary_dict, W2_to_bary_dir, "W2_to_bary.json")
-
 
 
 

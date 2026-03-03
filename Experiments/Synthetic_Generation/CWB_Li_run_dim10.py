@@ -19,17 +19,7 @@ Caveat: check customized_template.yaml in Algorithms/CWB_Li/cwb/templates to ens
 
 
 if __name__ == '__main__':
-    np.random.seed(44)
-    tf.random.set_seed(44)
-
-    # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-    # gpu_devices = tf.config.experimental.list_physical_devices('GPU')
-    # if len(gpu_devices) > 0:
-    #     tf.config.experimental.set_memory_growth(gpu_devices[0], True)
-
-    # ---- FORCE CPU ONLY ----
-    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
+    
     # ---- Reproducibility ----
     np.random.seed(44)
     tf.random.set_seed(44)
@@ -37,9 +27,6 @@ if __name__ == '__main__':
     # ---- Reduce TF logging ----
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
-    # ---- (Optional) verify ----
-    print("GPUs visible to TF:", tf.config.list_physical_devices("GPU"))
-    print("CPUs visible to TF:", tf.config.list_physical_devices("CPU"))
 
     ##############################
 
@@ -66,12 +53,12 @@ if __name__ == '__main__':
 
     exp = "SyntheticGeneration"
 
-    input_csv_path = f"{instance_dir}/input_samples/csv_files"
+    input_csv_dir = f"{instance_dir}/csv_files"
 
     g_base_dir = f"{instance_dir}/outputs/CWB_Li_outputs"
 
     sample_count = eval_num_samples * MC_size
 
-    batch_run_exp(exp, "cwb", repeat_range=repeat_range, input_csv_path=input_csv_path, num_measures=num_measures, g_base_dir=g_base_dir, dim_range=dim_range, sample_count=sample_count)
+    batch_run_exp(exp, "cwb", repeat_range=repeat_range, input_csv_dir=input_csv_dir, num_measures=num_measures, g_base_dir=g_base_dir, dim_range=dim_range, sample_count=sample_count)
 
     
