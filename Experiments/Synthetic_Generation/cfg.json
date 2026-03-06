@@ -61,7 +61,7 @@
     "num_measures": 10,
     "truncated_radius": 1000,
     "n_k": 1000,
-    "instance_identifier": "TRIAL1",
+    "instance_identifier": "FINAL",
     "surjective_mapping": {
       "0": 0,
       "2": 1,

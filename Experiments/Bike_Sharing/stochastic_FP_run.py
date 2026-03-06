@@ -28,7 +28,7 @@ if __name__ == "__main__":
     rand_state = np.random.RandomState(seed = 88888)
     init_method = {"type": "moment", "sample_size": 10000}
     truncate_radius = params["truncated_radius"]
-    sample_size_scheme = np.rint(np.exp(np.linspace(np.log(10000), np.log(80000), num_iters)) + 1).astype(int).tolist()
+    sample_size_scheme = np.rint(np.exp(np.linspace(np.log(5000), np.log(20000), num_iters)) + 1).astype(int).tolist()
     reg_param_scheme = [1e-8] * num_iters
     # sinkhorn_impl = "ott"
     # warm_start = {"type": "first-order"}
