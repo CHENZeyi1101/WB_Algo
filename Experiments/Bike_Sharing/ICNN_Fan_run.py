@@ -263,7 +263,7 @@ if __name__ == '__main__':
     eval_num_samples = params["eval_num_samples"]
     csv_skip_rows = params["csv_skip_rows"]
     csv_cols_range = range(params["csv_cols_range"][0], params["csv_cols_range"][1])
-    outputs_dir = f"{cfg_dict['outputs_dir']}/ICNN_Fan_outputs"
+    outputs_dir = f"{cfg_dict['outputs_dir']}/ICNN_Fan_outputs_cpu"
     os.makedirs(outputs_dir, exist_ok=True)
 
     split_posterior_sampler = csv_posterior_sampler_BikeSharing(csv_dir = samples_dir, 

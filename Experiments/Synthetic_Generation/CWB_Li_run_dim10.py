@@ -53,12 +53,13 @@ if __name__ == '__main__':
 
     exp = "SyntheticGeneration"
 
-    input_csv_dir = f"{instance_dir}/csv_files"
+    input_csv_path = f"{instance_dir}/csv_files"
 
     g_base_dir = f"{instance_dir}/outputs/CWB_Li_outputs"
+    os.makedirs(g_base_dir, exist_ok=True)
 
     sample_count = eval_num_samples * MC_size
 
-    batch_run_exp(exp, "cwb", repeat_range=repeat_range, input_csv_dir=input_csv_dir, num_measures=num_measures, g_base_dir=g_base_dir, dim_range=dim_range, sample_count=sample_count)
+    batch_run_exp(exp, "cwb", repeat_range=repeat_range, input_csv_path=input_csv_path, num_measures=num_measures, g_base_dir=g_base_dir, dim_range=dim_range, sample_count=sample_count)
 
     

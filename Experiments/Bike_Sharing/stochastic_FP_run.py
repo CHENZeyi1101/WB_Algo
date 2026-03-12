@@ -10,7 +10,7 @@ if __name__ == "__main__":
     with open(Cfg_PATH, "r") as f:
         cfg_dict = json.load(f)
 
-    params = cfg_dict["params_posterior_aggregation_dim9"]
+    params = cfg_dict["params_posterior_aggregation_dim8"]
 
     samples_dir = cfg_dict['samples_dir']
 

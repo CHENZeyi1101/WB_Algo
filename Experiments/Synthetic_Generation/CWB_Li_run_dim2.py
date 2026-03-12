@@ -56,6 +56,7 @@ if __name__ == '__main__':
     input_csv_path = f"{instance_dir}/input_samples/csv_files"
 
     g_base_dir = f"{instance_dir}/outputs/CWB_Li_outputs"
+    os.makedirs(g_base_dir, exist_ok=True)
 
     sample_count = eval_num_samples * MC_size
 

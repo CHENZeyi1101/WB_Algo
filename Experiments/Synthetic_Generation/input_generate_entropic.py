@@ -445,17 +445,17 @@ class entropic_input_sampler:
     
     def compute_true_V_value_via_OT(self, sample_size, num_rep):
         r'''
-        Approximately compute the true V-value (i.e., the minimal value of the barycenter functional) via Monte Carlo integration
+        Approximately compute the true V-value (i.e., the minimal value of the barycenter functional) via empirical OT
         The effects of the truncation of the input measures are ignored
         '''
         # ignore the random seed
         V_vec = np.zeros(num_rep)
         
-        for rep in range(num_rep):
+        for rep in tqdm(range(num_rep), desc="Computing true V-value via OT"):
             source_samples = self.source_sampler.sample(sample_size)
             input_samples = self.sample(sample_size)
 
-            for k in range(self.num_measures):
+            for k in tqdm(range(self.num_measures), desc=f"Computing V-value"):
                 V_vec[rep] += W2_pot(source_samples, input_samples[k]) / self.num_measures
             
             print(f"V-value computed = {V_vec[rep]}")

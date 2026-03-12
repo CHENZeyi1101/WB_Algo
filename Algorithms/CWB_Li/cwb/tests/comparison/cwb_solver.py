@@ -38,7 +38,7 @@ def get_template_name(exp):
     else:
         raise Exception('No template for experiment {}!'.format(exp))
 
-def run(exp, dim, sample_count, working_dir, data_dir, result_dir, result_filename, input_csv_path, num_measures):
+def run(exp, dim, sample_count, working_dir, data_dir, result_dir, result_filename, input_csv_path, num_measures, params = None):
     '''
     data_dir: directory containing the input distributions (csv files)
     result_dir: directory to save the output barycenter samples
@@ -54,17 +54,14 @@ def run(exp, dim, sample_count, working_dir, data_dir, result_dir, result_filena
     conf['exp'] = exp
     conf['point_dim'] = dim
 
+    if params is not None:
+        csv_skip_rows = params["csv_skip_rows"]
+        csv_cols_range = params["csv_cols_range"]
+        # csv_cols_range = range(params["csv_cols_range"][0], params["csv_cols_range"][1])
+        conf['csv_skip_rows'] = csv_skip_rows
+        conf['csv_cols_range'] = csv_cols_range
+
     source_list = []
-    # data_files = sorted([p for p in os.listdir(data_dir) if p.endswith('.pkl')])
-    # # ---- CSV inputs instead of PKL ----
-    # data_files = sorted([
-    #     p for p in os.listdir(data_dir)
-    #     if p.lower().endswith(".csv")
-    # ])
-
-    # if len(data_files) == 0:
-    #     raise FileNotFoundError(f"No .csv files found in data_dir={data_dir}")
-
     num_sources = num_measures
     weight = 1 / num_sources
     for i in range(num_sources):
@@ -104,7 +101,6 @@ def run(exp, dim, sample_count, working_dir, data_dir, result_dir, result_filena
     src = os.path.join(working_dir, g_sample_dir, g_sample_npy)
     dst = os.path.join(result_dir, result_filename)
 
-    # ensure destination directory exists
     os.makedirs(os.path.dirname(dst), exist_ok=True)
 
     if not os.path.exists(src):

@@ -15,17 +15,16 @@ if __name__ == "__main__":
     with open(Cfg_PATH, "r") as f:
         cfg_dict = json.load(f)
 
-    params = cfg_dict["params_synthetic_generation_dim10"]
+    params = cfg_dict["params_posterior_aggregation_dim8"]
 
     # take all items in params
     dim = params["dim"]
     num_measures = params["num_measures"]
     instance_identifier = params["instance_identifier"]
     MC_size = params["MC_size"]
-    num_samples = params["num_samples"]
     eval_num_samples = params["eval_num_samples"]
 
-    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
+    instance_dir = cfg_dict['data_dir']
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
@@ -40,7 +39,7 @@ if __name__ == "__main__":
     cwb_data = np.load(result_npz_path)
     print(cwb_data.shape) # (MC_size * num_samples, dim)
 
-    approx_bary_it = list(cwb_data.reshape(MC_size, num_samples, dim))
+    approx_bary_it = list(cwb_data.reshape(MC_size, eval_num_samples, dim))
     
 
     eval_dir = f"{instance_dir}/samples_for_evaluation"

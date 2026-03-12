@@ -151,7 +151,7 @@ class entropic_iterative_scheme:
         based on the generated samples after iterations;
         Will be envoked each time after iterative_sampling() is called when a new (empirical) G(\mu) measure is obtained.
         '''
-        for measure_index in tqdm(range(self.num_measures), desc = "OT map construction", disable = self.sinkhorn_impl == "ott"):
+        for measure_index in tqdm(range(self.num_measures), desc = "OT map construction", disable = False):
             input_measure_samples = np.array(input_samples_collection[measure_index])
             log_info(map_logger, f"\n"
                                 f"################################################################\n"
@@ -178,7 +178,8 @@ class entropic_iterative_scheme:
 
     def converge(self, 
                  logger : dict = {logger: None for logger in ['sample_logger', 'map_logger']},
-                 data_dir: str = None):
+                 data_dir: str = None,
+                 eval_boolean = True):
         '''
         Main function to run the entropic iterative scheme for approximating the G-operator fixed point
         Outputs are saved to JSON files in data_dir
@@ -212,33 +213,33 @@ class entropic_iterative_scheme:
 
             for eval_samples in eval_samples_it:
                 accepted_samples_list.append(eval_samples.tolist())
-            
-            V_values_list, W2_to_bary_list = evaluate_MC(eval_samples_it, 
-                                                        input_measure_samples_collection_it, 
-                                                        true_bary_samples_it, 
-                                                        MC_size = self.eval_MC_size, 
-                                                        num_parallel_process = self.num_parallel, 
-                                                        pbar_text = f"Evaluation of iter {iter}")
-            
-            self.V_values_dict[f"iteration_{iter}"] = {
-                "mean": np.mean(V_values_list), 
-                "std": np.std(V_values_list),
-                "sample_size": self.eval_num_samples,
-                "values": V_values_list
-            }
-            self.W2_to_bary_dict[f"iteration_{iter}"] = {
-                "mean": np.mean(W2_to_bary_list),
-                "std": np.std(W2_to_bary_list),
-                "sample_size": self.eval_num_samples,
-                "values": W2_to_bary_list
-            }
+
+            if eval_boolean:
+                V_values_list, W2_to_bary_list = evaluate_MC(eval_samples_it, 
+                                                            input_measure_samples_collection_it, 
+                                                            true_bary_samples_it, 
+                                                            MC_size = self.eval_MC_size, 
+                                                            num_parallel_process = self.num_parallel, 
+                                                            pbar_text = f"Evaluation of iter {iter}")
+                
+                self.V_values_dict[f"iteration_{iter}"] = {
+                    "mean": np.mean(V_values_list), 
+                    "std": np.std(V_values_list),
+                    "sample_size": self.eval_num_samples,
+                    "values": V_values_list
+                }
+                self.W2_to_bary_dict[f"iteration_{iter}"] = {
+                    "mean": np.mean(W2_to_bary_list),
+                    "std": np.std(W2_to_bary_list),
+                    "sample_size": self.eval_num_samples,
+                    "values": W2_to_bary_list
+                }
+                save_json(self.V_values_dict, V_values_dir, f"V_values_iter{iter}.json")
+                save_json(self.W2_to_bary_dict, W2_to_bary_dir, f"W2_to_bary_iter{iter}.json")
 
             self.G_samples_dict[f"iteration_{iter}"] = accepted_samples_list
-
-            save_json(self.V_values_dict, V_values_dir, f"V_values_iter{iter}.json")
-            save_json(self.W2_to_bary_dict, W2_to_bary_dir, f"W2_to_bary_iter{iter}.json")
             save_json(self.G_samples_dict, G_samples_dir, f"G_samples_iter{iter}.json")
-            
+                
             if iter >= self.num_iters:
                 break
 

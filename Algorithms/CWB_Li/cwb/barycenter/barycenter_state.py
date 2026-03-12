@@ -37,21 +37,24 @@ class BarycenterState:
         ##############################
         if 'num_sources' in conf:
             self.num_sources = conf['num_sources']
-        if 'input_csv_path' in conf:
+        if conf['exp'] == 'SyntheticGeneration':
             self.input_csv_path = conf['input_csv_path']
-            if conf['exp'] == 'SyntheticGeneration':
-                self.input_sampler = csv_input_sampler_SyntheticGeneration(self.input_csv_path, 
-                                                    self.num_sources, 
-                                                    multiplication_factor=1)
-                self.input_sampler.set_streamers()
-            elif conf['exp'] == 'BikeSharing':
-                self.input_sampler = csv_posterior_sampler_BikeSharing(self.input_csv_path, 
+            self.input_sampler = csv_input_sampler_SyntheticGeneration(self.input_csv_path, 
                                                 self.num_sources, 
-                                                multiplication_factor=1,
-                                                type="split",
-                                                usecols=range(7, 16),
-                                                skiprows=52)
-                self.input_sampler.set_streamers()
+                                                multiplication_factor=1)
+            self.input_sampler.set_streamers()
+        elif conf['exp'] == 'BikeSharing':
+            self.input_csv_path = conf['input_csv_path']
+            self.csv_cols_range = range(conf["csv_cols_range"][0], conf["csv_cols_range"][1])
+            self.csv_skip_rows = conf['csv_skip_rows']
+                
+            self.input_sampler = csv_posterior_sampler_BikeSharing(csv_dir = self.input_csv_path, 
+                                                num_measures = self.num_sources, 
+                                                multiplication_factor = 1, 
+                                                type = "split",
+                                                usecols = self.csv_cols_range,
+                                                skiprows = self.csv_skip_rows)
+            self.input_sampler.set_streamers()
         ##############################
 
         self.build_distribution_list()

@@ -34,3 +34,23 @@ if __name__ == "__main__":
     }
 
     save_json(output_dict, outputs_dir, 'true_V_value.json')
+
+    
+    # sample_size = 10000
+    # num_rep = 20
+
+    # [V_mean, V_std, V_vec] = entropic_sampler.compute_true_V_value_via_OT(sample_size=sample_size, num_rep=num_rep)
+
+    # outputs_dir = f"{instance_dir}/outputs/true_V_value_OT"
+    # os.makedirs(outputs_dir, exist_ok=True)
+    # output_dict = {
+    #     "mean": V_mean,
+    #     "std": V_std,
+    #     "sample_size": sample_size,
+    #     "values": V_vec.tolist()
+    # }
+
+    # save_json(output_dict, outputs_dir, 'true_V_value_OT.json')
+
+
+    

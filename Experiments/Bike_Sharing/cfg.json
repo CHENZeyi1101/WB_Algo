@@ -30,9 +30,9 @@
   "devices": {
     "WGHA_Kim": "cpu",
     "Fast_Cuturi": "cpu",
-    "CWB_Li": "mps",
-    "WIN_Korotin": "mps",
-    "ICNN_Fan": "mps",
+    "CWB_Li": "cpu",
+    "WIN_Korotin": "cpu",
+    "ICNN_Fan": "cpu",
     "stochastic_FP": "cpu"
   }
 }

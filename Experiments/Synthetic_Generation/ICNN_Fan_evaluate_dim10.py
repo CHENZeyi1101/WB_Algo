@@ -72,7 +72,7 @@ if __name__ == "__main__":
     true_bary_samples_it = [bary_samples_collection_loaded[i][:eval_num_samples] for i in range(MC_size)]
 
  
-    epoch_to_load = 70
+    epoch_to_load = 100
     MC_size = 20
     epoch_evaluation_dir = f"{evaluation_dir}/outputs_{epoch_to_load}"
     os.makedirs(epoch_evaluation_dir, exist_ok=True)
@@ -113,55 +113,4 @@ if __name__ == "__main__":
 
 
 
-    # for epoch_to_load in range(100, max_epoch + 1, 100):
-    #     epoch_evaluation_dir = f"{evaluation_dir}/outputs_{epoch_to_load}"
-    #     os.makedirs(epoch_evaluation_dir, exist_ok=True)
-    #     approx_bary_it = []
-    #     for i in tqdm(range(MC_size), desc=f"Epoch {epoch_to_load}"):
-    #         barycenter_samples = CDR.barycenter_sampler(
-    #             cfg, PTU.device, outputs_dir, load_epoch=epoch_to_load
-    #         )
-    #         barycenter_samples_np = barycenter_samples.detach().numpy()
-    #         approx_bary_it.append(barycenter_samples_np)
-    #         df = pd.DataFrame(barycenter_samples_np)
-    #         df.to_csv(f"{epoch_evaluation_dir}/outputs_NWBFanTaghvaeiChen_samples_epoch_{epoch_to_load}_MCSample_{i}.csv",index=False, header=False)
-
-    #     V_values_list, W2_to_bary_list = evaluate_MC(approx_bary_it, 
-    #                                              input_measure_samples_collection_it, 
-    #                                              true_bary_samples_it, 
-    #                                              MC_size = MC_size, 
-    #                                              num_parallel_process = None, 
-    #                                              pbar_text = "Evaluation of ICNN_Fan")
-
-
-    #     # save V-values and W2_to_bary values
-    #     V_values_dict = {
-    #         "mean": np.mean(V_values_list),
-    #         "std": np.std(V_values_list),
-    #         "values": V_values_list}
-    #     save_json(V_values_dict, V_values_dir, f"V_values_epoch{epoch_to_load}.json")
-
-    #     W2_to_bary_dict = {
-    #         "mean": np.mean(W2_to_bary_list),
-    #         "std": np.std(W2_to_bary_list),
-    #         "values": W2_to_bary_list}
-    #     save_json(W2_to_bary_dict, W2_to_bary_dir, f"W2_to_bary_epoch{epoch_to_load}.json")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    

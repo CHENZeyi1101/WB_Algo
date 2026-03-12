@@ -43,17 +43,20 @@ if __name__ == '__main__':
     with open(Cfg_PATH, "r") as f:
         cfg_dict = json.load(f)
 
-    params = cfg_dict["params_bike_sharing"]
+    params = cfg_dict["params_posterior_aggregation_dim8"]
+
+    samples_dir = cfg_dict['samples_dir']
+    # assert existence
+    assert os.path.exists(samples_dir), f"Instance directory {samples_dir} does not exist."
 
     # take all items in params
-    num_samples = params["num_samples"]
     dim = params["dim"]
     num_measures = params["num_measures"]
-    truncated_radius = params["truncated_radius"]
-    # instance_identifier = params["instance_identifier"]
+    instance_identifier = params["instance_identifier"]
     MC_size = params["MC_size"]
+    eval_num_samples = params["eval_num_samples"]
 
-    instance_dir = f"{cfg_dict['data_dir']}/Bike_Sharing"
+    instance_dir = cfg_dict['data_dir']
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
@@ -62,10 +65,13 @@ if __name__ == '__main__':
 
     exp = "BikeSharing"
 
-    input_csv_path = instance_dir
+    input_csv_path = samples_dir
 
     g_base_dir = f"{instance_dir}/outputs/CWB_Li_outputs"
+    os.makedirs(g_base_dir, exist_ok=True)
 
-    batch_run_exp(exp, "cwb", repeat_range=repeat_range, input_csv_path=input_csv_path, num_measures=num_measures, g_base_dir=g_base_dir, dim_range=dim_range, sample_count=num_samples, MC_size=MC_size)
+    sample_count = eval_num_samples * MC_size
+
+    batch_run_exp(exp, "cwb", repeat_range=repeat_range, input_csv_path=input_csv_path, num_measures=num_measures, g_base_dir=g_base_dir, dim_range=dim_range, sample_count=sample_count, params=params)
 
     
