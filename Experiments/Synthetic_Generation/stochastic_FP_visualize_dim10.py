@@ -37,11 +37,19 @@ if __name__ == "__main__":
     assert os.path.exists(v_values_path), f"V values file {v_values_path} does not exist."
     true_v_path = f"{instance_dir}/outputs/true_V_value/true_V_value.json"
     assert os.path.exists(true_v_path), f"True V value file {true_v_path} does not exist."
+    true_v_path_OT = f"{instance_dir}/outputs/true_via_OT/true_V_values_OT.json"
 
     W2_to_bary_path = f"{outputs_dir}/W2_to_bary/W2_to_bary_iter9.json"
     assert os.path.exists(W2_to_bary_path), f"W2-to-bary file {W2_to_bary_path} does not exist."
+    true_W2_to_bary_path_OT = f"{instance_dir}/outputs/true_via_OT/true_W2_to_bary_OT.json"
 
-    plot_v_values(v_values_path, true_v_path, plot_dir=plot_dir, plot_name="V_values_iters")
-    plot_w2_values(W2_to_bary_path, plot_dir=plot_dir, plot_name="W2_to_bary_iters")
-
+    plot_v_values(v_values_path=v_values_path, 
+                  true_v_OT_path=true_v_path_OT, 
+                  true_v_path=true_v_path, 
+                  plot_dir=plot_dir, 
+                  plot_name="V_values_iters_maxmin")
+    plot_w2_values(w2_values_path=W2_to_bary_path, 
+                   true_OT_path=true_W2_to_bary_path_OT, 
+                   plot_dir=plot_dir, 
+                   plot_name="W2_to_bary_iters_maxmin")
     

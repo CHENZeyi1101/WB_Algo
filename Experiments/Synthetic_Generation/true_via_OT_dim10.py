@@ -48,7 +48,7 @@ if __name__ == "__main__":
     source_info = {
         "num_components": params["num_components"],
         "component_seed": params["seeds"]["source_components_seed"], 
-        "master_sampling_rng": np.random.SeedSequence(params["seeds"]["master_source_sampling_seed"] + 100) # use a different seed for the source sampler in the evaluation script to avoid overlap with the samples used in evaluation
+        "master_sampling_rng": np.random.SeedSequence(params["seeds"]["master_source_sampling_seed"] - 4000) # use a different seed for the source sampler in the evaluation script to avoid overlap with the samples used in evaluation
     }
     
     source_sampler = MixtureOfGaussians(dim = dim, 
@@ -62,6 +62,14 @@ if __name__ == "__main__":
     for i in range(MC_size):
         source_samples = source_sampler.sample(eval_num_samples)
         eval_bary_samples_it.append(source_samples)
+
+    # true_bary_samples_it = []
+    # for i in range(MC_size):
+    #     bary_samples = source_sampler.sample(eval_num_samples)
+    #     true_bary_samples_it.append(bary_samples)
+
+    # # check
+    # print(true_bary_samples_it[0] == eval_bary_samples_it[0]) # should be False since the samples are different, even though they come from the same distribution
 
     input_measure_samples_collection_it = [{k : input_samples_collection_loaded[i][k][:eval_num_samples] for k in range(num_measures)} for i in range(MC_size)]
     true_bary_samples_it = [bary_samples_collection_loaded[i][:eval_num_samples] for i in range(MC_size)]
@@ -78,10 +86,11 @@ if __name__ == "__main__":
         "mean": np.mean(V_values_list),
         "std": np.std(V_values_list),
         "values": V_values_list}
-    save_json(V_values_dict, save_dir, "true_V_values_OT.json")
+    save_json(V_values_dict, save_dir, "true_V_values_OT_check.json")
+
 
     W2_to_bary_dict = {
         "mean": np.mean(W2_to_bary_list),
         "std": np.std(W2_to_bary_list),
         "values": W2_to_bary_list}
-    save_json(W2_to_bary_dict, save_dir, "true_W2_to_bary_OT.json")
+    save_json(W2_to_bary_dict, save_dir, "true_W2_to_bary_OT_check.json")

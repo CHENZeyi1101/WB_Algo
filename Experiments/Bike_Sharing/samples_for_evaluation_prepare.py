@@ -10,7 +10,7 @@ if __name__ == "__main__":
         cfg_dict = json.load(f)
     samples_dir = cfg_dict["samples_dir"]
 
-    params = cfg_dict["params_posterior_aggregation_dim9"]
+    params = cfg_dict["params_posterior_aggregation_dim8"]
     num_measures = params["num_measures"]
     eval_MC_size = params["MC_size"]
     eval_num_samples = params["eval_num_samples"]

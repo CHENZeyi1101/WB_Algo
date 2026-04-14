@@ -302,10 +302,17 @@ if __name__ == "__main__":
         f"{plot_dir}/component_pushforwards/component_4_minus_kde.png"
     ]
 
-    combine_images_row(image_paths_1, save_path=f"{plot_dir}/source_auxiliary_pdf_combined.png", figsize=(24, 6))
-    print("Combined source and auxiliary measure PDFs.")
-    combine_images_row(image_paths_2, save_path=f"{plot_dir}/source_input_kde_combined.png", figsize=(24, 6))
-    print("Combined source and input measure KDEs.")
+    # combine_images_row(image_paths_1, save_path=f"{plot_dir}/source_auxiliary_pdf_combined.png", figsize=(24, 6))
+    # print("Combined source and auxiliary measure PDFs.")
+    
+    # combine_images_row(image_paths_2, save_path=f"{plot_dir}/input_kde_combined.pdf", figsize=(24, 6))
+    # print("Combined source and input measure KDEs.")
 
-    combine_images_2rows(image_paths_3, save_path=f"{plot_dir}/component_pushforwards_kde_combined.png", figsize=(24, 12))
-    print("Combined component pushforwards KDEs.")
+    # combine_images_2rows(image_paths_1, save_path=f"{plot_dir}/source_auxiliary_pdf_combined_2rows.pdf", figsize=(24, 12))
+    # print("Combined source and auxiliary measure PDFs.")
+
+    combine_images_2rows(image_paths_2, save_path=f"{plot_dir}/sourcePDF_inputKDE_combined_2rows.pdf", figsize=(24, 12))
+    print("Combined source and input measure PDFs.")
+
+    # combine_images_2rows(image_paths_3, save_path=f"{plot_dir}/component_pushforwards_kde_combined.png", figsize=(24, 12))
+    # print("Combined component pushforwards KDEs.")

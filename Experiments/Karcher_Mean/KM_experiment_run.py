@@ -57,7 +57,7 @@ class KMInstance_input_sampler:
         input_sample_collection[0] = sample_uniform_union_of_two_disks(self.mu1_centers[0], self.mu1_centers[1], self.eps, num_samples, self.rng)
         input_sample_collection[1] = sample_uniform_union_of_two_disks(self.mu2_centers[0], self.mu2_centers[1], self.eps, num_samples, self.rng)
         if convolution:
-            # Convolve each sample with a small Gaussian noise
+            # Convolute each sample with a small Gaussian noise
             noise_scale = 1 
             for k in range(2):
                 noise = self.rng.normal(loc=0.0, scale=noise_scale, size=input_sample_collection[k].shape)
@@ -65,16 +65,17 @@ class KMInstance_input_sampler:
         return input_sample_collection
     
 class KMInstance_KM_sampler:
-    def __init__(self, seed, karcher_centers, eps):
+    def __init__(self, seed, karcher_centers, eps, convolution=True):
         self.rng = np.random.default_rng(seed=seed)
         self.karcher_centers = karcher_centers
         self.eps = eps
+        self.convolution = convolution
 
-    def sample(self, num_samples, convolution=True):
+    def sample(self, num_samples):
         karcher_samples = sample_uniform_union_of_two_disks(self.karcher_centers[0], self.karcher_centers[1], self.eps, num_samples, self.rng)
-        if convolution:
+        if self.convolution:
             # Convolve each sample with a small Gaussian noise
-            noise_scale = 2
+            noise_scale = 3 # noise_scale = 2
             noise = self.rng.normal(loc=0.0, scale=noise_scale, size=karcher_samples.shape)
             karcher_samples += noise
         return karcher_samples
@@ -89,16 +90,19 @@ if __name__ == "__main__":
     # instance_identifier = "TrialB" # without convolution; small regularization
     # instance_identifier = "TrialC" # with convolution; scaling regularization
     instance_identifier = "TrialD" # with convolution; small regularization
-    outputs_dir = f"{instance_dir}/KM_Example_outputs/Instance_{instance_identifier}"
+    outputs_dir = f"{instance_dir}/KM_Example_outputs/Instance_{instance_identifier}_reg500"
     os.makedirs(outputs_dir, exist_ok=True)
 
     num_samples = 2000
     eval_num_samples = num_samples
+    convolution = True
+    # convolution = False
 
     # Parameters
     a = 60
     M = 20
-    eps = 2 # radius of the disks
+    eps = 0.2 # radius of the disks
+    # eps = 2
 
     cfg_dict = {"a": a,
                 "M": M,
@@ -122,21 +126,22 @@ if __name__ == "__main__":
 
     # Create samplers
     input_sampler = KMInstance_input_sampler(seed=2000, mu1_centers=mu1_centers, mu2_centers=mu2_centers, eps=eps)
-    karcher_sampler_A = KMInstance_KM_sampler(seed=3000, karcher_centers=karcher_A_centers, eps=eps)
-    karcher_sampler_B = KMInstance_KM_sampler(seed=4000, karcher_centers=karcher_B_centers, eps=eps)
+    karcher_sampler_A = KMInstance_KM_sampler(seed=3000, karcher_centers=karcher_A_centers, eps=eps, convolution=False)
+    karcher_sampler_B = KMInstance_KM_sampler(seed=4000, karcher_centers=karcher_B_centers, eps=eps, convolution=convolution)
 
     bary_samples = karcher_sampler_A.sample(eval_num_samples)
     input_samples = input_sampler.sample(eval_num_samples)
 
     # parameters for the entropic iterative scheme
     dim = 2
-    num_iters = 9
+    num_iters = 14
     rand_state = np.random.RandomState(seed = 5000) # redundant here; for input constraints of the entropic iterative scheme
     init_method = {"type": "moment", "sample_size": 10000} # redundant here
     truncate_radius = 200
     sample_size_scheme = [2000] * num_iters
     # reg_param_scheme = np.rint(np.exp(np.linspace(np.log(200000), np.log(10), num_iters))).tolist() # for TrialA and TrialC
-    reg_param_scheme = [10] * num_iters # for TrialB and TrialD
+    # reg_param_scheme = np.rint(np.exp(np.linspace(np.log(200000), np.log(50), num_iters))).tolist() # for TrialA and TrialC
+    reg_param_scheme = [500] * num_iters # for TrialB and TrialD
     
     sinkhorn_impl = "ott"
     warm_start = None

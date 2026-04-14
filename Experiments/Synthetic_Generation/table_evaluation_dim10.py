@@ -115,10 +115,9 @@ if __name__ == "__main__":
     export_latex_table(
         results,
         output_path=f"{all_outputs_dir}/10d_results_table.txt",
-        metric_names = [
-            f"V-values ($V(\\bar{{\\mu}}) = {true_v:.4f}$)",
-            r"2-Wasserstein distance to $\bar{\mu}$"
-        ],
+        metric_names=[
+            r"$V(\widehat{\mu})$)",
+            r"$\mathcal{W}_2(\widehat{\mu}, \bar{\mu})$"],
         caption="Performances of algorithms in Experiment [SG-10d]",
         label="tab:results"
     )

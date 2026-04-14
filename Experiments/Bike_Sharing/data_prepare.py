@@ -27,7 +27,7 @@ if __name__ == "__main__":
     samples_dir = cfg_dict["samples_dir"]
     os.makedirs(stan_dir, exist_ok=True)
     os.makedirs(samples_dir, exist_ok=True)
-    selected_columns = cfg_dict["params_posterior_aggregation_dim9"]["selected_columns"]
+    selected_columns = cfg_dict["params_posterior_aggregation_dim8"]["selected_columns"]
 
     # select the columns of interest
     X = X[selected_columns].to_numpy()

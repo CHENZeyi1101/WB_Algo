@@ -1,0 +1,31 @@
+% ── Required packages in preamble ────────────────────────────────
+% \usepackage{booktabs}
+% \usepackage{adjustbox}
+%
+\begin{table}[ht]
+  \centering
+  \caption{Summary statistics of the bike-sharing dataset ($N = 17,379$).}
+  \label{tab:bike_summary}
+  \begin{adjustbox}{max width=\textwidth}
+  \begin{tabular}{llrrrrr}
+    \toprule
+    \textbf{Variable} & \textbf{Description} & \textbf{Mean} & \textbf{Std} & \textbf{Min} & \textbf{Median} & \textbf{Max} \\
+    \midrule
+    \multicolumn{7}{l}{\textit{Continuous variables}} \\
+    \midrule
+    Count$^*$ & Total bike rentals (response variable) & 189.463 & 181.388 & 1 & 142 & 977 \\
+    Temp. & Normalized temperature & 0.497 & 0.193 & 0.020 & 0.500 & 1 \\
+    Feels-like Temp. & Normalized feeling temperature & 0.476 & 0.172 & 0 & 0.485 & 1 \\
+    Humidity & Normalized humidity & 0.627 & 0.193 & 0 & 0.630 & 1 \\
+    Wind Speed & Normalized wind speed & 0.190 & 0.122 & 0 & 0.194 & 0.851 \\
+    \midrule
+    \multicolumn{7}{l}{\textit{Categorical \& binary variables}} \\
+    \midrule
+    Hour & Hour of the day (ordinal, 0--23) & \multicolumn{5}{l}{Range: 0--23 \quad Mode: 16} \\
+    Season & Meteorological season & \multicolumn{5}{l}{Spring: 24.4\% \quad Summer: 25.4\% \quad Fall: 25.9\% \quad Winter: 24.4\%} \\
+    Working Day & Whether the day is a working day & \multicolumn{5}{l}{No: 31.7\% \quad Yes: 68.3\%} \\
+    Weather & Weather situation & \multicolumn{5}{l}{Clear: 65.7\% \quad Mist: 26.1\% \quad Light rain/snow: 8.2\% \quad Heavy rain/snow: 0.0\%} \\
+    \bottomrule
+  \end{tabular}
+  \end{adjustbox}
+\end{table}
