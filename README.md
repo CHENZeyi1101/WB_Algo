@@ -1,5 +1,5 @@
 # Provably Convergent Stochastic Fixed-Point Algorithm for Free-Support Wasserstein Barycenter of Continuous Non-Parametric Measures
-+ This repository contains the Python code implementations of the paper.
++ This repository contains the Python code implementations of the paper. [[arXiv](https://arxiv.org/abs/2505.24384)]
 + By Zeyi Chen, Ariel Neufeld and Qikun Xiang.
 
 ## Table of Contents
@@ -12,9 +12,9 @@
 
 # Abstract
 
-We develop a framework utilizing statistical estimators and stochastic iterations to compute 2-Wasserstein barycenters for continuous, non-parametric probability distributions. Our work provides the first thorough convergence proof for implementable stochastic versions of an iterative method from Álvarez-Esteban et al. (2016). We establish convergence guarantees and identify conditions for geometric convergence rates under bounded optimal transport map estimation errors. We propose a computationally efficient algorithm supporting measures with Caffarelli-type regularity properties, utilizing modified entropic optimal transport map estimation. Additionally, we introduce a novel synthetic benchmark generation procedure where input distributions have meaningful characteristics and barycenters are approximately known. Experimental validation using both synthetic and real datasets demonstrates computational efficiency, estimation quality, and sampling versatility.
+We develop an estimator-based stochastic fixed-point framework for approximately computing the 2-Wasserstein barycenter of continuous, non-parametric probability measures. Notably, we provide the first rigorous convergence analysis for implementable estimator-based stochastic extensions of the fixed-point iterative scheme proposed by Álvarez-Esteban, del Barrio, Cuesta-Albertos, and Matrán (2016). In particular, we establish almost sure convergence, and identify sufficient conditions for geometric rates of convergence under controlled errors in optimal transport (OT) map estimation. We subsequently propose a concrete, provably convergent, and computationally tractable stochastic algorithm that accommodates input measures satisfying Caffarelli-type regularity conditions, which form a dense subset of the Wasserstein space. This algorithm leverages a modified entropic OT map estimator to enable efficient and scalable implementation. To facilitate quantitative evaluation, we further propose a novel and efficient procedure for synthetically generating benchmark instances, in which the input measures exhibit non-trivial features and the corresponding barycenters are approximately known. Numerical experiments on both synthetic and real-world datasets demonstrate the strong computational efficiency, estimation accuracy, and sampling flexibility of our approach.
 
-Keywords: Wasserstein barycenter, optimal transport, information aggregation, transportation map estimation
+**Keywords:** Wasserstein barycenter, optimal transport, transportation map estimation, entropic regularization
 
 # Descriptions of folders
 
