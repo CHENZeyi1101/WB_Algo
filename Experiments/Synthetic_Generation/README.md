@@ -1,10 +1,8 @@
 Every script is executed by running the following command in the terminal
 
-    <!-- python -m Experiments.Synthetic_Generation.(SCRIPT_NAME) -->
+    python -m Experiments.Synthetic_Generation.(SCRIPT_NAME)
 
-# Parameter configurations:
-
-The JSON file cfg.json contains the parameter configurations for this experiment. 
+The JSON file [cfg.json](cfg.json) contains the parameter configurations for this experiment. 
 
 # For 2-dimensional experiments:
 
