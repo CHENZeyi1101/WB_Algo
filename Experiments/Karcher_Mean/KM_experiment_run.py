@@ -86,11 +86,11 @@ if __name__ == "__main__":
     data_dir = "../../WB_data"
     instance_dir = f"{data_dir}/Karcher_Mean"
     os.makedirs(instance_dir, exist_ok=True)
-    # instance_identifier = "TrialA" # without convolution; scaling regularization
-    # instance_identifier = "TrialB" # without convolution; small regularization
-    # instance_identifier = "TrialC" # with convolution; scaling regularization
+    instance_identifier = "TrialA" # without convolution; scaling regularization
+    instance_identifier = "TrialB" # without convolution; small regularization
+    instance_identifier = "TrialC" # with convolution; scaling regularization
     instance_identifier = "TrialD" # with convolution; small regularization
-    outputs_dir = f"{instance_dir}/KM_Example_outputs/Instance_{instance_identifier}_reg500"
+    outputs_dir = f"{instance_dir}/KM_Example_outputs/Instance_{instance_identifier}"
     os.makedirs(outputs_dir, exist_ok=True)
 
     num_samples = 2000
@@ -101,8 +101,7 @@ if __name__ == "__main__":
     # Parameters
     a = 60
     M = 20
-    eps = 0.2 # radius of the disks
-    # eps = 2
+    eps = 2
 
     cfg_dict = {"a": a,
                 "M": M,
@@ -134,14 +133,13 @@ if __name__ == "__main__":
 
     # parameters for the entropic iterative scheme
     dim = 2
-    num_iters = 14
+    num_iters = 9
     rand_state = np.random.RandomState(seed = 5000) # redundant here; for input constraints of the entropic iterative scheme
     init_method = {"type": "moment", "sample_size": 10000} # redundant here
     truncate_radius = 200
     sample_size_scheme = [2000] * num_iters
-    # reg_param_scheme = np.rint(np.exp(np.linspace(np.log(200000), np.log(10), num_iters))).tolist() # for TrialA and TrialC
-    # reg_param_scheme = np.rint(np.exp(np.linspace(np.log(200000), np.log(50), num_iters))).tolist() # for TrialA and TrialC
-    reg_param_scheme = [500] * num_iters # for TrialB and TrialD
+    reg_param_scheme = np.rint(np.exp(np.linspace(np.log(200000), np.log(10), num_iters))).tolist() # for TrialA and TrialC
+    # reg_param_scheme = [10] * num_iters # for TrialB and TrialD
     
     sinkhorn_impl = "ott"
     warm_start = None

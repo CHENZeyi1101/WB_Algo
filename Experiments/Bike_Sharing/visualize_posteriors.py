@@ -93,6 +93,9 @@ def plot_2d_measures_kde(
 
 
 if __name__ == "__main__":
+    '''
+    Visualize posterior samples (via PCA)
+    '''
     num_measures = 5  # ensure matches training splits
     DATA_DIR = os.path.dirname(__file__)
     print("Current working directory:", DATA_DIR)
