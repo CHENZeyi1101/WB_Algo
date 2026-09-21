@@ -1,11 +1,13 @@
 import json
 import os
+import time
 from scipy.stats import gaussian_kde
 import numpy as np
 from tqdm import tqdm
 
 from Experiments.CSV_read import csv_input_sampler_SyntheticGeneration
 from Algorithms.WDHA_Kim.implementation2D.functions import frechet_mean
+from Algorithms.data_manage import save_json, read_json
 
 def build_unit_density_grids_from_samples(
     input_samples_collection,
@@ -112,24 +114,33 @@ if __name__ == "__main__":
 
     input_samples_collection = input_sampler.sample(num_samples)
 
+    kde_start = time.time()
     dists_unit_density = build_unit_density_grids_from_samples(
                                                         input_samples_collection,
                                                         num_measures,
                                                         n1=n1,
                                                         n2=n2,
-                                                        lo=lo,                 
-                                                        hi=hi,                
-                                                        truncated_radius=truncated_radius,   
+                                                        lo=lo,
+                                                        hi=hi,
+                                                        truncated_radius=truncated_radius,
                                                         bw_method=None,
                                                         eps=1e-15
                                                     )
-    
+    kde_preprocessing_seconds = time.time() - kde_start
+
     # save densities in dists_unit_density
     for i, dens_uv in enumerate(dists_unit_density):
         np.save(f"{outputs_dir}/density_unit_{i}.npy", dens_uv)
-    
-    mu_WGHA_unit = frechet_mean(dists_unit_density, 500, 'barycenter', save_option = False, return_option = True)
+
+    runtime_path = os.path.join(outputs_dir, "runtime.json")
+    mu_WGHA_unit = frechet_mean(dists_unit_density, 500, 'barycenter', save_option = False, return_option = True, runtime_path = runtime_path)
     np.save(f"{outputs_dir}/barycenter_density_unit.npy", mu_WGHA_unit)
+
+    # frechet_mean already wrote algorithm_seconds/n_outer_iterations to runtime.json;
+    # add the KDE discretization cost (unique to WDHA_Kim's density representation) as its own line item
+    runtime_dict = read_json(outputs_dir, "runtime.json")
+    runtime_dict["kde_preprocessing_seconds"] = kde_preprocessing_seconds
+    save_json(runtime_dict, outputs_dir, "runtime.json")
 
     # mu_WGHA_scaled = mu_WGHA_unit / (L * L)  # density w.r.t (x,y) coords
 

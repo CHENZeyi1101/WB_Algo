@@ -54,6 +54,7 @@ if __name__ == '__main__':
             state.train_potentials()
             if conf['estimate_map']:
                 state.train_transport_maps()
+            state.save_runtime_info()
 
         if args.test:
             test_conf = conf['test']

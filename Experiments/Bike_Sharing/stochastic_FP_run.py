@@ -76,7 +76,7 @@ if __name__ == "__main__":
         input_samples_for_evaluation = input_samples_collection_loaded,
         eval_num_samples = eval_num_samples,
         eval_MC_size = eval_MC_size,
-        num_parallel = 5
+        num_parallel = None
     )
     
 
@@ -84,4 +84,4 @@ if __name__ == "__main__":
     os.makedirs(outputs_dir, exist_ok=True)
     
     ##### Run the stochastic FP algorithm with entropic OT map estimation #####
-    entropic_iterative_computer.converge(logger = {'sample_logger': None, 'map_logger': None}, data_dir = outputs_dir)
+    entropic_iterative_computer.converge(logger = {'sample_logger': None, 'map_logger': None}, data_dir = outputs_dir, eval_boolean=False)

@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import time
 from tqdm import tqdm
 from multiprocessing import Pool
 
@@ -82,6 +83,7 @@ class entropic_iterative_scheme:
         self.G_samples_dict = {}
         self.V_values_dict = {}
         self.W2_to_bary_dict = {}
+        self.runtime_dict = {}
 
         self.set_init_gauss(init_method)
     
@@ -244,8 +246,18 @@ class entropic_iterative_scheme:
                 break
 
             # collect samples and compute the OT maps
+            # (this is the actual algorithmic work of the fixed-point scheme; the
+            # evaluation/logging block above is our own diagnostic and is excluded from runtime)
+            step_start = time.time()
             accepted_samples = self.iterative_sampling(iter, self.sample_size_scheme[iter], sample_logger)
             input_samples_collection: dict = self.input_sampler.sample(self.sample_size_scheme[iter])
             self.map_construct(iter, accepted_samples, input_samples_collection, self.reg_param_scheme[iter], map_logger)
+            self.runtime_dict[f"iteration_{iter}"] = time.time() - step_start
+            save_json(self.runtime_dict, data_dir, "runtime.json")
 
             iter += 1
+
+        runtime_summary = dict(self.runtime_dict)
+        runtime_summary["algorithm_seconds"] = sum(self.runtime_dict.values())
+        runtime_summary["n_outer_iterations"] = self.num_iters
+        save_json(runtime_summary, data_dir, "runtime.json")

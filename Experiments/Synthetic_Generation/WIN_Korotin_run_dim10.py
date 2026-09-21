@@ -1,5 +1,6 @@
 import matplotlib
 import numpy as np
+import time
 import matplotlib.pyplot as plt
 from tqdm import tqdm, tqdm_notebook
 from Experiments.Synthetic_Generation.samplers import *
@@ -174,6 +175,7 @@ if __name__ == "__main__":
 
     G.train(True)
 
+    warmstart_start = time.time()
     for iteration in tqdm_notebook(range(10000)):
         Z = Z_sampler.sample(BATCH_SIZE).detach() * 3
         loss = F.mse_loss(Z, G(Z))
@@ -182,6 +184,7 @@ if __name__ == "__main__":
         print(loss.item())
         if loss.item() < 1e-2:
             break
+    warmstart_seconds = time.time() - warmstart_start
 
     print(loss)
 
@@ -207,12 +210,15 @@ if __name__ == "__main__":
     last_plot_it = -1
     last_score_it = -1
 
+    main_loop_seconds_total = 0.0
+    outer_pass_count = 0
 
 ######################################
 #####################################3
-    
-     
+
+
     while it < MAX_ITER:
+        outer_pass_start = time.time()
         freeze(G)
         input_measure_samples_for_D = input_sampler.sample(BATCH_SIZE * D_ITERS)
         input_measure_samples_for_T_inv = input_sampler.sample(BATCH_SIZE * D_ITERS * T_ITERS)
@@ -326,5 +332,12 @@ if __name__ == "__main__":
             del G_old, G_loss, T_G_old_Z, Z
             gc.collect()
 
+        main_loop_seconds_total += time.time() - outer_pass_start
+        outer_pass_count += 1
 
-
+    runtime_dict = {
+        "algorithm_seconds": main_loop_seconds_total,
+        "n_outer_iterations": outer_pass_count,
+        "setup_seconds": warmstart_seconds,
+    }
+    save_json(runtime_dict, outputs_dir, "runtime.json")

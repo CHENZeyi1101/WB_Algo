@@ -38,10 +38,12 @@ def get_template_name(exp):
     else:
         raise Exception('No template for experiment {}!'.format(exp))
 
-def run(exp, dim, sample_count, working_dir, data_dir, result_dir, result_filename, input_csv_path, num_measures, params = None):
+def run(exp, dim, sample_count, working_dir, data_dir, result_dir, result_filename, input_csv_path, num_measures, params = None, outputs_dir = None):
     '''
     data_dir: directory containing the input distributions (csv files)
     result_dir: directory to save the output barycenter samples
+    outputs_dir: if given, runtime.json (outer-epoch training time) is copied here,
+                 alongside the V_values/ and W2_to_bary/ directories for this algorithm
     '''
     # original_working_dir = os.getcwd()
     if not os.path.exists(working_dir):
@@ -78,6 +80,7 @@ def run(exp, dim, sample_count, working_dir, data_dir, result_dir, result_filena
     conf['input_csv_path'] = input_csv_path
     conf['potential_ckpt_dir'] = os.path.join(working_dir, 'checkpoints', 'potential')
     conf['map_ckpt_dir'] = os.path.join(working_dir, 'checkpoints', 'map')
+    conf['runtime_path'] = os.path.join(working_dir, 'runtime.json')
     # --------------------------------
     conf['distribution_list'] = source_list
     conf['test'] = {
@@ -114,6 +117,11 @@ def run(exp, dim, sample_count, working_dir, data_dir, result_dir, result_filena
     # subprocess.run(['cp {} {}'.format(
     #     os.path.join(working_dir, g_sample_dir, g_sample_npy),
     #     os.path.join(result_dir, result_filename))], shell=True)
+
+    runtime_src = os.path.join(working_dir, 'runtime.json')
+    if outputs_dir is not None and os.path.exists(runtime_src):
+        os.makedirs(outputs_dir, exist_ok=True)
+        subprocess.run(["cp", runtime_src, os.path.join(outputs_dir, 'runtime.json')], check=True)
 
 
 if __name__ == '__main__':

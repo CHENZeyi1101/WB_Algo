@@ -25,6 +25,7 @@ import tensorflow_probability as tfp
 import numpy as np
 import math
 import os
+import json
 from sklearn import decomposition
 
 class BarycenterState:
@@ -415,6 +416,7 @@ class BarycenterState:
 
     def train_potentials(self):
         conf = self.conf
+        potential_train_start = tf.timestamp()
         while int(self.potential_step) < conf['potential_total_epochs']:
             potential_obj, reg_total = self.train_potential_step()
             elapsed_time = tf.timestamp() - self.start_time
@@ -433,6 +435,9 @@ class BarycenterState:
 
             if step_int % conf['val_frequency'] == 0:
                 self.validate_potential_training()
+
+        self.potential_train_seconds = float(tf.timestamp() - potential_train_start)
+        self.potential_epochs_trained = int(self.potential_step)
 
 
     @staticmethod
@@ -477,6 +482,7 @@ class BarycenterState:
             self.potential_MA.swap_in_averages()
         conf = self.conf
         print("Start training transport maps...")
+        map_train_start = tf.timestamp()
         while int(self.map_step) < conf['map_total_epochs']:
             map_obj = self.train_all_transport_maps_step()
             self.map_step.assign_add(1)
@@ -498,6 +504,35 @@ class BarycenterState:
                 self.validate_map_training()
         if self.conf['moving_averages']['potential_enabled']:
             self.potential_MA.swap_out_averages()
+
+        self.map_train_seconds = float(tf.timestamp() - map_train_start)
+        self.map_epochs_trained = int(self.map_step)
+
+    def save_runtime_info(self):
+        '''
+        Persist wall-clock training time (outer epoch loops only, excludes
+        model setup and --test sampling) to conf['runtime_path'], if set.
+        '''
+        runtime_path = self.conf.get('runtime_path')
+        if not runtime_path:
+            return
+
+        runtime_info = {
+            'potential_train_seconds': getattr(self, 'potential_train_seconds', None),
+            'potential_epochs': getattr(self, 'potential_epochs_trained', None),
+        }
+        if hasattr(self, 'map_train_seconds'):
+            runtime_info['map_train_seconds'] = self.map_train_seconds
+            runtime_info['map_epochs'] = self.map_epochs_trained
+
+        runtime_info['algorithm_seconds'] = (
+            (runtime_info['potential_train_seconds'] or 0.0)
+            + runtime_info.get('map_train_seconds', 0.0)
+        )
+
+        os.makedirs(os.path.dirname(runtime_path), exist_ok=True)
+        with open(runtime_path, 'w') as f:
+            json.dump(runtime_info, f, indent=2)
 
     def validate_potential_training(self):
         self.validator.validate_potential_training()
