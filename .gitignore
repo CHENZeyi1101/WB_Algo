@@ -1,5 +1,41 @@
 
 *.log
-#*.json
-*G_samples.json
+
 *.zip
+# *.csv
+.vscode/settings.json
+.vscode/launch.json
+*.pyc
+.DS_Store
+
+Experiments/Bike_Sharing/data_outputs/stochastic_FP_outputs/G_samples
+
+Algorithms/WDHA_Kim/implementation2D/.DS_Store
+Experiments/Bike_Sharing/.DS_Store
+Experiments/Bike_Sharing/bike_sharing_dataset/.DS_Store
+Experiments/Bike_Sharing/build/.DS_Store
+Experiments/Synthetic_Generation/.DS_Store
+
+CNX_outputs/
+
+# CWB temporary outputs
+cwb_tmp/
+Algorithms/CWB_Li/cwb_tmp/
+
+# Experiment results
+result/
+results/
+Algorithms/CWB_Li/result/
+Algorithms/CWB_Li/results/
+log_dir/
+
+# BFM 
+bfm/
+
+# binary
+Experiments/Bike_Sharing/bike_sharing_PoissonGLM
+Experiments/.DS_Store
+Algorithms/ICNN_Fan/CNX/__pycache__/generate_NN.cpython-311.pyc
+Algorithms/ICNN_Fan/CNX/__pycache__/generate_NN.cpython-311.pyc
+Algorithms/ICNN_Fan/optimal_transport_modules/__pycache__/plot_utils.cpython-311.pyc
+/CNX_outputs

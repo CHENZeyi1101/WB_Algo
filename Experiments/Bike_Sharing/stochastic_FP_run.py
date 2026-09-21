@@ -1,46 +1,87 @@
-from ...Algorithms.Stochastic_FP.entropic_iterative_scheme import *
-from ...Algorithms.data_manage import *
-from .posterior_sampler import *
-from .visualize_posteriors import *
+import numpy as np
+import json, os
+from pathlib import Path
 
-'''
-Running command from terminal: python -m WB_Algo.Experiments.Bike_Sharing.stochastic_FP_run
-'''
+from Algorithms.Stochastic_FP.entropic_iterative_scheme import entropic_iterative_scheme
+from Experiments.CSV_read import csv_posterior_sampler_BikeSharing
 
 if __name__ == "__main__":
-    dim = 8
-    num_samples = 2000
-    num_measures = 5
-    truncated_radius = 500
-    multiplication_factor = 10
+    Cfg_PATH = Path(__file__).parent / "cfg.json"
+    with open(Cfg_PATH, "r") as f:
+        cfg_dict = json.load(f)
 
-    DATA_DIR = os.path.dirname(__file__)
-    MODEL_DIR = os.path.join(DATA_DIR, "models_meta")
+    params = cfg_dict["params_posterior_aggregation_dim8"]
 
-    total_posterior_path = os.path.join(MODEL_DIR, "model_total.meta.pkl")
+    samples_dir = cfg_dict['samples_dir']
+
+    # assert existence
+    assert os.path.exists(samples_dir), f"Instance directory {samples_dir} does not exist."
+
+    dim = params["dim"]
+    num_measures = params["num_measures"]
+    eval_MC_size = params["MC_size"]
+    eval_num_samples = params["eval_num_samples"]
+    csv_skip_rows = params["csv_skip_rows"]
+    csv_cols_range = range(params["csv_cols_range"][0], params["csv_cols_range"][1])
+
+    num_iters = 9
+    rand_state = np.random.RandomState(seed = 88888)
+    init_method = {"type": "moment", "sample_size": 10000}
+    truncate_radius = params["truncated_radius"]
+    sample_size_scheme = np.rint(np.exp(np.linspace(np.log(5000), np.log(20000), num_iters)) + 1).astype(int).tolist()
+    reg_param_scheme = [1e-8] * num_iters
+    # sinkhorn_impl = "ott"
+    # warm_start = {"type": "first-order"}
+
+    sinkhorn_impl = "geomloss"
+    warm_start = None
+
+    ##### Set up the samplers for Bike Sharing data #####
+    split_posterior_sampler = csv_posterior_sampler_BikeSharing(csv_dir = samples_dir, 
+                                                num_measures = num_measures, 
+                                                multiplication_factor = 1, 
+                                                type = "split",
+                                                usecols = csv_cols_range,
+                                                skiprows = csv_skip_rows)
+    split_posterior_sampler.set_streamers()
+
+    ##### Set up the samples for evaluation #####
+    eval_dir = cfg_dict["samples_for_evaluation_dir"]
+
+    bary_sample_path = f"{eval_dir}/bary_samples_collection.json"
+    with open(bary_sample_path, 'r') as json_file:
+        bary_samples_collection_loaded = json.load(json_file)
+    bary_samples_collection_loaded = {int(k): np.array(v) for k, v in bary_samples_collection_loaded.items()}
+
+    input_sample_path = f"{eval_dir}/input_samples_collection.json"
+    with open(input_sample_path, 'r') as json_file:
+        input_samples_collection_loaded = json.load(json_file)
+    input_samples_collection_loaded = {int(k): {int(i): np.array(u) for i, u in v.items()}
+                                        for k, v in input_samples_collection_loaded.items()}
+
     
-    total_posterior_sampler = posterior_sampler(model_path=total_posterior_path, num_measures=1, multiplication_factor=multiplication_factor)
-    subset_posterior_sampler = posterior_sampler(model_path=MODEL_DIR, num_measures=num_measures, multiplication_factor=multiplication_factor)
+    ##### Set up the entropic iterative computer #####
+    entropic_iterative_computer = entropic_iterative_scheme(
+        dim = dim,
+        num_iters = num_iters,
+        input_sampler = split_posterior_sampler,
+        rand_state = rand_state,
+        init_method = init_method,
+        truncate_radius = truncate_radius,
+        sinkhorn_impl = sinkhorn_impl,
+        sample_size_scheme = sample_size_scheme,
+        reg_param_scheme = reg_param_scheme,
+        warm_start = warm_start,
+        bary_samples_collection = bary_samples_collection_loaded, 
+        input_samples_for_evaluation = input_samples_collection_loaded,
+        eval_num_samples = eval_num_samples,
+        eval_MC_size = eval_MC_size,
+        num_parallel = None
+    )
     
-    # Set up the entropic iterative computer
-    entropic_iterative_computer = entropic_iterative_scheme(dim = dim, 
-                                                            num_measures = num_measures, 
-                                                            bary_sampler = total_posterior_sampler, 
-                                                            input_sampler = subset_posterior_sampler, 
-                                                            truncate_radius = truncated_radius)
-    bary_samples = entropic_iterative_computer.bary_sampling(num_samples = num_samples)
-    input_samples_collection = entropic_iterative_computer.input_sampling(num_samples = num_samples)
 
-    data_dir = "./WB_Algo/Experiments/Bike_Sharing/data_outputs/stochastic_FP_outputs"
-    os.makedirs(data_dir, exist_ok=True)
-
-    entropic_iterative_computer.converge(bary_samples,
-                                        input_samples_collection,
-                                        max_iter = 5,
-                                        num_samples = num_samples,
-                                        epsilon = 10,
-                                        MC_size = 30,
-                                        logger = {'sample_logger': None, 'map_logger': None},
-                                        data_dir = data_dir,
-                                        warm_start = False
-                                        )
+    outputs_dir = f"{cfg_dict['outputs_dir']}/stochastic_FP_outputs"
+    os.makedirs(outputs_dir, exist_ok=True)
+    
+    ##### Run the stochastic FP algorithm with entropic OT map estimation #####
+    entropic_iterative_computer.converge(logger = {'sample_logger': None, 'map_logger': None}, data_dir = outputs_dir, eval_boolean=False)

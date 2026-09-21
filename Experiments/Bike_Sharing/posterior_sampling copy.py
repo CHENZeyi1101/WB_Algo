@@ -4,6 +4,10 @@ import pickle
 import numpy as np
 import stan  # PyStan 3
 
+'''
+This module implements functions to save model metadata, load data, and sample from posterior distributions using Stan.
+'''
+
 
 def load_data(dnm):
     data = np.load(dnm)
@@ -49,6 +53,10 @@ def sample_from_meta(meta_filename, num_chains=1, num_samples=1000, save_samples
         samples_path = os.path.join(save_dir, samples_name)
         np.save(samples_path, draws)
         print("Saved samples to:", samples_path) # file type: npy
+        # csv_name = meta['model_name'] + "_samples.csv"
+        # csv_path = os.path.join(save_dir, csv_name)
+        # draws.to_csv(csv_path)
+        # print("Saved samples to:", csv_path) # file type: csv
     return draws  # (chains, draws, d)
     
 if __name__ == "__main__":
@@ -58,7 +66,8 @@ if __name__ == "__main__":
     STAN_FILE = os.path.join(DATA_DIR, f"{MODEL}.stan")
     OUTPUT_MODEL_DIR = os.path.join(DATA_DIR, "models_meta")
     OUTPUT_SAMPLES_DIR = os.path.join(DATA_DIR, "samples")
-    
+
+    num_samples = 10000
     # ensure output directories
     os.makedirs(OUTPUT_MODEL_DIR, exist_ok=True)
     os.makedirs(OUTPUT_SAMPLES_DIR, exist_ok=True)
@@ -84,19 +93,19 @@ if __name__ == "__main__":
     for i, part in enumerate(splits):
         Xi = X[part]
         Yi = Y[part].astype(int)
-        data_i = {'x': Xi, 'y': Yi, 'd': d, 'n': len(part), 'n_rep': n_splits}
+        data_i = {'x': Xi, 'y': Yi, 'd': d, 'n': len(part), 'n_rep': N / len(part)}
         meta_model_save(f"model_split_{i}", data_i, stan_code, seed=i)
 
     # sample from full model
     print("Sampling from full model...")
-    full_samples = sample_from_meta(os.path.join(OUTPUT_MODEL_DIR, "model_total.meta.pkl"), num_chains=1, num_samples=10000, save_samples=True, save_dir=OUTPUT_SAMPLES_DIR) 
+    full_samples = sample_from_meta(os.path.join(OUTPUT_MODEL_DIR, "model_total.meta.pkl"), num_chains=1, num_samples=num_samples, save_samples=True, save_dir=OUTPUT_SAMPLES_DIR) 
     print("Full model samples shape:", full_samples.shape)
     print(full_samples[0:5])  # print first 5 samples
 
     # sample from split models
     for i in range(n_splits):
         print(f"Sampling from split model {i}...")
-        split_samples = sample_from_meta(os.path.join(OUTPUT_MODEL_DIR, f"model_split_{i}.meta.pkl"), num_chains=1, num_samples=10000, save_samples=True, save_dir=OUTPUT_SAMPLES_DIR)
+        split_samples = sample_from_meta(os.path.join(OUTPUT_MODEL_DIR, f"model_split_{i}.meta.pkl"), num_chains=1, num_samples=num_samples, save_samples=True, save_dir=OUTPUT_SAMPLES_DIR)
         print(f"Split model {i} samples shape:", split_samples.shape)
         print(split_samples[0:5])  # print first 5 samples
 

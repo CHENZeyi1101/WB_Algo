@@ -1,0 +1,106 @@
+import os
+import numpy as np
+import json
+import time
+from pathlib import Path
+
+from Experiments.metrics_to_compare import evaluate_MC
+from Algorithms.Fast_Cuturi.free_support_WB import w2_barycenter_free_support_from_samples
+from Experiments.CSV_read import csv_input_sampler_SyntheticGeneration
+from Algorithms.data_manage import save_json
+
+if __name__ == "__main__":
+    Cfg_PATH = Path(__file__).parent / "cfg.json"
+    with open(Cfg_PATH, "r") as f:
+        cfg_dict = json.load(f)
+
+    params = cfg_dict["params_synthetic_generation_dim10"]
+
+    # take all items in params
+    dim = params["dim"]
+    num_measures = params["num_measures"]
+    instance_identifier = params["instance_identifier"]
+    MC_size = params["MC_size"]
+    eval_num_samples = params["eval_num_samples"]
+
+    # number of atoms to approximate the input measures
+    num_samples = 10000
+    
+    # number of atoms in the discrete supports
+    support_size = 10000
+
+    instance_dir = f"{cfg_dict['data_dir']}/Synthetic_Generation/dim{dim}_data/Instance{instance_identifier}"
+    # assert existence
+    assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
+
+    input_csv_path = f"{instance_dir}/csv_files"
+    input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
+                                                num_measures, 
+                                                multiplication_factor=1)
+    input_sampler.set_streamers()
+
+    eval_dir = f"{instance_dir}/samples_for_evaluation"
+
+    bary_sample_path = f"{eval_dir}/bary_samples_collection.json"
+    with open(bary_sample_path, 'r') as json_file:
+        bary_samples_collection_loaded = json.load(json_file)
+    bary_samples_collection_loaded = {int(k): np.array(v) for k, v in bary_samples_collection_loaded.items()}
+
+    input_sample_path = f"{eval_dir}/input_samples_collection.json"
+    with open(input_sample_path, 'r') as json_file:
+        input_samples_collection_loaded = json.load(json_file)
+    input_samples_collection_loaded = {int(k): {int(i): np.array(u) for i, u in v.items()}
+                                        for k, v in input_samples_collection_loaded.items()}
+ 
+    outputs_dir = f"{instance_dir}/outputs/Fast_Cuturi_outputs"
+    os.makedirs(outputs_dir, exist_ok=True)
+
+    V_values_dir = os.path.join(outputs_dir, "V_values")
+    W2_to_bary_dir = os.path.join(outputs_dir, "W2_to_bary")
+    os.makedirs(V_values_dir, exist_ok=True)
+    os.makedirs(W2_to_bary_dir, exist_ok=True)
+
+    input_samples_collection = input_sampler.sample(num_samples)
+    samples_list = [np.array(input_samples_collection[key]) for key in sorted(input_samples_collection.keys())]
+    runtime_start = time.time()
+    approx_bary, fc_log = w2_barycenter_free_support_from_samples(
+        samples_list,
+        k=support_size,
+        init="random",
+        numItermax=200,
+        verbose=True,
+        seed=942,
+        log=True,
+    )
+    runtime_seconds = time.time() - runtime_start
+
+    runtime_dict = {
+        "algorithm_seconds": runtime_seconds,
+        "n_outer_iterations": len(fc_log["displacement_square_norms"]),
+    }
+    save_json(runtime_dict, outputs_dir, "runtime.json")
+
+    # Evaluation
+    approx_bary_it = [approx_bary for _ in range(MC_size)]
+    input_measure_samples_collection_it = [{k : input_samples_collection_loaded[i][k][:eval_num_samples] for k in range(num_measures)} for i in range(MC_size)]
+    true_bary_samples_it = [bary_samples_collection_loaded[i][:eval_num_samples] for i in range(MC_size)]
+    
+    V_values_list, W2_to_bary_list = evaluate_MC(approx_bary_it, 
+                                                 input_measure_samples_collection_it, 
+                                                 true_bary_samples_it, 
+                                                 MC_size = MC_size, 
+                                                 num_parallel_process = None,
+                                                 pbar_text = "Evaluation of Fast_Cuturi")
+
+    # save V-values and W2_to_bary values
+    V_values_dict = {
+        "mean": np.mean(V_values_list),
+        "std": np.std(V_values_list),
+        "values": V_values_list}
+    save_json(V_values_dict, V_values_dir, "V_values.json")
+
+    W2_to_bary_dict = {
+        "mean": np.mean(W2_to_bary_list),
+        "std": np.std(W2_to_bary_list),
+        "values": W2_to_bary_list}
+    save_json(W2_to_bary_dict, W2_to_bary_dir, "W2_to_bary.json")
