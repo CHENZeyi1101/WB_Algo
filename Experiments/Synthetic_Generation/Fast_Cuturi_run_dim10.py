@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import json
+import time
 from pathlib import Path
 
 from Experiments.metrics_to_compare import evaluate_MC
@@ -32,7 +33,7 @@ if __name__ == "__main__":
     # assert existence
     assert os.path.exists(instance_dir), f"Instance directory {instance_dir} does not exist."
 
-    input_csv_path = f"{instance_dir}/input_samples/csv_files"
+    input_csv_path = f"{instance_dir}/csv_files"
     input_sampler = csv_input_sampler_SyntheticGeneration(input_csv_path, 
                                                 num_measures, 
                                                 multiplication_factor=1)
@@ -61,14 +62,23 @@ if __name__ == "__main__":
 
     input_samples_collection = input_sampler.sample(num_samples)
     samples_list = [np.array(input_samples_collection[key]) for key in sorted(input_samples_collection.keys())]
-    approx_bary = w2_barycenter_free_support_from_samples(
+    runtime_start = time.time()
+    approx_bary, fc_log = w2_barycenter_free_support_from_samples(
         samples_list,
         k=support_size,
         init="random",
         numItermax=200,
         verbose=True,
         seed=942,
+        log=True,
     )
+    runtime_seconds = time.time() - runtime_start
+
+    runtime_dict = {
+        "algorithm_seconds": runtime_seconds,
+        "n_outer_iterations": len(fc_log["displacement_square_norms"]),
+    }
+    save_json(runtime_dict, outputs_dir, "runtime.json")
 
     # Evaluation
     approx_bary_it = [approx_bary for _ in range(MC_size)]
@@ -79,7 +89,7 @@ if __name__ == "__main__":
                                                  input_measure_samples_collection_it, 
                                                  true_bary_samples_it, 
                                                  MC_size = MC_size, 
-                                                 num_parallel_process = 5, 
+                                                 num_parallel_process = None,
                                                  pbar_text = "Evaluation of Fast_Cuturi")
 
     # save V-values and W2_to_bary values

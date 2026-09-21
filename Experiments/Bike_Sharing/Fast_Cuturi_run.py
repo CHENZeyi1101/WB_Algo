@@ -1,5 +1,6 @@
 import numpy as np
 import json, os
+import time
 from pathlib import Path
 
 from Algorithms.Fast_Cuturi.free_support_WB import w2_barycenter_free_support_from_samples
@@ -12,7 +13,7 @@ if __name__ == "__main__":
     with open(Cfg_PATH, "r") as f:
         cfg_dict = json.load(f)
 
-    params = cfg_dict["params_posterior_aggregation_dim9"]
+    params = cfg_dict["params_posterior_aggregation_dim8"]
 
     samples_dir = cfg_dict['samples_dir']
 
@@ -65,14 +66,23 @@ if __name__ == "__main__":
 
     input_samples_collection = split_posterior_sampler.sample(num_samples)
     samples_list = [np.array(input_samples_collection[key]) for key in sorted(input_samples_collection.keys())]
-    approx_bary = w2_barycenter_free_support_from_samples(
+    runtime_start = time.time()
+    approx_bary, fc_log = w2_barycenter_free_support_from_samples(
         samples_list,
         k=support_size,
         init="random",
         numItermax=200,
         verbose=True,
         seed=8842,
+        log=True,
     )
+    runtime_seconds = time.time() - runtime_start
+
+    runtime_dict = {
+        "algorithm_seconds": runtime_seconds,
+        "n_outer_iterations": len(fc_log["displacement_square_norms"]),
+    }
+    save_json(runtime_dict, outputs_dir, "runtime.json")
 
     # Evaluation
     approx_bary_it = [approx_bary for _ in range(MC_size)]
@@ -83,7 +93,7 @@ if __name__ == "__main__":
                                                  input_measure_samples_collection_it, 
                                                  true_bary_samples_it, 
                                                  MC_size = MC_size, 
-                                                 num_parallel_process = 5, 
+                                                 num_parallel_process = None,
                                                  pbar_text = "Evaluation of Fast_Cuturi")
 
     # save V-values and W2_to_bary values

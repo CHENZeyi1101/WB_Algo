@@ -1,3 +1,11 @@
+import pykeops
+import pykeops.torch  # let this raise loudly if it's broken
+from pykeops.torch import generic_logsumexp
+import geomloss.sinkhorn_samples as ss
+ss.generic_logsumexp = generic_logsumexp  # monkey-patch the name into geomloss's namespace
+
+from geomloss import SamplesLoss  # your existing import, now after the patch
+
 from geomloss import SamplesLoss
 import torch
 

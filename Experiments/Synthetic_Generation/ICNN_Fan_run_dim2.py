@@ -6,6 +6,7 @@ import logging
 
 import sys
 import os
+import time
 import numpy as np
 from tqdm import tqdm
 import pandas as pd
@@ -32,6 +33,7 @@ from Algorithms.ICNN_Fan.CNX.cfg import CNXCfgCustom as Cfg_class
 from Algorithms.ICNN_Fan.CNX import compare_dist_results as CDR
 from Experiments.Synthetic_Generation.samplers import *
 from Experiments.CSV_read import *
+from Algorithms.data_manage import save_json
 
 ##### For computing the constraint loss of negtive weights ######
 def compute_constraint_loss(list_of_params):
@@ -341,9 +343,12 @@ if __name__ == '__main__':
                         Real Training Process
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+    epoch_seconds_total = 0.0
     for epoch in range(1, cfg.epochs + 1):
         # Start training
+        epoch_start = time.time()
         train(epoch)
+        epoch_seconds_total += time.time() - epoch_start
         if cfg.schedule_learning_rate:
             if epoch % cfg.lr_schedule_per_epoch == 0:
                 for i in range(cfg.NUM_DISTRIBUTION):
@@ -355,6 +360,12 @@ if __name__ == '__main__':
         os.makedirs(model_save_dir_epoch, exist_ok=True)
         LLU.dump_nn(generator_h, convex_f, convex_g, epoch,
                 model_save_dir_epoch, num_distribution=cfg.NUM_DISTRIBUTION, save_f=cfg.save_f)
+
+    runtime_dict = {
+        "algorithm_seconds": epoch_seconds_total,
+        "n_outer_iterations": cfg.epochs,
+    }
+    save_json(runtime_dict, outputs_dir, "runtime.json")
         
 
 

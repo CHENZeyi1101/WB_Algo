@@ -41,7 +41,8 @@ def batch_run_exp(exp, method, repeat_range, input_csv_path = None, num_measures
                         result_filename=result_filename,
                         input_csv_path = input_csv_path,
                         num_measures = num_measures,
-                        params = params)
+                        params = params,
+                        outputs_dir = g_base_dir)
             elif method in ['bregman', 'exact_lp', 'conv']:
                 discrete_num = get_discrete_num(dim, method)
                 if not discrete_num:

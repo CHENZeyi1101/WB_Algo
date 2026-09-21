@@ -162,7 +162,7 @@ if __name__ == "__main__":
                                                  input_measure_samples_collection_it, 
                                                  true_bary_samples_it, 
                                                  MC_size = MC_size, 
-                                                 num_parallel_process = 5, 
+                                                 num_parallel_process = None,
                                                  pbar_text = "Evaluation of WDHA_Kim")
 
     # save V-values and W2_to_bary values

@@ -1,6 +1,8 @@
 # Imports -- run once
 from w2 import BFM
 from time import time
+import json
+import os
 import numpy as np
 import ot
 from matplotlib.colors import LinearSegmentedColormap
@@ -139,7 +141,7 @@ def compute_ot(phi, psi, bf,mu, nu, sigma, inner ):
     return new_w2
 
 
-def frechet_mean(dists, n_iter,name, plot_option = False,save_option = True, return_option = False,  inner = 1, x_grid = None, y_grid = None):
+def frechet_mean(dists, n_iter,name, plot_option = False,save_option = True, return_option = False,  inner = 1, x_grid = None, y_grid = None, runtime_path = None):
   n2, n1 = np.shape(dists[0])
   x, y = np.meshgrid(np.linspace(0.5/n1,1-0.5/n1,n1),
                     np.linspace(0.5/n2,1-0.5/n2,n2))
@@ -166,6 +168,12 @@ def frechet_mean(dists, n_iter,name, plot_option = False,save_option = True, ret
     # if (i+1) % 50 == 0:
     #   print(f"Number of Iterations : {i+1}")
   toc = time()
+
+  if runtime_path is not None:
+    os.makedirs(os.path.dirname(runtime_path), exist_ok=True)
+    with open(runtime_path, 'w') as f:
+      json.dump({"algorithm_seconds": toc - tic, "n_outer_iterations": n_iter}, f, indent=2)
+
   if plot_option:
     plotting(dists, rd,name,save_option = save_option)
   if return_option == True:
