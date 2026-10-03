@@ -69,7 +69,7 @@ def plot_v_values(v_values_path: str, true_v_OT_path: str=None, true_v_path: str
     ax.set_xticklabels(x_labels, rotation=45)
     ax.set_xlabel('Iteration')
     ax.set_ylabel('V-value')
-    ax.set_title(r'Empirical approximations $\bar{V}(\widehat{\mu}_t)$ across iterations')
+    ax.set_title(r'Empirical approximations of $\bar{V}(\widehat{\mu}_t)$ across iterations')
     ax.legend(loc='upper right')
     ax.grid(False)
     plt.tight_layout()
